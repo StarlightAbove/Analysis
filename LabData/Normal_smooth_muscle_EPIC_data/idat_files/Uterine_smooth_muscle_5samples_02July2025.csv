@@ -1,0 +1,6 @@
+Sample ID,Sample_name,Duplicate,QC_filters,Plate,Column,Row,Group,Group2,Group3,Location,PRM,STT,Material,Sample,LMS_subtype
+STS402,Plt6-B11-Smooth_muscle,Unique,PASS,Plate 6,Col 11,B,Smooth_muscle,Smooth_muscle,Smooth_muscle,nonGYN,Primary,14146,FFPE,Smooth_muscle,NA
+STS411,Plt6-C12-Smooth_muscle,Unique,PASS,Plate 6,Col 12,C,Smooth_muscle,Smooth_muscle,Smooth_muscle,nonGYN,Primary,14147,FFPE,Smooth_muscle,NA
+STS419,Plt7-C1-Smooth_muscle,Unique,PASS,Plate7,Col 1,C,Smooth_muscle,Smooth_muscle,Smooth_muscle,nonGYN,Primary,14148,FFPE,Smooth_muscle,NA
+STS428,Plt7-D2-Smooth_muscle,Unique,PASS,Plate7,Col 2,D,Smooth_muscle,Smooth_muscle,Smooth_muscle,nonGYN,Primary,14149,FFPE,Smooth_muscle,NA
+STS437,Plt7-E3-Smooth_muscle,Unique,PASS,Plate7,Col 3,E,Smooth_muscle,Smooth_muscle,Smooth_muscle,nonGYN,Primary,14150,FFPE,Smooth_muscle,NA

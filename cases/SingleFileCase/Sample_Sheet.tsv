@@ -1,0 +1,21 @@
+File ID	File Name	Data Category	Data Type	Project ID	Case ID	Sample ID	Tissue Type	Tumor Descriptor	Specimen Type	Preservation Method
+c8d9fa29-9013-4ad6-bf45-9493a3d85618	e7ba6d40-7e4e-4a7a-aa4a-d37e4dee2188_noid_Red.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-3B-A9HX	TCGA-3B-A9HX-01A	Tumor	Primary	Solid Tissue	OCT
+800c5715-ca5f-4e05-9987-5b46a4c0ff3d	e7ba6d40-7e4e-4a7a-aa4a-d37e4dee2188_noid_Grn.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-3B-A9HX	TCGA-3B-A9HX-01A	Tumor	Primary	Solid Tissue	OCT
+95632700-126f-487c-868f-892ee160c1a0	a2cd4859-304f-47bd-a8e6-2564ce864f20_noid_Red.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A6Z2	TCGA-DX-A6Z2-01A	Tumor	Primary	Unknown	OCT
+e9736d7a-0eb2-4c43-bd57-6409f819d15d	a2cd4859-304f-47bd-a8e6-2564ce864f20_noid_Grn.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A6Z2	TCGA-DX-A6Z2-01A	Tumor	Primary	Unknown	OCT
+fc307591-73aa-444d-9326-83f64d429f70	19a89984-61f0-4f1b-a423-6e73589ad706_noid_Grn.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A7EN	TCGA-DX-A7EN-01A	Tumor	Primary	Solid Tissue	OCT
+72851633-a58f-466e-81cd-e8200491d20e	c1abadac-49aa-4885-a017-cb0d8a54d61e_noid_Red.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A6BA	TCGA-DX-A6BA-01A	Tumor	Primary	Unknown	OCT
+7f13ec21-fe06-4272-a6a9-6c1d4bb1b97e	c1abadac-49aa-4885-a017-cb0d8a54d61e_noid_Grn.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A6BA	TCGA-DX-A6BA-01A	Tumor	Primary	Unknown	OCT
+cff5d0f1-468d-4040-b681-60ca94ba003b	8b20043f-7c89-49eb-a2f2-f165d685af99_noid_Grn.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-K1-A42W	TCGA-K1-A42W-01A	Tumor	Primary	Solid Tissue	OCT
+7e660b05-e511-49b6-9d09-4abf853c9698	19a89984-61f0-4f1b-a423-6e73589ad706_noid_Red.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A7EN	TCGA-DX-A7EN-01A	Tumor	Primary	Solid Tissue	OCT
+832ba500-1c34-4e15-a27a-a0bc5cdc1bbb	8b20043f-7c89-49eb-a2f2-f165d685af99_noid_Red.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-K1-A42W	TCGA-K1-A42W-01A	Tumor	Primary	Solid Tissue	OCT
+87fd8706-de94-47b1-a3fa-f947cd738756	54d23a15-16da-4628-af72-8d864f503754_noid_Red.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A7EL	TCGA-DX-A7EL-01A	Tumor	Primary	Unknown	OCT
+60465135-4a84-457c-91eb-8d839488885f	2317031d-2222-4848-9363-dd6475ca3005_noid_Red.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A48P	TCGA-DX-A48P-01A	Tumor	Primary	Unknown	OCT
+844c5976-6182-444c-81c8-335dadfc6968	2317031d-2222-4848-9363-dd6475ca3005_noid_Grn.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A48P	TCGA-DX-A48P-01A	Tumor	Primary	Unknown	OCT
+0f1de77f-245e-4da6-ba08-d891019d6bc7	16fbdec6-fd39-4852-a162-893e597529f3_noid_Red.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-3B-A9HQ	TCGA-3B-A9HQ-01A	Tumor	Primary	Solid Tissue	OCT
+d59f7815-144a-4e07-81eb-e5d8957ddbdc	16fbdec6-fd39-4852-a162-893e597529f3_noid_Grn.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-3B-A9HQ	TCGA-3B-A9HQ-01A	Tumor	Primary	Solid Tissue	OCT
+7cce0a62-2053-48ee-8df5-0602f7ac661d	25ca5bf7-8ace-4e41-a65e-c4082e66b536_noid_Red.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A3UC	TCGA-DX-A3UC-01A	Tumor	Primary	Unknown	OCT
+1f5c7a53-394b-4750-8bbf-6ecb2d5a317f	25ca5bf7-8ace-4e41-a65e-c4082e66b536_noid_Grn.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A3UC	TCGA-DX-A3UC-01A	Tumor	Primary	Unknown	OCT
+e90660c2-09ec-4be7-99e2-e407ea47aa89	54d23a15-16da-4628-af72-8d864f503754_noid_Grn.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A7EL	TCGA-DX-A7EL-01A	Tumor	Primary	Unknown	OCT
+d2800a5b-e1bd-4a39-86db-c1fe275ac23c	d5ca90d2-672d-465c-943b-6ee9c3834b00_noid_Red.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A48O	TCGA-DX-A48O-01A	Tumor	Primary	Unknown	OCT
+e529b079-78e9-46b3-8572-07a73ad28549	d5ca90d2-672d-465c-943b-6ee9c3834b00_noid_Grn.idat	DNA Methylation	Masked Intensities	TCGA-SARC	TCGA-DX-A48O	TCGA-DX-A48O-01A	Tumor	Primary	Unknown	OCT

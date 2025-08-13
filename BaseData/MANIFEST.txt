@@ -1,0 +1,11 @@
+id	filename	md5	size	state
+08db990f-5d6b-479e-9d54-a48764ec887b	08db990f-5d6b-479e-9d54-a48764ec887b/16fbdec6-fd39-4852-a162-893e597529f3.methylation_array.sesame.level3betas.txt	3ea0ed273e02cf948c78467d8d8d1e80	13016837	validated
+3b89252e-b92b-4174-ba95-7a7cf05e2311	3b89252e-b92b-4174-ba95-7a7cf05e2311/a2cd4859-304f-47bd-a8e6-2564ce864f20.methylation_array.sesame.level3betas.txt	8b94fa202e90142fffb700ca5970e587	13088602	validated
+58022c89-554f-4973-a0ce-146c842caab8	58022c89-554f-4973-a0ce-146c842caab8/e7ba6d40-7e4e-4a7a-aa4a-d37e4dee2188.methylation_array.sesame.level3betas.txt	1b6903f53edefae85be038f25bf84093	12997236	validated
+5e0d3b6b-fe4e-45ab-8529-576f12e72ccb	5e0d3b6b-fe4e-45ab-8529-576f12e72ccb/2317031d-2222-4848-9363-dd6475ca3005.methylation_array.sesame.level3betas.txt	17e09ff68e005ae9bd104e5aad797cf7	13080547	validated
+83da554e-85c6-4593-bcac-c3990689f3cb	83da554e-85c6-4593-bcac-c3990689f3cb/c1abadac-49aa-4885-a017-cb0d8a54d61e.methylation_array.sesame.level3betas.txt	099e1cc221df61aa6e73e6bd6019abb3	13101270	validated
+9206ee00-b416-46ec-b648-192a2b1befe9	9206ee00-b416-46ec-b648-192a2b1befe9/19a89984-61f0-4f1b-a423-6e73589ad706.methylation_array.sesame.level3betas.txt	94e6fc5c3949523ac01ef59eadda5b83	13103366	validated
+bce0df10-a07e-4fc2-9f79-4529a8c98e90	bce0df10-a07e-4fc2-9f79-4529a8c98e90/8b20043f-7c89-49eb-a2f2-f165d685af99.methylation_array.sesame.level3betas.txt	cf7f05b1f4f686586898498f7adb8e2f	13108614	validated
+d49c4cc2-5f31-443a-b3e4-f8b790a576af	d49c4cc2-5f31-443a-b3e4-f8b790a576af/d5ca90d2-672d-465c-943b-6ee9c3834b00.methylation_array.sesame.level3betas.txt	2f70b5ecfc405fec23e5d0df5edd1a03	13069811	validated
+d8bcef8a-57d7-4f73-a821-19f8d09daf28	d8bcef8a-57d7-4f73-a821-19f8d09daf28/54d23a15-16da-4628-af72-8d864f503754.methylation_array.sesame.level3betas.txt	aa16476974c452d9b19628dd586600a6	13112173	validated
+e13e575b-6932-41d8-82fb-f01bd1cdb2c7	e13e575b-6932-41d8-82fb-f01bd1cdb2c7/25ca5bf7-8ace-4e41-a65e-c4082e66b536.methylation_array.sesame.level3betas.txt	c48fd4ed516e2859932b0376a35ef19d	13162343	validated

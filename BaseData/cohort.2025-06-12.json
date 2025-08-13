@@ -1,0 +1,642 @@
+[{
+  "summary": {
+    "file_count": 77, 
+    "experimental_strategies": [
+      {
+        "experimental_strategy": "RNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "miRNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "WXS"
+      }, 
+      {
+        "experimental_strategy": "WGS"
+      }, 
+      {
+        "experimental_strategy": "Genotyping Array"
+      }, 
+      {
+        "experimental_strategy": "Methylation Array"
+      }, 
+      {
+        "experimental_strategy": "Tissue Slide"
+      }, 
+      {
+        "experimental_strategy": "Diagnostic Slide"
+      }
+    ]
+  }, 
+  "primary_site": "Retroperitoneum and peritoneum", 
+  "submitter_slide_ids": [
+    "TCGA-3B-A9HX-01A-01-TS1", 
+    "TCGA-3B-A9HX-01Z-00-DX1"
+  ], 
+  "disease_type": "Myomatous Neoplasms", 
+  "case_id": "9ff814f6-4a05-4471-8492-41574fa3eeeb", 
+  "project": {
+    "project_id": "TCGA-SARC", 
+    "program": {
+      "name": "TCGA"
+    }
+  }, 
+  "submitter_id": "TCGA-3B-A9HX", 
+  "diagnoses": [
+    {
+      "age_at_diagnosis": 25627
+    }
+  ], 
+  "demographic": {
+    "race": "white", 
+    "gender": "female", 
+    "ethnicity": "not hispanic or latino", 
+    "vital_status": "Alive"
+  }
+},{
+  "summary": {
+    "file_count": 99, 
+    "experimental_strategies": [
+      {
+        "experimental_strategy": "RNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "miRNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "WXS"
+      }, 
+      {
+        "experimental_strategy": "WGS"
+      }, 
+      {
+        "experimental_strategy": "Genotyping Array"
+      }, 
+      {
+        "experimental_strategy": "Methylation Array"
+      }, 
+      {
+        "experimental_strategy": "Reverse Phase Protein Array"
+      }, 
+      {
+        "experimental_strategy": "Tissue Slide"
+      }, 
+      {
+        "experimental_strategy": "Diagnostic Slide"
+      }
+    ]
+  }, 
+  "primary_site": "Retroperitoneum and peritoneum", 
+  "submitter_slide_ids": [
+    "TCGA-DX-A6Z2-01A-01-TSA", 
+    "TCGA-DX-A6Z2-11A-01-TSA", 
+    "TCGA-DX-A6Z2-01Z-00-DX1", 
+    "TCGA-DX-A6Z2-01Z-00-DX3", 
+    "TCGA-DX-A6Z2-01Z-00-DX2"
+  ], 
+  "disease_type": "Myomatous Neoplasms", 
+  "case_id": "1ad65834-8bac-4b80-8b2e-2588548ea003", 
+  "project": {
+    "project_id": "TCGA-SARC", 
+    "program": {
+      "name": "TCGA"
+    }
+  }, 
+  "submitter_id": "TCGA-DX-A6Z2", 
+  "diagnoses": [
+    {
+      "age_at_diagnosis": 32701
+    }, 
+    {
+      "age_at_diagnosis": 30042
+    }
+  ], 
+  "demographic": {
+    "race": "white", 
+    "gender": "female", 
+    "ethnicity": "not hispanic or latino", 
+    "vital_status": "Alive"
+  }
+},{
+  "summary": {
+    "file_count": 81, 
+    "experimental_strategies": [
+      {
+        "experimental_strategy": "RNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "miRNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "WXS"
+      }, 
+      {
+        "experimental_strategy": "WGS"
+      }, 
+      {
+        "experimental_strategy": "Genotyping Array"
+      }, 
+      {
+        "experimental_strategy": "Methylation Array"
+      }, 
+      {
+        "experimental_strategy": "Reverse Phase Protein Array"
+      }, 
+      {
+        "experimental_strategy": "Tissue Slide"
+      }, 
+      {
+        "experimental_strategy": "Diagnostic Slide"
+      }
+    ]
+  }, 
+  "primary_site": "Retroperitoneum and peritoneum", 
+  "submitter_slide_ids": [
+    "TCGA-DX-A7EN-11A-01-TSA", 
+    "TCGA-DX-A7EN-01Z-00-DX1", 
+    "TCGA-DX-A7EN-01A-01-TSA"
+  ], 
+  "disease_type": "Myomatous Neoplasms", 
+  "case_id": "3ed1862b-c6ef-4744-9123-bb1ee557f068", 
+  "project": {
+    "project_id": "TCGA-SARC", 
+    "program": {
+      "name": "TCGA"
+    }
+  }, 
+  "submitter_id": "TCGA-DX-A7EN", 
+  "diagnoses": [
+    {
+      "age_at_diagnosis": 19588
+    }, 
+    {
+      "age_at_diagnosis": 19940
+    }
+  ], 
+  "demographic": {
+    "race": "white", 
+    "gender": "female", 
+    "ethnicity": "not hispanic or latino", 
+    "vital_status": "Alive"
+  }
+},{
+  "summary": {
+    "file_count": 81, 
+    "experimental_strategies": [
+      {
+        "experimental_strategy": "RNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "miRNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "WXS"
+      }, 
+      {
+        "experimental_strategy": "WGS"
+      }, 
+      {
+        "experimental_strategy": "Genotyping Array"
+      }, 
+      {
+        "experimental_strategy": "Methylation Array"
+      }, 
+      {
+        "experimental_strategy": "Reverse Phase Protein Array"
+      }, 
+      {
+        "experimental_strategy": "Tissue Slide"
+      }, 
+      {
+        "experimental_strategy": "Diagnostic Slide"
+      }
+    ]
+  }, 
+  "primary_site": "Retroperitoneum and peritoneum", 
+  "submitter_slide_ids": [
+    "TCGA-DX-A6BA-01Z-00-DX1", 
+    "TCGA-DX-A6BA-01A-01-TSA", 
+    "TCGA-DX-A6BA-01Z-00-DX2"
+  ], 
+  "disease_type": "Myomatous Neoplasms", 
+  "case_id": "4dc28966-d2c4-4661-b71f-d7f85e536cb6", 
+  "project": {
+    "project_id": "TCGA-SARC", 
+    "program": {
+      "name": "TCGA"
+    }
+  }, 
+  "submitter_id": "TCGA-DX-A6BA", 
+  "diagnoses": [
+    {
+      "age_at_diagnosis": 20947
+    }, 
+    {
+      "age_at_diagnosis": 20869
+    }, 
+    {
+      "age_at_diagnosis": 19863
+    }, 
+    {
+      "age_at_diagnosis": 19863
+    }, 
+    {
+      "age_at_diagnosis": 19455
+    }, 
+    {
+      "age_at_diagnosis": 20465
+    }, 
+    {
+      "age_at_diagnosis": 20465
+    }, 
+    {
+      "age_at_diagnosis": 20465
+    }
+  ], 
+  "demographic": {
+    "race": "white", 
+    "gender": "female", 
+    "ethnicity": "not hispanic or latino", 
+    "vital_status": "Alive"
+  }
+},{
+  "summary": {
+    "file_count": 78, 
+    "experimental_strategies": [
+      {
+        "experimental_strategy": "RNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "miRNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "WXS"
+      }, 
+      {
+        "experimental_strategy": "WGS"
+      }, 
+      {
+        "experimental_strategy": "Genotyping Array"
+      }, 
+      {
+        "experimental_strategy": "Methylation Array"
+      }, 
+      {
+        "experimental_strategy": "Reverse Phase Protein Array"
+      }, 
+      {
+        "experimental_strategy": "Tissue Slide"
+      }, 
+      {
+        "experimental_strategy": "Diagnostic Slide"
+      }
+    ]
+  }, 
+  "primary_site": "Retroperitoneum and peritoneum", 
+  "submitter_slide_ids": [
+    "TCGA-DX-A3UC-01A-01-TSA", 
+    "TCGA-DX-A3UC-01Z-00-DX1"
+  ], 
+  "disease_type": "Myomatous Neoplasms", 
+  "case_id": "778dc00a-0b94-45a8-ae13-9c80f0c1dfd6", 
+  "project": {
+    "project_id": "TCGA-SARC", 
+    "program": {
+      "name": "TCGA"
+    }
+  }, 
+  "submitter_id": "TCGA-DX-A3UC", 
+  "diagnoses": [
+    {
+      "age_at_diagnosis": 14661
+    }, 
+    {
+      "age_at_diagnosis": 13921
+    }, 
+    {
+      "age_at_diagnosis": 13745
+    }, 
+    {
+      "age_at_diagnosis": 14308
+    }, 
+    {
+      "age_at_diagnosis": 14772
+    }, 
+    {
+      "age_at_diagnosis": 13921
+    }, 
+    {
+      "age_at_diagnosis": 13921
+    }, 
+    {
+      "age_at_diagnosis": 15032
+    }, 
+    {
+      "age_at_diagnosis": 14308
+    }
+  ], 
+  "demographic": {
+    "race": "white", 
+    "gender": "female", 
+    "ethnicity": "not hispanic or latino", 
+    "vital_status": "Alive"
+  }
+},{
+  "summary": {
+    "file_count": 76, 
+    "experimental_strategies": [
+      {
+        "experimental_strategy": "RNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "miRNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "WXS"
+      }, 
+      {
+        "experimental_strategy": "WGS"
+      }, 
+      {
+        "experimental_strategy": "Genotyping Array"
+      }, 
+      {
+        "experimental_strategy": "Methylation Array"
+      }, 
+      {
+        "experimental_strategy": "Reverse Phase Protein Array"
+      }, 
+      {
+        "experimental_strategy": "Tissue Slide"
+      }, 
+      {
+        "experimental_strategy": "Diagnostic Slide"
+      }
+    ]
+  }, 
+  "primary_site": "Retroperitoneum and peritoneum", 
+  "submitter_slide_ids": [
+    "TCGA-K1-A42W-01Z-00-DX1", 
+    "TCGA-K1-A42W-01A-01-TS1"
+  ], 
+  "disease_type": "Myomatous Neoplasms", 
+  "case_id": "83a93378-0978-4102-9e4b-09b547b75687", 
+  "project": {
+    "project_id": "TCGA-SARC", 
+    "program": {
+      "name": "TCGA"
+    }
+  }, 
+  "submitter_id": "TCGA-K1-A42W", 
+  "diagnoses": [
+    {
+      "age_at_diagnosis": 23910
+    }, 
+    {
+      "age_at_diagnosis": 24736
+    }, 
+    {
+      "age_at_diagnosis": 24736
+    }
+  ], 
+  "demographic": {
+    "race": "white", 
+    "gender": "female", 
+    "ethnicity": "not hispanic or latino", 
+    "vital_status": "Alive"
+  }
+},{
+  "summary": {
+    "file_count": 77, 
+    "experimental_strategies": [
+      {
+        "experimental_strategy": "RNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "miRNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "WXS"
+      }, 
+      {
+        "experimental_strategy": "WGS"
+      }, 
+      {
+        "experimental_strategy": "Genotyping Array"
+      }, 
+      {
+        "experimental_strategy": "Methylation Array"
+      }, 
+      {
+        "experimental_strategy": "Tissue Slide"
+      }, 
+      {
+        "experimental_strategy": "Diagnostic Slide"
+      }
+    ]
+  }, 
+  "primary_site": "Retroperitoneum and peritoneum", 
+  "submitter_slide_ids": [
+    "TCGA-3B-A9HQ-01A-01-TS1", 
+    "TCGA-3B-A9HQ-01Z-00-DX1"
+  ], 
+  "disease_type": "Myomatous Neoplasms", 
+  "case_id": "851f8905-778c-4016-85e5-bc22817a6a28", 
+  "project": {
+    "project_id": "TCGA-SARC", 
+    "program": {
+      "name": "TCGA"
+    }
+  }, 
+  "submitter_id": "TCGA-3B-A9HQ", 
+  "diagnoses": [
+    {
+      "age_at_diagnosis": 24386
+    }
+  ], 
+  "demographic": {
+    "race": "white", 
+    "gender": "female", 
+    "ethnicity": "not hispanic or latino", 
+    "vital_status": "Alive"
+  }
+},{
+  "summary": {
+    "file_count": 78, 
+    "experimental_strategies": [
+      {
+        "experimental_strategy": "RNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "miRNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "WXS"
+      }, 
+      {
+        "experimental_strategy": "WGS"
+      }, 
+      {
+        "experimental_strategy": "Genotyping Array"
+      }, 
+      {
+        "experimental_strategy": "Methylation Array"
+      }, 
+      {
+        "experimental_strategy": "Reverse Phase Protein Array"
+      }, 
+      {
+        "experimental_strategy": "Tissue Slide"
+      }, 
+      {
+        "experimental_strategy": "Diagnostic Slide"
+      }
+    ]
+  }, 
+  "primary_site": "Retroperitoneum and peritoneum", 
+  "submitter_slide_ids": [
+    "TCGA-DX-A48P-01Z-00-DX1", 
+    "TCGA-DX-A48P-01A-01-TSA"
+  ], 
+  "disease_type": "Myomatous Neoplasms", 
+  "case_id": "de277edb-4543-4bd7-8f86-206c18b54d8d", 
+  "project": {
+    "project_id": "TCGA-SARC", 
+    "program": {
+      "name": "TCGA"
+    }
+  }, 
+  "submitter_id": "TCGA-DX-A48P", 
+  "diagnoses": [
+    {
+      "age_at_diagnosis": 19794
+    }
+  ], 
+  "demographic": {
+    "race": "white", 
+    "gender": "female", 
+    "ethnicity": "not hispanic or latino", 
+    "vital_status": "Alive"
+  }
+},{
+  "summary": {
+    "file_count": 87, 
+    "experimental_strategies": [
+      {
+        "experimental_strategy": "RNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "miRNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "WXS"
+      }, 
+      {
+        "experimental_strategy": "WGS"
+      }, 
+      {
+        "experimental_strategy": "Genotyping Array"
+      }, 
+      {
+        "experimental_strategy": "Methylation Array"
+      }, 
+      {
+        "experimental_strategy": "Reverse Phase Protein Array"
+      }, 
+      {
+        "experimental_strategy": "Tissue Slide"
+      }, 
+      {
+        "experimental_strategy": "Diagnostic Slide"
+      }
+    ]
+  }, 
+  "primary_site": "Retroperitoneum and peritoneum", 
+  "submitter_slide_ids": [
+    "TCGA-DX-A7EL-01Z-00-DX1", 
+    "TCGA-DX-A7EL-01A-01-TSA", 
+    "TCGA-DX-A7EL-01Z-00-DX2", 
+    "TCGA-DX-A7EL-01Z-00-DX3"
+  ], 
+  "disease_type": "Myomatous Neoplasms", 
+  "case_id": "ef273fe6-aab0-41eb-94f7-cca980bf789e", 
+  "project": {
+    "project_id": "TCGA-SARC", 
+    "program": {
+      "name": "TCGA"
+    }
+  }, 
+  "submitter_id": "TCGA-DX-A7EL", 
+  "diagnoses": [
+    {
+      "age_at_diagnosis": 20767
+    }, 
+    {
+      "age_at_diagnosis": 18133
+    }, 
+    {
+      "age_at_diagnosis": 23016
+    }
+  ], 
+  "demographic": {
+    "race": "white", 
+    "gender": "female", 
+    "ethnicity": "not hispanic or latino", 
+    "vital_status": "Alive"
+  }
+},{
+  "summary": {
+    "file_count": 68, 
+    "experimental_strategies": [
+      {
+        "experimental_strategy": "RNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "miRNA-Seq"
+      }, 
+      {
+        "experimental_strategy": "WXS"
+      }, 
+      {
+        "experimental_strategy": "Genotyping Array"
+      }, 
+      {
+        "experimental_strategy": "Methylation Array"
+      }, 
+      {
+        "experimental_strategy": "Reverse Phase Protein Array"
+      }, 
+      {
+        "experimental_strategy": "Tissue Slide"
+      }, 
+      {
+        "experimental_strategy": "Diagnostic Slide"
+      }
+    ]
+  }, 
+  "primary_site": "Retroperitoneum and peritoneum", 
+  "submitter_slide_ids": [
+    "TCGA-DX-A48O-01Z-00-DX1", 
+    "TCGA-DX-A48O-01A-01-TS1"
+  ], 
+  "disease_type": "Myomatous Neoplasms", 
+  "case_id": "fd93cabe-fb8d-4a46-97ee-60051110237a", 
+  "project": {
+    "project_id": "TCGA-SARC", 
+    "program": {
+      "name": "TCGA"
+    }
+  }, 
+  "submitter_id": "TCGA-DX-A48O", 
+  "diagnoses": [
+    {
+      "age_at_diagnosis": 23364
+    }
+  ], 
+  "demographic": {
+    "race": "white", 
+    "gender": "female", 
+    "ethnicity": "not hispanic or latino", 
+    "vital_status": "Alive"
+  }
+}]

@@ -88,5 +88,10 @@ lmProcessing <- function(outputDir){
   rbind(chasFiltered, fasst2filtered, cnvMethyl) %>% arrange(chrom) %>% dplyr::filter(!(is.na(chrom)))
 }
 
+labLMSProc <- function(outputDir){
+  # Correlate by STT information between methylation Sentrix and SNP data.
+  
+}
+
 
 

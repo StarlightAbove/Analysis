@@ -29,6 +29,8 @@ pccB <- function(dset){
   cor(overlap_df$pred_cnv, overlap_df$truth_cnv, method = "pearson")
   
 }
+
+# Lab LMS correlation.
 correlative <- read_csv("LabData/LMS_SNP_EPIC_array_data/correlative.csv")$STT
 casesList <- c("Sample 1", "Sample 2", "Sample 3", "Sample 4", "Sample 5", 
                "Sample 6", "Sample 7", "Sample 8", "Sample 9", "Sample 10", 
@@ -80,5 +82,90 @@ pltM <- pivot_longer(cMatrix, names_to = "Technology", values_to = "Correlation"
 ggplot(pltM, aes(fill=Technology, y=Correlation, x=Cases)) + 
   geom_bar(position="dodge", stat="identity")
 
+# LMS Correlation.
+barcodes <- as.list(read.csv("./cases/SingleFileCase/SampleSheet.csv") %>% select("caseNames"))[[1]]
+casesList <- c("Sample 1", "Sample 2", "Sample 3", "Sample 4", "Sample 5", 
+               "Sample 6", "Sample 7", "Sample 8", "Sample 9", "Sample 10")
+ses <- c(pccB(softOutputProcessingLMS(barcodes[1])), 
+         pccB(softOutputProcessingLMS(barcodes[2])), 
+         pccB(softOutputProcessingLMS(barcodes[3])), 
+         pccB(softOutputProcessingLMS(barcodes[4])),
+         pccB(softOutputProcessingLMS(barcodes[5])),
+         pccB(softOutputProcessingLMS(barcodes[6])),
+         pccB(softOutputProcessingLMS(barcodes[7])),
+         pccB(softOutputProcessingLMS(barcodes[8])),
+         pccB(softOutputProcessingLMS(barcodes[9])),
+         pccB(softOutputProcessingLMS(barcodes[10])))
+
+con <- c(pccB(matchingAlgo(barcodes[1], "Conumee", "LMS")), 
+         pccB(matchingAlgo(barcodes[2], "Conumee", "LMS")), 
+         pccB(matchingAlgo(barcodes[3], "Conumee", "LMS")), 
+         pccB(matchingAlgo(barcodes[4], "Conumee", "LMS")),
+         pccB(matchingAlgo(barcodes[5], "Conumee", "LMS")),
+         pccB(matchingAlgo(barcodes[6], "Conumee", "LMS")),
+         pccB(matchingAlgo(barcodes[7], "Conumee", "LMS")),
+         pccB(matchingAlgo(barcodes[8], "Conumee", "LMS")),
+         pccB(matchingAlgo(barcodes[9], "Conumee", "LMS")),
+         pccB(matchingAlgo(barcodes[10], "Conumee", "LMS")))
+
+methyl <- c(pccB(lmsProcessing(barcodes[1])), 
+            pccB(lmsProcessing(barcodes[2])), 
+            pccB(lmsProcessing(barcodes[3])), 
+            pccB(lmsProcessing(barcodes[4])),
+            pccB(lmsProcessing(barcodes[5])),
+            pccB(lmsProcessing(barcodes[6])),
+            pccB(lmsProcessing(barcodes[7])),
+            pccB(lmsProcessing(barcodes[8])),
+            pccB(lmsProcessing(barcodes[9])),
+            pccB(lmsProcessing(barcodes[10])))
+            
+cMatrix <- data.frame(Cases = casesList, STT = barcodes, 
+                      Conumee = con, SeSAMe = ses, MethylMaster = methyl)
+pltM <- pivot_longer(cMatrix, names_to = "Technology", values_to = "Correlation", cols = c("Conumee", "SeSAMe", "MethylMaster"))
+ggplot(pltM, aes(fill=Technology, y=Correlation, x=Cases)) + 
+  geom_bar(position="dodge", stat="identity")
+
+# LM Correlation.
+barcodesCM <- paste0("./Outputs/Conumee/LMData/", list.files("./Outputs/Conumee/LMData/", pattern = "\\.csv$") ) 
+barcodesSMLM <- list.files("./Outputs/SeSAMe/LM/") 
+barcodesSMLM <- paste0("./Outputs/SeSAMe/LM/", barcodesSMLM[!(grepl(pattern = "bins_", barcodesSMLM))])
+barcodesMMLM <- paste0("./Outputs/MethylMaster/LM/", list.files("./Outputs/MethylMaster/LM", pattern = "autocorrected_regions.csv", recursive = T))
+casesList <- c("Sample 1", "Sample 2", "Sample 3", "Sample 4", "Sample 5", 
+               "Sample 6", "Sample 7", "Sample 8", "Sample 9")
+ses <- c(pccB(softOutputProcessingLM(barcodesSMLM[1])), 
+         pccB(softOutputProcessingLM(barcodesSMLM[2])), 
+         pccB(softOutputProcessingLM(barcodesSMLM[3])), 
+         pccB(softOutputProcessingLM(barcodesSMLM[4])),
+         pccB(softOutputProcessingLM(barcodesSMLM[5])),
+         pccB(softOutputProcessingLM(barcodesSMLM[6])),
+         pccB(softOutputProcessingLM(barcodesSMLM[7])),
+         pccB(softOutputProcessingLM(barcodesSMLM[8])),
+         pccB(softOutputProcessingLM(barcodesSMLM[9])))
+
+con <- c(pccB(matchingAlgoLM(barcodesCM[1])), 
+         pccB(matchingAlgoLM(barcodesCM[1])), 
+         pccB(matchingAlgoLM(barcodesCM[1])), 
+         pccB(matchingAlgoLM(barcodesCM[1])),
+         pccB(matchingAlgoLM(barcodesCM[1])),
+         pccB(matchingAlgoLM(barcodesCM[1])),
+         pccB(matchingAlgoLM(barcodesCM[1])),
+         pccB(matchingAlgoLM(barcodesCM[1])),
+         pccB(matchingAlgoLM(barcodesCM[1])))
+
+methyl <- c(pccB(lmProcessing(barcodesMMLM[1])), 
+            pccB(lmProcessing(barcodesMMLM[2])), 
+            pccB(lmProcessing(barcodesMMLM[3])), 
+            pccB(lmProcessing(barcodesMMLM[4])),
+            pccB(lmProcessing(barcodesMMLM[5])),
+            pccB(lmProcessing(barcodesMMLM[6])),
+            pccB(lmProcessing(barcodesMMLM[7])),
+            pccB(lmProcessing(barcodesMMLM[8])),
+            pccB(lmProcessing(barcodesMMLM[9])))
+
+cMatrix <- data.frame(Cases = casesList, STT = barcodesCM, 
+                      Conumee = con, SeSAMe = ses, MethylMaster = methyl)
+pltM <- pivot_longer(cMatrix, names_to = "Technology", values_to = "Correlation", cols = c("Conumee", "SeSAMe", "MethylMaster"))
+ggplot(pltM, aes(fill=Technology, y=Correlation, x=Cases)) + 
+  geom_bar(position="dodge", stat="identity")
 
 

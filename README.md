@@ -1,12 +1,13 @@
-# Analysis
+# Benchmarking detection of DNA copy number variation using high-density methylation microarrays
+Codebase of the project developed over the summer at the Przybyl Lab, RI-MUHC. A key and guide to this repo and other details are being added to this README.
 
-A repository containing all code and data used for the project started over the summer at the Przybyl Lab, including all data, plots and code.
 
-The final code should be in the "Comparative Code" folder, the rest of the code is experimental. fpCheck is for LM data, and gRangeAccModel is for LMS models. 
-
-visualize.R is the actual visualizing code.
+# Methods
+This section is currently being written, and will cover the algorithms and visualizers being used.
 
 # Indexes for all statistics
+Details the internal sample references, their correlated identifiers, and the filepath of the Manhattan plot.
+
 ### "LMS" - LMS cases from TCGA-provided samples.
 | Sample Number (Internal) | TCGA Identifier | File Path                                    | Most/Least Accurate? | Comments |
 |--------------------------|-----------------|----------------------------------------------|----------------------|----------|
@@ -52,3 +53,4 @@ visualize.R is the actual visualizing code.
 | Sample 9                 | 203257030060_R08C01 | ./Statistics/LM/AllSamples/203257030060_R08C01.png | ✔ Most Accurate     |          |
 
 Most accurate Manhattan plots are usually labelled as mAcc.png, and least accurate as lAcc.png.
+

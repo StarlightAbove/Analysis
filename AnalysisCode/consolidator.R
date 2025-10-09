@@ -1,3 +1,5 @@
+library(gtools)
+
 # Consolidates data from cases into a single dataframe for easy analysis.
 # Generalized barcodes for LMS to correlate case names.
 barcodes <- as.list(read.csv("./cases/SingleFileCase/SampleSheet.csv") %>% select("caseNames"))[[1]]
@@ -281,5 +283,43 @@ plot_cnv_segments(smp12)
 smp13 <- rbind(labLMSProc(correlative[13], "Sesame"), rbind(labLMSProc(correlative[13], "Conumee"), labLMSProc(correlative[13], "MethylMaster") %>% dplyr::filter(!(type == "SNP"))))
 plot_cnv_segments(smp13)
 
+# Renaming to relevant tags.
+
+# LM Files Renaming.
+LMFiles <- mixedsort(list.files(path = "./Statistics/LM/AllSamples"))
+bC <- list.files("./Outputs/Conumee/LMData/", pattern = "\\.csv$") %>% str_remove(".csv")
+bCode <- 1
+
+for(f in LMFiles){
+  print(f)
+  print(bC[bCode])
+  file.rename(from = paste0("./Statistics/LM/AllSamples/",f), to = paste0("./Statistics/LM/AllSamples/",bC[[bCode]],".png"))
+  bCode <- bCode + 1
+}
 
 
+# LMS files (GDC) Renaming.
+bC <- as.list(read.csv("./cases/SingleFileCase/SampleSheet.csv") %>% select("caseNames"))[[1]]
+LMSFiles <- mixedsort(list.files(path = "./Statistics/LMS/AllSamples"))
+bCode <- 1
+
+for(f in LMSFiles){
+  print(f)
+  print(bC[bCode])
+  file.rename(from = paste0("./Statistics/LMS/AllSamples/",f), to = paste0("./Statistics/LMS/AllSamples/",bC[[bCode]],".png"))
+  bCode <- bCode + 1
+}
+
+length(unique(mixedsort(list.files(path = "./Statistics/LMS/AllSamples"))))
+
+# LMS files (laboratory) Renaming.
+bC <- read_csv("LabData/LMS_SNP_EPIC_array_data/correlative.csv")$STT
+LLMSFiles <- mixedsort(list.files(path = "./Statistics/LabLMS/AllSamples"))
+bCode <- 1
+
+for(f in LLMSFiles){
+  print(f)
+  print(bC[bCode])
+  file.rename(from = paste0("./Statistics/LabLMS/AllSamples/",f), to = paste0("./Statistics/LabLMS/AllSamples/",bC[[bCode]],".png"))
+  bCode <- bCode + 1
+}

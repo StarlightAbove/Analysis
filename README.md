@@ -339,6 +339,56 @@ This will compute the statuses over each other, and acts as a state variable wit
 ### Visualization (visualize.R and consolidation.R)
 NOTE: Due to recent Visualization changes, there is a slight artifacting in the SNP Array line within Manhattan plots for Lab LMS. I am currently analysing them and will try to get them fixed ASAP.
 
+consolidation.R contains all the files which synthesize statistics as well as the Manhattan plots. The Manhattan genomic plots are derived from visualize.R. These use the outputs from post-preprocessing, with all software integrated into one file, and that is merely passed through to ggplot2. 
+The implementation is rather simplistic and will be described below:
+``` r
+# Calculate chromosome cumulative positions
+  chr_lengths <- df %>%
+    group_by(chrom) %>%
+    summarize(chr_len = max(loc.end), .groups = "drop") %>%
+    arrange(chrom) %>%
+    mutate(chr_start = lag(cumsum(chr_len), default = 0)) %>%
+    mutate(chr_mid = chr_start + chr_len / 2)
+  # Join to get cumulative start and end positions
+  df <- df %>%
+    left_join(chr_lengths, by = "chrom") %>%
+    mutate(
+      start_cum = loc.start + chr_start,
+      end_cum = loc.end + chr_start
+    ) %>%mutate(type = ifelse(type == "SNP", "SNP Array", type)) %>% mutate(type = as.factor(type))
+```
+It first calculates the chromosomal lengths, and then finds the middle. It then adds the actual start and end linearly to the actual dataframe that is then visualized.
+``` r
+chr_boundaries <- chr_lengths %>%
+    mutate(x = chr_start) %>%
+    select(chrom, x)
+  
+  x_breaks <- chr_lengths$chr_mid
+  x_labels <- paste0("chr", chr_lengths$chrom)
+```
+The chromosome limits are found, and then the chromosomes and x (the chromosome start are selected). The lengths are also added as "breaks", giving the vertical bars. The x-labels allow us to mention which chromosome is being represented on the linear graph.
+``` r
+# Plot
+  p <- ggplot(df, aes(x = start_cum, xend = end_cum, y = seg.mean, yend = seg.mean)) +
+    geom_segment(aes(color = type), size = 0.7, alpha = 0.8) +
+    geom_vline(data = chr_boundaries, aes(xintercept = x), color = "grey70", linetype = "dashed") +
+    # scale_color_manual(values = c("Amplification" = "red", "Deletion" = "blue", "Normal" = "black")) +
+    scale_x_continuous(breaks = x_breaks, labels = x_labels) +
+    scale_color_manual(values = c("SeSAMe" = "red", "MethylMaster" = "blue", "Conumee" = "green", "SNP Array" = "black")) +
+    labs(
+      x = "Genomic Position (across chromosomes)",
+      y = "Segment Mean (log2 ratio)",
+      title = "CNV Segments Across Genome"
+    ) + geom_hline(yintercept = -0.2, linetype = "dotted", color = "black") + 
+    geom_hline(yintercept = 0.2, linetype = "dotted", color = "black") + 
+    theme_minimal() +
+    theme(
+      panel.grid.major.y = element_line(color = "grey90"),
+      panel.grid.major.x = element_blank(),
+      legend.position = "bottom"
+    )
+```
+It is then plotted, with the x being from the cumulative start, to the cumulative end, and the same for the y. Then, segments are created by type, and vertical lines are added to segment chromosomes. Then, the breaks for the vertical lines are added, and a scale color is added so that each software and SNP array can be represented. Then, x and y labels at large are added, and horizontal lines are added to represent the limits used for the deletion-amplification inferrence. Finally, a theme is set, and "p" is returned to produce the plot. 
 
 # Indexes for all statistics
 Details the internal sample references, their correlated identifiers, and the filepath of the Manhattan plot.

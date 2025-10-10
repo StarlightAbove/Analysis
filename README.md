@@ -130,14 +130,215 @@ labLMSProc <- function(STTq, Technology){
 }
 ```
 
+***LMS and LM files***: LMS and LM files are split across two functions, just due to the idea fo consolidation at that moment not popping into my head. They are very similar however, and it is a future goal in the code cleaning to get that done. In short, they work the same way as the code above, which is why I am choosing not to go into detail. They either use the TCGA identifier, or the Sentrix identifier directly to retrieve data, and rename it into the internal reference which I mentioned above, returning a combined data.frame, with both CNV calls from SNP arrays and from software, all labelled with their "type".
 
-
+An output from this code is sampled below.
+``` r
+chrom loc.start   loc.end seg.mean CNVStatus     type   
+    <chr>     <dbl>     <dbl>    <dbl> <chr>         <chr>  
+  1 1        599171   3185375  -0.0629 Normal        SNP    
+  2 1       3186748   3906704  -0.753  Deletion      SNP    
+  3 1       3974037  11900776   0.033  Normal        SNP    
+  4 1      11909975  16482199   0.492  Amplification SNP    
+  5 1      16487426  17040250   0.261  Normal        SNP    
+  6 1      17040376  25256850   0.488  Amplification SNP    
+  7 1      25336819  31663315   0.485  Amplification SNP    
+  8 1      31670172  31972468   0.022  Normal        SNP    
+  9 1      31972914  45785677   0.491  Amplification SNP    
+ 10 1      45903822  48342115   0.0456 Normal        SNP    
+ 11 1      48343508  50572289   0.485  Amplification SNP    
+ 12 1      50574582  53957577   0.0636 Normal        SNP    
+ 13 1      54137895  58254237   0.0481 Normal        SNP
+# There of course exist software outputs, but these are sorted across by type.
+```
 ### Accuracy Determination
+For accuracy determination, a dataframe of CNV-methylation correlated is required.
+This then goes through either "fpCheck.R" or "gRangeAccModel.R".
+fpCheck is specifically used for LM data due to how narrow the changes are. Both of them have generally the same code, with fpCheck having the input of the HG19 reference genome to compute across the whole genome.
 
-### Pearson Correlation Coefficient Computation
+***Analysing gRangeAccModel.R***: The entire model is located in a function named "AccuracyModel".
+``` r
+pred_df <- t1 %>% filter(!(type == "SNP"))
+  truth_df <- t1 %>% filter(type == "SNP")
+  
+  truth_gr <- GRanges(seqnames = truth_df$chrom,
+                      ranges = IRanges(start = truth_df$loc.start, end = truth_df$loc.end),
+                      CNV = truth_df$CNVStatus)
+  
+  pred_gr <- GRanges(seqnames = pred_df$chrom,
+                     ranges = IRanges(start = pred_df$loc.start, end = pred_df$loc.end),
+                     CNV = pred_df$CNVStatus)
+```
+This is simple, it takes the table given to it, and sorts it into software CNV calls and CNV calls from SNP arrays, and converts them into gRanges. IRanges are used for the location of the CNV since it will simplify the math later on.
+``` r
+hits <- findOverlaps(pred_gr, truth_gr)
+overlap_ranges <- pintersect(pred_gr[queryHits(hits)], truth_gr[subjectHits(hits)])
+```
+These two commands are the "meat" of the algorithm. "hits" stores the findOverlaps output, which is specifically an IRanges function. This function will look like this:
+``` r
+Hits object with 248 hits and 0 metadata columns:
+        queryHits subjectHits
+        <integer>   <integer>
+    [1]         1           1
+    [2]         2           1
+    [3]         2           2
+    [4]         3           3
+    [5]         3           4
+    ...       ...         ...
+  [244]        60         212
+  [245]        60         213
+  [246]        60         214
+  [247]        60         215
+  [248]        60         216
+```
+What this essentially is doing is that it is numbering each instance in the software output, and then matching it based on its range to the "subject", in this case, the CNVs called from the SNPs. This works both ways, so there is no need to consider any reverse or forward implication.
 
-### Visualization
-NOTE: Due to recent Visualization changes, there is a slight artifacting in the SNP Array line within Manhattan plots. These will be changed and swapped as soon as possible. This was due to the addition of "Mixedsort" to a labelling system, which was not later removed.
+pIntersect then takes the results from this, to "intersect" parallel, essentially, imagine that each of these were groups by their numbers, and then the intersect function from set theory was applied. That, in a nutshell, is pintersect. This output will look like this:
+``` r
+GRanges object with 248 ranges and 2 metadata columns:
+        seqnames            ranges strand |         CNV       hit
+           <Rle>         <IRanges>  <Rle> | <character> <logical>
+    [1]        1    599171-3075000      * |      Normal      TRUE
+    [2]        1   3125000-3185375      * |    Deletion      TRUE
+    [3]        1   3186748-3822634      * |    Deletion      TRUE
+    [4]        1  4072634-11900776      * |      Normal      TRUE
+    [5]        1 11909975-16482199      * |      Normal      TRUE
+    ...      ...               ...    ... .         ...       ...
+  [244]       22 16373925-18822597      * |      Normal      TRUE
+  [245]       22 18917479-23432731      * |      Normal      TRUE
+  [246]       22 23433022-42496590      * |      Normal      TRUE
+  [247]       22 42546956-49004270      * |      Normal      TRUE
+  [248]       22 49004572-50796027      * |      Normal      TRUE
+```
+It shows the different IRanges along which these intersect, as well as their CNV character. seqnames, of course, correlates to chromosome. Now, all that is left to compute their sizes and average them out to complete the dataset (that's the hard part done!).
+``` r
+overlap_df <- data.frame(
+    Chromosome = as.character(seqnames(overlap_ranges)),
+    width = width(overlap_ranges),
+    pred_cnv = mcols(pred_gr)$CNV[queryHits(hits)],
+    truth_cnv = mcols(truth_gr)$CNV[subjectHits(hits)]
+  )
+  
+  weighted_matrix <- overlap_df %>%
+    group_by(truth_cnv, pred_cnv) %>%
+    summarise(total_bp = sum(width), .groups = "drop") %>%
+    tidyr::pivot_wider(names_from = pred_cnv, values_from = total_bp, values_fill = 0)
+```
+overlap_df is merely consolidating all the different data points into the values which we need. Chromosome is of course seqnames, width returns the difference of each IRange, and pred_cnv is taking the "mcols" (the values beyond the | line, and then looking for their CNV which correlates to their "hits", and the same is done from the truth_cnv. The output is given below:
+``` r
+    Chromosome    width pred_cnv     truth_cnv
+1            1  2475830   Normal        Normal
+2            1    60376 Deletion        Normal
+3            1   635887 Deletion      Deletion
+4            1  7828143   Normal        Normal
+5            1  4572225   Normal Amplification
+6            1   552825   Normal        Normal
+7            1  8216475   Normal Amplification
+8            1  6326497   Normal Amplification
+9            1   302297   Normal        Normal
+10           1 13812764   Normal Amplification
+...
+```
+Now, we have to find the matrix of different values, think of this as a confusion matrix. This is what the weighted_matrix command does, which makes it a lot simpler for use across the entire sample. It groups by the different predictions, sums their "widths", and then drops the grouping. It then pivots it wider to show the confusion matrix. The output is below:
+``` r
+  truth_cnv      Deletion     Normal
+  <chr>             <int>      <int>
+1 Amplification  11622220  308199672
+2 Deletion      381256807   50694212
+3 Normal        308760825 1687770847
+```
+Note that this matrix has been bypassed in the latest iteration, but can give interesting insight, so I have left it in the code.
+This can then be used to compute the total "truth" vs the total basepairs covered in the first place.
+``` r
+TP_weighted <- sum(overlap_df$width[overlap_df$truth_cnv == overlap_df$pred_cnv])
+Total_weighted <- sum(overlap_df$width)
+weighted_accuracy <- TP_weighted / Total_weighted
+```
+This is done rather simply, TP_weighted takes the widths which match, and the Total_weighted sums the whole thing. Then the ratio of the two is taken.
+Per chromosome, the same principle is used, but all that is done is grouped by chromosome before computation:
+``` r
+accuracy_by_chr <- overlap_df %>%
+    group_by(Chromosome) %>%
+    summarise(
+      TP_bp = sum(width[pred_cnv == truth_cnv]),
+      Total_bp = sum(width),
+      Accuracy = TP_bp / Total_bp
+    )
+```
+This all leads to the final output as given below:
+``` r
+[[1]]
+# A tibble: 22 × 4
+   Chromosome     TP_bp  Total_bp Accuracy
+   <chr>          <int>     <int>    <dbl>
+ 1 1          197517883 246108941    0.803
+ 2 10         133185948 133185948    1    
+ 3 11         103276264 132148541    0.782
+ 4 12          96383261 129706240    0.743
+ 5 13          94543856  94543856    1    
+ 6 14          76639185  87229477    0.879
+ 7 15          19122580  79086734    0.242
+ 8 16          89674915  89972386    0.997
+ 9 17          40235548  80076561    0.502
+10 18          77886221  77886221    1    
+# ℹ 12 more rows
+# ℹ Use `print(n = ...)` to see more rows
+
+[[2]]
+[1] 0.7528378
+```
+fpCheck works exactly on these same lines with some important corrections. Up until the overlaps, it is the exact same, and then it continues on an extended subroutine.
+``` r
+  non_overlapping_pred <- pred_gr[-queryHits(hits)]
+  fp_df <- as.data.frame(non_overlapping_pred) %>%
+    filter(CNV != "Normal") %>%
+    group_by(seqnames) %>%
+    summarise(FP_bp = sum(width), .groups = "drop") %>% dplyr::rename(Chromosome = "seqnames")
+  print(fp_df)
+```
+It computes what is not within the queryHits (the truth) but in pred_gr (the software CNV). It then computes a data.frame where it filters out the normals, and then groups by the chromosomes, and computes the false positive basepairs finally.
+
+``` r
+  non_overlapping_truth <- truth_gr[-subjectHits(hits)]
+  fn_df <- as.data.frame(non_overlapping_truth) %>%
+    filter(CNV != "Normal") %>%
+    group_by(seqnames) %>%
+    summarise(FN_bp = sum(width), .groups = "drop") %>% dplyr::rename(Chromosome = "seqnames")
+  print(fn_df)
+```
+It computes what is not within the subjectHits (the software CNV) but in truth_gr (the truth set). It then computes a data.frame where it filters out the normals, and then groups by the chromosomes, and computes the false negative basepairs finally.
+
+``` r
+  final_eval <- hg19_chr_sizes %>%
+    left_join(tp_df, by = "Chromosome") %>%
+    left_join(fp_df, by = "Chromosome") %>%
+    left_join(fn_df, by = "Chromosome") %>%
+    mutate(across(c(TP_bp, FP_bp, FN_bp), ~replace_na(., 0))) %>%
+    mutate(
+      CNV_bp = TP_bp + FP_bp + FN_bp,
+      TN_bp = Genome_bp - CNV_bp,
+      Accuracy = (TP_bp + TN_bp) / Genome_bp,
+      CNV_Only_Accuracy = ifelse((TP_bp + FP_bp + FN_bp) == 0, NA,
+                                 TP_bp / (TP_bp + FP_bp + FN_bp))
+    ) %>%
+    arrange(as.numeric(Chromosome))
+  
+  accuracy <- sum(final_eval$Accuracy) / 22
+```
+All of this is then merged together, with all the NA replaced by a mutate, then the CNV basepairs are computed, with true negative and positive giving the accuracy across the entire genomic reference of HG19. The rest is within the CNVs only, such as the method in gRangeAccModel. This is of course, computed across each chromosome, so the sum of the final accuracies divided by 22 gives the final sample-wide accuracy.
+
+This gives us some extra information and seemingly gave more sensible results on LM. However, this is a lot more unreliable and gave some >1 accuracies, therefore I do not trust it as much.
+
+### Pearson Correlation Coefficient Computation (pcc.R)
+This hijacks a part of the normal accuracy algorithm to compute a Pearson Correlation Coefficient. Similar the above code, until overlaps_df, the code is the same. The only difference is the further computation of accuracy is removed and instead replaced by:
+``` r
+  cor(overlap_df$pred_cnv, overlap_df$truth_cnv, method = "pearson")
+```
+This will compute the statuses over each other, and acts as a state variable with three different modes, whcih then computes for their accurate correlation.
+
+### Visualization (visualize.R and consolidation.R)
+NOTE: Due to recent Visualization changes, there is a slight artifacting in the SNP Array line within Manhattan plots for Lab LMS. I am currently analysing them and will try to get them fixed ASAP.
+
 
 # Indexes for all statistics
 Details the internal sample references, their correlated identifiers, and the filepath of the Manhattan plot.

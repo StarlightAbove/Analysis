@@ -1,7 +1,6 @@
 # Processing .txt CNV data to readable .csv for comparison, with internal proper 
 # labelling.
 # Also processing .txt methylation data.
-# Side note: Who decided that .txt files were appropriate for this at the NIH?
 
 library("tidyverse")
 basePath <- "./cases/"

@@ -30,7 +30,7 @@ plot_cnv_segments <- function(df) {
     select(chrom, x)
   
   x_breaks <- chr_lengths$chr_mid
-  x_labels <- mixedsort(paste0("chr", chr_lengths$chrom))
+  x_labels <- paste0("chr", chr_lengths$chrom)
   print(x_labels)
   print(df)
   

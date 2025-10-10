@@ -37,10 +37,10 @@ accuracyModel <- function(t1){
   
   
   hits <- findOverlaps(pred_gr, truth_gr)
+  # print(hits)
   
   overlap_ranges <- pintersect(pred_gr[queryHits(hits)], truth_gr[subjectHits(hits)])
-  
-  overlap_widths <- width(overlap_ranges)
+  # print(overlap_ranges)
   
   overlap_df <- data.frame(
     Chromosome = as.character(seqnames(overlap_ranges)),
@@ -48,11 +48,19 @@ accuracyModel <- function(t1){
     pred_cnv = mcols(pred_gr)$CNV[queryHits(hits)],
     truth_cnv = mcols(truth_gr)$CNV[subjectHits(hits)]
   )
+  # print(overlap_df)
   
   weighted_matrix <- overlap_df %>%
     group_by(truth_cnv, pred_cnv) %>%
     summarise(total_bp = sum(width), .groups = "drop") %>%
     tidyr::pivot_wider(names_from = pred_cnv, values_from = total_bp, values_fill = 0)
+  # print(weighted_matrix)
+  
+  TP_weighted <- sum(overlap_df$width[overlap_df$truth_cnv == overlap_df$pred_cnv])
+  # print(TP_weighted)
+  
+  Total_weighted <- sum(overlap_df$width)
+  # print(Total_weighted)
   
   accuracy_by_chr <- overlap_df %>%
     group_by(Chromosome) %>%
@@ -61,11 +69,6 @@ accuracyModel <- function(t1){
       Total_bp = sum(width),
       Accuracy = TP_bp / Total_bp
     )
-  
-  TP_weighted <- sum(overlap_df$width[overlap_df$truth_cnv == overlap_df$pred_cnv])
-  
-  Total_weighted <- sum(overlap_df$width)
-  
   weighted_accuracy <- TP_weighted / Total_weighted
   list(accuracy_by_chr, weighted_accuracy)
 }

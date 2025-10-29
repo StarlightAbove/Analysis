@@ -439,3 +439,13 @@ Details the internal sample references, their correlated identifiers, and the fi
 
 Most accurate Manhattan plots are usually labelled as mAcc.png, and least accurate as lAcc.png.
 
+# Internal Binning Systems in Conumee 2.0, SeSAMe & MethylMasteR.
+## Conumee 2.0
+The standard bins are observed to be at 500 basepairs per segment. 
+You can observe these bins in the Outputs directory, under the different sample types, as bins.csv.
+
+The main implementation of Conumee 2.0's binning is within its annotation creator, in CNV.create_anno(). To restrict the bin, min_minsize and bin_maxsize will be set consecutively. 
+
+## SeSAMe
+
+## MethylMasteR

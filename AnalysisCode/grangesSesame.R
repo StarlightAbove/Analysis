@@ -52,6 +52,7 @@ softOutputProcessingLM <- function(outputDir){
   print(colnames(sesameOutput))
   rbind(sesameOutput, fasst2filtered, chasFiltered) %>% filter(!is.na(chrom))
 }
+
 softOutputProcessingLMS <- function(caseName){
   SampSheet <- read.csv("./cases/SingleFileCase/SampleSheet.csv")
   caseMethyl <- unique(str_remove(str_remove( 

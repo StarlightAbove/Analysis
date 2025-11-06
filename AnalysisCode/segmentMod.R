@@ -6,7 +6,7 @@ library(sesameData)
 library(reshape2)
 
 # Conumee 2 Function.
-con2 <- function(locationOfTest, locationOfControl, arrayType, binSize){
+con2 <- function(locationOfTest, locationOfControl, arrayType, binSize, OutputFolder){
   RGset <- read.metharray.exp(locationOfTest, recursive = T, verbose = T)
   MSet <- preprocessIllumina(RGset)
   CSet <- read.metharray.exp(locationOfControl, recursive = T, verbose = T)
@@ -20,11 +20,18 @@ con2 <- function(locationOfTest, locationOfControl, arrayType, binSize){
   x <- CNV.segment(x)
   segments <- CNV.write(x, what = "segments")
   bins <- CNV.write(x, what = "bins")
+  
+  dir.create(paste0("./Outputs/Conumee/",OutputFolder,"/",binSize))
+  write.csv(bins, paste0("./Outputs/Conumee/",OutputFolder,"/",binSize,"/bins.csv"))
+  for(segment in segments){
+    write.csv(segment, paste0("./Outputs/Conumee/",OutputFolder,"/",binSize,"/",segment[["ID"]][1], ".csv"))
+  }
 }
 
 # Sesame Function.
-sesame <- function(locationOfTest, binSize, typeOfSample){
+ses <- function(locationOfTest, binSize, typeOfSample){
   sdfs <- openSesame(locationOfTest, func = NULL)
+  dir.create(paste0("./Outputs/SeSAMe/",typeOfSample,"/bins/",binSize))
   i <- 1
   for(sdf in sdfs){
     segs <- sdf
@@ -32,8 +39,9 @@ sesame <- function(locationOfTest, binSize, typeOfSample){
     segmentalSignals <- segments[["seg.signals"]]
     bins <- segments[["bin.signals"]]
     bins <- reshape2::melt(bins)
-    write.csv(bins, paste0("./Outputs/SeSAMe/",typeOfSample,"/bins_",names(sdfs[i]),".csv"), row.names = TRUE)
-    write.csv(segmentalSignals, paste0("./Outputs/SeSAMe/",typeOfSample,"/segments_", 
+    write.csv(bins, paste0("./Outputs/SeSAMe/",typeOfSample,"/bins/",binSize,"/bins_",
+                           names(sdfs[i]),".csv"), row.names = TRUE)
+    write.csv(segmentalSignals, paste0("./Outputs/SeSAMe/",typeOfSample,"/",binSize,"/segments_", 
                                        names(sdfs[i]), ".csv"), row.names = FALSE)
     i <- i + 1
   }

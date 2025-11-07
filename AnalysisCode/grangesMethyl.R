@@ -159,34 +159,35 @@ labLMSProc <- function(STTq, Technology){
   combinedSet
 }
 
-labLMSProc <- function(STTq, Technology, binSize){
+labNmrlProc <- function(Sentrix, Technology, binSize){
   # Correlate by STT information between methylation Sentrix and SNP data.
-  correlationSheet <- read.csv("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/correlative.csv") %>% filter(STT == STTq)
+  correlationSheet <- read.csv(
+    "~/Work/Analysis/LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv") %>% filter(STT == STTq)
   
-  cnvMatch <- read.csv(paste0("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/CNVCallsCSV/", 
-                              correlationSheet$CNV_Label[1], "_events.csv"))
+  # cnvMatch <- read.csv(paste0("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/CNVCallsCSV/", 
+                              # correlationSheet$CNV_Label[1], "_events.csv"))
   
   # methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", 
                                  #paste0(correlationSheet$Sentrix_ID[1],"_", 
                                    #     correlationSheet$Sentrix_Position[1], "/"), 
                                 # "autocorrected_regions.csv"))
   
-  conumeeMatch <- read.csv(paste0("~/Work/Analysis/Outputs/Conumee/LabLMS/", binSize,"/", paste0(correlationSheet$Sentrix_ID[1],"_", 
+  conumeeMatch <- read.csv(paste0("~/Work/Analysis/Outputs/Conumee/LabNormals/", binSize,"/", paste0(correlationSheet$Sentrix_ID[1],"_", 
                                                                                     correlationSheet$Sentrix_Position[1],".csv")))
   
-  sesameMatch <- read.csv(paste0("~/Work/Analysis/Outputs/SeSAMe/LabLMS/", binSize,"/", paste0("segments_",correlationSheet$Sentrix_ID[1],"_", 
+  sesameMatch <- read.csv(paste0("~/Work/Analysis/Outputs/SeSAMe/Normals/", binSize,"/", paste0("segments_",correlationSheet$Sentrix_ID[1],"_", 
                                                                                   correlationSheet$Sentrix_Position[1],".csv")))
   
-  cnvMatch <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(cnvMatch, `Chromosome.Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
-                                          names = c("loc.start", "loc.end"), delim = "-") %>% mutate(type = "SNP") %>% dplyr::rename(CNVStatus = "Event") %>%
-    mutate(CNVStatus = case_when(
-      CNVStatus == "CN Loss" ~ "Deletion", 
-      CNVStatus == "CN Gain" ~ "Amplification", 
-      TRUE ~ "Normal"
-    )) %>% dplyr::rename(seg.mean = "Probe.Median") %>% 
-    dplyr::select(c(chrom, loc.start, loc.end, CNVStatus, seg.mean, type)) %>% mutate(loc.start = as.numeric(gsub(",","",loc.start)), loc.end = as.numeric(gsub(",","",loc.end)))
-  cnvMatch$chrom <- as.numeric(str_replace_all(cnvMatch$chrom, "chr", ""))
-  cnvMatch <- cnvMatch %>% filter(!is.na(chrom))
+ # cnvMatch <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(cnvMatch, `Chromosome.Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
+  #                                        names = c("loc.start", "loc.end"), delim = "-") %>% mutate(type = "SNP") %>% dplyr::rename(CNVStatus = "Event") %>%
+   # mutate(CNVStatus = case_when(
+   #   CNVStatus == "CN Loss" ~ "Deletion", 
+   #   CNVStatus == "CN Gain" ~ "Amplification", 
+   #   TRUE ~ "Normal"
+   # )) %>% dplyr::rename(seg.mean = "Probe.Median") %>% 
+  #  dplyr::select(c(chrom, loc.start, loc.end, CNVStatus, seg.mean, type)) %>% mutate(loc.start = as.numeric(gsub(",","",loc.start)), loc.end = as.numeric(gsub(",","",loc.end)))
+  #cnvMatch$chrom <- as.numeric(str_replace_all(cnvMatch$chrom, "chr", ""))
+  #cnvMatch <- cnvMatch %>% filter(!is.na(chrom))
   
   if(Technology == "MethylMaster") {
     methylMatch <- methylMatch %>% dplyr::rename(
@@ -200,7 +201,7 @@ labLMSProc <- function(STTq, Technology, binSize){
         seg.mean >= 0.2 ~ "Amplification", 
         TRUE ~ "Normal"
       ))
-    combinedSet <- rbind(methylMatch, cnvMatch) %>% arrange(chrom)
+    combinedSet <- methylMatch %>% arrange(chrom)
   }
   
   if(Technology == "Conumee"){
@@ -209,7 +210,7 @@ labLMSProc <- function(STTq, Technology, binSize){
       seg.mean >= 0.2 ~ "Amplification", 
       TRUE ~ "Normal"
     )) %>% mutate(chrom = as.numeric(gsub("chr", "", chrom))) %>% mutate(type = "Conumee")
-    combinedSet <- rbind(conumeeMatch, cnvMatch) %>% arrange(chrom)
+    combinedSet <- conumeeMatch %>% arrange(chrom)
   }
   
   if(Technology == "Sesame"){
@@ -221,7 +222,7 @@ labLMSProc <- function(STTq, Technology, binSize){
                                                            CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
                                                                                  seg.mean < -0.3 ~ "Deletion",
                                                                                  TRUE ~ "Normal"), type = "SeSAMe") 
-    combinedSet <- rbind(sesameMatch, cnvMatch) %>% arrange(chrom)
+    combinedSet <- sesameMatch %>% arrange(chrom)
   }
   
   

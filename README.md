@@ -442,12 +442,16 @@ Most accurate Manhattan plots are usually labelled as mAcc.png, and least accura
 # Binning Systems in Conumee 2.0, SeSAMe & MethylMasteR.
 ## LabLMS
 Graphs Path: Analysis/Statistics/LabLMS/byBin
-
 It is organized by the binsize, and then also the case that it comes from.
+
 ## LMS
+
+
 ## LM
+
+
 ## Normals
 Normals have been computed and exists in:
 - Analysis/Outputs/Conumee/LabNormals: organized by binsize.
 - Analysis/Outputs/SeSAMe/Normals: organized by binsize. The default ones are in 50000.
-This is raw data. Due to a different nature of this data, its graphs are still being computed.
+The graphs have been computed and can be found at: Analysis/Statistics/Normals/byBin, organized by bin size, with the default being 50000.

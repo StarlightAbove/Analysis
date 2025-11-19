@@ -184,8 +184,100 @@ for(llC in lablmsCodes){
          width = 1920, height = 1080, units = "px")
 }
 
+plot_cnvns <- function(df){
+  df <- df %>%
+    mutate(
+      type_group = ifelse(type == "SNP", "SNP", "non-SNP")
+    ) %>%
+    arrange(chrom, loc.start)
+  
+  # Calculate chromosome cumulative positions
+  chr_lengths <- df %>%
+    group_by(chrom) %>%
+    summarize(chr_len = max(loc.end), .groups = "drop") %>%
+    arrange(chrom) %>%
+    mutate(chr_start = lag(cumsum(as.numeric(chr_len)), default = 0)) %>%
+    mutate(chr_mid = chr_start + chr_len / 2)
+  
+  # Join to get cumulative start and end positions
+  df <- df %>%
+    left_join(chr_lengths, by = "chrom") %>%
+    mutate(
+      start_cum = loc.start + chr_start,
+      end_cum = loc.end + chr_start
+    ) %>%mutate(type = ifelse(type == "SNP", "SNP Array", type)) %>% mutate(type = as.factor(type))
+  
+  # Vertical chromosome boundaries
+  chr_boundaries <- chr_lengths %>%
+    mutate(x = chr_start) %>%
+    select(chrom, x)
+  
+  x_breaks <- chr_lengths$chr_mid
+  x_labels <- paste0("chr", chr_lengths$chrom)
+  print(x_labels)
+  print(df)
+  
+  p <- ggplot(df, aes(x = start_cum, xend = end_cum, y = seg.mean, yend = seg.mean)) +
+    geom_segment(aes(color = type), size = 0.7, alpha = 0.8) +
+    geom_vline(data = chr_boundaries, aes(xintercept = x), color = "grey70", linetype = "dashed") +
+    # scale_color_manual(values = c("Amplification" = "red", "Deletion" = "blue", "Normal" = "black")) +
+    scale_x_continuous(breaks = x_breaks, labels = x_labels) +
+    scale_color_manual(values = c("SeSAMe" = "red", "MethylMaster" = "blue", "Conumee" = "green", "SNP Array" = "black")) +
+    labs(
+      x = "Genomic Position (across chromosomes)",
+      y = "Segment Mean (log2 ratio)",
+      title = "CNV Segments Across Genome"
+    ) + geom_hline(yintercept = -0.2, linetype = "dotted", color = "black") + 
+    geom_hline(yintercept = 0.2, linetype = "dotted", color = "black") + 
+    theme_minimal() +
+    theme(
+      panel.grid.major.y = element_line(color = "grey90"),
+      panel.grid.major.x = element_blank(),
+      legend.position = "bottom"
+    )
+  
+  return(p)
+}
 
-sdjds <- labNmrlProc(LabNmrlsCodes[1], "Conumee", 10000)
-labNmrlPlots <- rbind(labNmrlProc(lNC, "Conumee", 10000), labNmrlProc(lNC, "Sesame", 10000))
+plot_cnvns(rbind(labNmrlProc("205240110063_R03C01","Sesame","1e+06"), 
+                       labNmrlProc("205240110063_R03C01","Conumee","1e+06")))
 
+for(nmls in LabNmrlsCodes){
+  plt <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","10000"), 
+                   labNmrlProc(nmls,"Conumee","10000")))
+  plt2 <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","25000"), 
+                          labNmrlProc(nmls,"Conumee","25000")))
+  plt3 <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","50000"), 
+                          labNmrlProc(nmls,"Conumee","50000")))
+  plt4 <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","75000"), 
+                          labNmrlProc(nmls,"Conumee","75000")))
+  plt5 <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","1e+05"), 
+                          labNmrlProc(nmls,"Conumee","1e+05")))
+  plt6 <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","5e+05"), 
+                          labNmrlProc(nmls,"Conumee","5e+05")))
+  plt7 <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","1e+06"), 
+                          labNmrlProc(nmls,"Conumee","1e+06")))
+  ggsave(plot = plt, filename = paste0(toString(nmls), ".png"), 
+         path = "~/Work/Analysis/Statistics/Normals/byBin/10000",
+         width = 1920, height = 1080, units = "px")
+  ggsave(plot = plt1, filename = paste0(toString(nmls), ".png"), 
+         path = "~/Work/Analysis/Statistics/Normals/byBin/25000",
+         width = 1920, height = 1080, units = "px")
+  ggsave(plot = plt2, filename = paste0(toString(nmls), ".png"), 
+         path = "~/Work/Analysis/Statistics/Normals/byBin/50000",
+         width = 1920, height = 1080, units = "px")
+  ggsave(plot = plt3, filename = paste0(toString(nmls), ".png"), 
+         path = "~/Work/Analysis/Statistics/Normals/byBin/75000",
+         width = 1920, height = 1080, units = "px")
+  ggsave(plot = plt4, filename = paste0(toString(nmls), ".png"), 
+         path = "~/Work/Analysis/Statistics/Normals/byBin/100000",
+         width = 1920, height = 1080, units = "px")
+  ggsave(plot = plt5, filename = paste0(toString(nmls), ".png"), 
+         path = "~/Work/Analysis/Statistics/Normals/byBin/5e+05",
+         width = 1920, height = 1080, units = "px")
+  ggsave(plot = plt6, filename = paste0(toString(nmls), ".png"), 
+         path = "~/Work/Analysis/Statistics/Normals/byBin/1e+06",
+         width = 1920, height = 1080, units = "px")
+  
+}
 

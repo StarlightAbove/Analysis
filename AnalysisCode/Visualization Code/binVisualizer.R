@@ -184,6 +184,7 @@ for(llC in lablmsCodes){
          width = 1920, height = 1080, units = "px")
 }
 
+# Plotting for lab normals.
 plot_cnvns <- function(df){
   df <- df %>%
     mutate(
@@ -238,10 +239,6 @@ plot_cnvns <- function(df){
   
   return(p)
 }
-
-plot_cnvns(rbind(labNmrlProc("205240110063_R03C01","Sesame","1e+06"), 
-                       labNmrlProc("205240110063_R03C01","Conumee","1e+06")))
-
 for(nmls in LabNmrlsCodes){
   plt <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","10000"), 
                    labNmrlProc(nmls,"Conumee","10000")))
@@ -281,3 +278,6 @@ for(nmls in LabNmrlsCodes){
   
 }
 
+# Plotting for TCGA LMS.
+
+# Plotting for LM.

@@ -445,9 +445,10 @@ Graphs Path: Analysis/Statistics/LabLMS/byBin
 It is organized by the binsize, and then also the case that it comes from.
 
 ## LMS
-
+Graphs path: currently under computation.
 
 ## LM
+Graphs path: currently under computation.
 
 
 ## Normals

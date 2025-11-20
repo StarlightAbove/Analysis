@@ -11,7 +11,7 @@ con2 <- function(locationOfTest, locationOfControl, arrayType, binSize, OutputFo
   MSet <- preprocessIllumina(RGset)
   CSet <- read.metharray.exp(locationOfControl, recursive = T, verbose = T)
   CSet <- preprocessIllumina(CSet)
-  anno <- CNV.create_anno(array_type = arrayType, bin_minsize = binSize)
+  anno <- CNV.create_anno(array_type = c("450k", "EPIC"), bin_minsize = binSize)
   load.data <- CNV.load(MSet)
   load.controls <- CNV.load(CSet)
   x <- CNV.fit(load.data, ref = load.controls, anno)

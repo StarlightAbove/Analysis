@@ -11,7 +11,7 @@ plot_cnv_segments <- function(df) {
   
   # Calculate chromosome cumulative positions
   chr_lengths <- df %>%
-    group_by(chrom) %>%
+    dplyr::group_by(chrom) %>%
     summarize(chr_len = max(loc.end), .groups = "drop") %>%
     arrange(chrom) %>%
     mutate(chr_start = lag(cumsum(chr_len), default = 0)) %>%

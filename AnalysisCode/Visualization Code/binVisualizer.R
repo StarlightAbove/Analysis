@@ -135,7 +135,118 @@ labNmrlProc <- function(Sentrix, Technology, binSize){
   
   combinedSet
 }
-binLength <-  c(10000,25000,50000,75000,100000, 5e+05, 1e+06)
+lmProcessingSes <- function(outputDir){
+  IDATSampleSheet <- read.csv("./LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv")
+  chasFile <- readxl::read_excel("./LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_ChAS_CNVs.xlsx") %>% dplyr::select(File, `Mean Log2Ratio`, Chromosome, Type, `Full Location`)
+  fasst2file <- readxl::read_excel("./LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_FASST2_CNVs.xlsx")
+  
+  caseNameCorrelation <- str_split(str_split(outputDir, "/")[[1]][7], pattern = "_")[[1]]
+  sentrixID <- caseNameCorrelation[[2]]
+  print(sentrixID)
+  sentrixPos <- str_remove_all(caseNameCorrelation[[3]], ".csv")
+  print(sentrixPos)
+  SUHMatch <- IDATSampleSheet %>% filter(Sentrix_ID == sentrixID, 
+    Sentrix_Position == sentrixPos) %>% 
+    dplyr::select(SUH) %>% dplyr::pull(SUH)
+  
+  cnvSes <- read.csv(outputDir) %>% 
+    dplyr::select(c("chrom", "loc.start", "loc.end", "seg.mean")) %>% 
+    dplyr::mutate(chrom = str_remove_all(chrom, "chr")) %>% 
+    filter(!(chrom == "X") & !(chrom == "Y")) %>% 
+    mutate(chrom = as.numeric(chrom)) %>% arrange(chrom) %>% 
+    mutate(CNVStatus = case_when(
+      seg.mean > 0.3 ~ "Amplification",
+      seg.mean < -0.3 ~ "Deletion",
+      TRUE ~ "Normal"), type = "SeSAMe") 
+  cnvSes$chrom <- as.numeric(str_remove_all(cnvSes$chrom, pattern = "chr"))
+  cnvSes <- cnvSes %>% filter(!(is.na(chrom))) %>% arrange(chrom)
+  
+  # SNP Processing
+  chasFiltered <- chasFile[str_detect(chasFile$File, SUHMatch), ]
+  chasFiltered <-  tidyr::separate_wider_delim(tidyr::separate_wider_delim(chasFiltered, `Full Location`, names = c("chromosome", "loc"), delim = ":"), `loc`,
+                                               names = c("loc.start", "loc.end"), delim = "-") %>% dplyr::select(-c("chromosome")) %>% dplyr::rename(CNVStatus = "Type", seg.mean = "Mean Log2Ratio", chrom = "Chromosome") %>%
+    mutate(
+      type = "SNP", 
+      CNVStatus = case_when(CNVStatus == "Loss" ~ "Deletion", 
+                            CNVStatus == "Gain" ~ "Amplification", 
+                            TRUE ~ "Normal")
+    ) %>% dplyr::select(-c("File"))
+  fasst2filtered <- fasst2file[str_detect(fasst2file$Sample, SUHMatch), ] %>%
+    dplyr::select(c("Probe Median", "Event", "Chromosome Region"))
+  fasst2filtered <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(fasst2filtered, `Chromosome Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
+                                                names = c("loc.start", "loc.end"), delim = "-") %>% mutate(type = "SNP") %>% dplyr::rename(CNVStatus = "Event") %>%
+    mutate(CNVStatus = case_when(
+      CNVStatus == "CN Loss" ~ "Deletion", 
+      CNVStatus == "CN Gain" ~ "Amplification", 
+      TRUE ~ "Normal"
+    )) %>% dplyr::rename(seg.mean = "Probe Median")
+  fasst2filtered$loc.start <- as.numeric(str_replace_all(fasst2filtered$loc.start, ",", ""))
+  fasst2filtered$loc.end <- as.numeric(str_replace_all(fasst2filtered$loc.end, ",", ""))
+  fasst2filtered$chrom <- as.numeric(str_replace_all(fasst2filtered$chrom, "chr", ""))
+  chasFiltered$chrom <- as.numeric(chasFiltered$chrom)
+  chasFiltered$loc.start <- as.numeric(chasFiltered$loc.start)
+  chasFiltered$loc.end <- as.numeric(chasFiltered$loc.end)
+  chasFiltered$seg.mean <- as.numeric(chasFiltered$seg.mean)
+  
+  rbind(chasFiltered, fasst2filtered, cnvSes) %>% arrange(chrom) %>% dplyr::filter(!(is.na(chrom)))
+} # Sesame.
+lmProcessingCon <- function(outputDir){
+  IDATSampleSheet <- read.csv("./LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv")
+  chasFile <- readxl::read_excel("./LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_ChAS_CNVs.xlsx") %>% dplyr::select(File, `Mean Log2Ratio`, Chromosome, Type, `Full Location`)
+  fasst2file <- readxl::read_excel("./LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_FASST2_CNVs.xlsx")
+  
+  caseNameCorrelation <- str_split(str_split(outputDir, "/")[[1]][7], pattern = "_")[[1]]
+  sentrixID <- caseNameCorrelation[[1]]
+  print(sentrixID)
+  sentrixPos <- str_remove_all(caseNameCorrelation[[2]], ".csv")
+  print(sentrixPos)
+  SUHMatch <- IDATSampleSheet %>% filter(Sentrix_ID == sentrixID, 
+                                         Sentrix_Position == sentrixPos) %>% 
+    dplyr::select(SUH) %>% dplyr::pull(SUH)
+  
+  cnvCon <- read.csv(outputDir) %>% 
+    dplyr::select(chrom, loc.start, loc.end, seg.mean) %>% mutate(CNVStatus = case_when(
+      seg.mean <= -0.2 ~ "Deletion", 
+      seg.mean >= 0.2 ~ "Amplification", 
+      TRUE ~ "Normal"
+    )) %>% mutate(chrom = as.numeric(gsub("chr", "", chrom))) %>% mutate(type = "Conumee")
+  cnvCon$chrom <- as.numeric(str_remove_all(cnvCon$chrom, pattern = "chr"))
+  cnvCon <- cnvCon %>% filter(!(is.na(chrom))) %>% arrange(chrom)
+  
+  # SNP Processing
+  chasFiltered <- chasFile[str_detect(chasFile$File, SUHMatch), ]
+  chasFiltered <-  tidyr::separate_wider_delim(tidyr::separate_wider_delim(chasFiltered, `Full Location`, names = c("chromosome", "loc"), delim = ":"), `loc`,
+                                               names = c("loc.start", "loc.end"), delim = "-") %>% dplyr::select(-c("chromosome")) %>% dplyr::rename(CNVStatus = "Type", seg.mean = "Mean Log2Ratio", chrom = "Chromosome") %>%
+    mutate(
+      type = "SNP", 
+      CNVStatus = case_when(CNVStatus == "Loss" ~ "Deletion", 
+                            CNVStatus == "Gain" ~ "Amplification", 
+                            TRUE ~ "Normal")
+    ) %>% dplyr::select(-c("File"))
+  fasst2filtered <- fasst2file[str_detect(fasst2file$Sample, SUHMatch), ] %>%
+    dplyr::select(c("Probe Median", "Event", "Chromosome Region"))
+  fasst2filtered <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(fasst2filtered, `Chromosome Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
+                                                names = c("loc.start", "loc.end"), delim = "-") %>% mutate(type = "SNP") %>% dplyr::rename(CNVStatus = "Event") %>%
+    mutate(CNVStatus = case_when(
+      CNVStatus == "CN Loss" ~ "Deletion", 
+      CNVStatus == "CN Gain" ~ "Amplification", 
+      TRUE ~ "Normal"
+    )) %>% dplyr::rename(seg.mean = "Probe Median")
+  fasst2filtered$loc.start <- as.numeric(str_replace_all(fasst2filtered$loc.start, ",", ""))
+  fasst2filtered$loc.end <- as.numeric(str_replace_all(fasst2filtered$loc.end, ",", ""))
+  fasst2filtered$chrom <- as.numeric(str_replace_all(fasst2filtered$chrom, "chr", ""))
+  chasFiltered$chrom <- as.numeric(chasFiltered$chrom)
+  chasFiltered$loc.start <- as.numeric(chasFiltered$loc.start)
+  chasFiltered$loc.end <- as.numeric(chasFiltered$loc.end)
+  chasFiltered$seg.mean <- as.numeric(chasFiltered$seg.mean)
+  
+  rbind(chasFiltered, fasst2filtered, cnvCon) %>% arrange(chrom) %>% dplyr::filter(!(is.na(chrom)))
+} # Conumee.
+
+
+library(tidyverse)
+
+binLength <- c(10000,25000,50000,75000,1e+05, 5e+05, 1e+06)
 
 
 lablmsCodes <- read.csv("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/correlative.csv")$STT
@@ -280,4 +391,58 @@ for(nmls in LabNmrlsCodes){
 
 # Plotting for TCGA LMS.
 
-# Plotting for LM.
+## Plotting for LM.
+binLength <- c(10000,25000,50000,75000,1e+05, 5e+05, 1e+06)
+
+# Getting paired paths.
+corr <- read.csv("~/Work/Analysis/LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv") %>%
+        dplyr::select(c(Sentrix_ID, Sentrix_Position))
+corr <-paste0(corr$Sentrix_ID, "_", corr$Sentrix_Position, ".csv")
+basePthSes <- "./Outputs/SeSAMe/LM/bins/"
+basePthCon <- "./Outputs/Conumee/LMData/bins/"
+basePthSes <- paste0(basePthSes, binLength, "/segments_")
+basePthCon <- paste0(basePthCon, binLength, "/")
+pathsSes <- c()
+pathsCon <- c()
+for(bps in basePthSes){
+  pathsSes <- c(pathsSes, paste0(bps, corr))
+}
+for(bps in basePthCon){
+  pathsCon <- c(pathsCon, paste0(bps, corr))
+}
+paired <- Map(list, pathsSes, pathsCon)
+names(paired) <- c(1:63)
+graphs <- c()
+for(pr in paired){
+  graphs <- c(graphs, 
+              plot_cnv_segments(rbind(lmProcessingCon(pr[[2]]), 
+                                      lmProcessingSes(pr[[1]]))))
+}
+for(i in 1:9){
+  ggsave(plot = graphs[[1*i]], filename = paste0(corr[i], ".png"), 
+         path = "~/Work/Analysis/Statistics/LM/byBin/10000",
+         width = 1920, height = 1080, units = "px")
+  ggsave(plot = graphs[[2*i]], filename = paste0(corr[i], ".png"), 
+         path = "~/Work/Analysis/Statistics/LM/byBin/25000",
+         width = 1920, height = 1080, units = "px")
+  ggsave(plot = graphs[[3*i]], filename = paste0(corr[i], ".png"), 
+         path = "~/Work/Analysis/Statistics/LM/byBin/50000",
+         width = 1920, height = 1080, units = "px")
+  ggsave(plot = graphs[[4*i]], filename = paste0(corr[i], ".png"), 
+         path = "~/Work/Analysis/Statistics/LM/byBin/75000",
+         width = 1920, height = 1080, units = "px")
+  ggsave(plot = graphs[[5*i]], filename = paste0(corr[i], ".png"), 
+         path = "~/Work/Analysis/Statistics/LM/byBin/100000",
+         width = 1920, height = 1080, units = "px")
+  ggsave(plot = graphs[[6*i]], filename = paste0(corr[i], ".png"), 
+         path = "~/Work/Analysis/Statistics/LM/byBin/5e+05",
+         width = 1920, height = 1080, units = "px")
+  ggsave(plot = graphs[[7*i]], filename = paste0(corr[i], ".png"), 
+         path = "~/Work/Analysis/Statistics/LM/byBin/1e+06",
+         width = 1920, height = 1080, units = "px")
+}
+
+
+
+
+

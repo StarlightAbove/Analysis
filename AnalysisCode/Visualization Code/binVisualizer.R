@@ -245,6 +245,7 @@ lmProcessingCon <- function(outputDir){
 
 
 library(tidyverse)
+library(reshape2)
 
 binLength <- c(10000,25000,50000,75000,1e+05, 5e+05, 1e+06)
 
@@ -368,22 +369,22 @@ for(nmls in LabNmrlsCodes){
   ggsave(plot = plt, filename = paste0(toString(nmls), ".png"), 
          path = "~/Work/Analysis/Statistics/Normals/byBin/10000",
          width = 1920, height = 1080, units = "px")
-  ggsave(plot = plt1, filename = paste0(toString(nmls), ".png"), 
+  ggsave(plot = plt2, filename = paste0(toString(nmls), ".png"), 
          path = "~/Work/Analysis/Statistics/Normals/byBin/25000",
          width = 1920, height = 1080, units = "px")
-  ggsave(plot = plt2, filename = paste0(toString(nmls), ".png"), 
+  ggsave(plot = plt3, filename = paste0(toString(nmls), ".png"), 
          path = "~/Work/Analysis/Statistics/Normals/byBin/50000",
          width = 1920, height = 1080, units = "px")
-  ggsave(plot = plt3, filename = paste0(toString(nmls), ".png"), 
+  ggsave(plot = plt4, filename = paste0(toString(nmls), ".png"), 
          path = "~/Work/Analysis/Statistics/Normals/byBin/75000",
          width = 1920, height = 1080, units = "px")
-  ggsave(plot = plt4, filename = paste0(toString(nmls), ".png"), 
+  ggsave(plot = plt5, filename = paste0(toString(nmls), ".png"), 
          path = "~/Work/Analysis/Statistics/Normals/byBin/100000",
          width = 1920, height = 1080, units = "px")
-  ggsave(plot = plt5, filename = paste0(toString(nmls), ".png"), 
+  ggsave(plot = plt6, filename = paste0(toString(nmls), ".png"), 
          path = "~/Work/Analysis/Statistics/Normals/byBin/5e+05",
          width = 1920, height = 1080, units = "px")
-  ggsave(plot = plt6, filename = paste0(toString(nmls), ".png"), 
+  ggsave(plot = plt7, filename = paste0(toString(nmls), ".png"), 
          path = "~/Work/Analysis/Statistics/Normals/byBin/1e+06",
          width = 1920, height = 1080, units = "px")
   
@@ -442,7 +443,54 @@ for(i in 1:9){
          width = 1920, height = 1080, units = "px")
 }
 
+# Bin differentials.
+case1 <- accuracyModel(labLMSProc(lablmsCodes[1], "Conumee", "10000"))
+case2 <- accuracyModel(labLMSProc(lablmsCodes[1], "Conumee", "25000"))
+case3 <- accuracyModel(labLMSProc(lablmsCodes[1], "Conumee", "50000"))
+case4 <- accuracyModel(labLMSProc(lablmsCodes[1], "Conumee", "75000"))
+case5 <- accuracyModel(labLMSProc(lablmsCodes[1], "Conumee", "1e+05"))
+case6 <- accuracyModel(labLMSProc(lablmsCodes[1], "Conumee", "5e+05"))
+case7 <- accuracyModel(labLMSProc(lablmsCodes[1], "Conumee", "1e+06"))
+accuracies <- data.frame(chrom = as.numeric(case1[[1]]$Chromosome), 
+                         "10000" = case1[[1]]$Accuracy,
+                         "25000" = case2[[1]]$Accuracy,
+                         "50000" = case3[[1]]$Accuracy,
+                         "75000" = case4[[1]]$Accuracy,
+                         "1e+05" = case5[[1]]$Accuracy,
+                         "5e+05" = case6[[1]]$Accuracy,
+                         "1e+06" = case7[[1]]$Accuracy)%>% 
+  dplyr::arrange(chrom) %>% 
+  pivot_longer(
+    cols = starts_with("X"), 
+    names_to = "BinSize", 
+    values_to = "Accuracies"  
+  )
+ggplot(accuracies, aes(group = chrom, y = Accuracies, x = chrom)) +
+  geom_boxplot() + facet_wrap(~BinSize, scale="free") + geom_point() +
+  labs(title = "STT 9202 Accuracy Across Different Bins")
 
 
-
-
+case1 <- fpCheck(lmProcessingCon(pathsCon[1]))
+case2 <- fpCheck(lmProcessingCon(pathsCon[9]))
+case3 <- fpCheck(lmProcessingCon(pathsCon[18]))
+case4 <- fpCheck(lmProcessingCon(pathsCon[27]))
+case5 <- fpCheck(lmProcessingCon(pathsCon[36]))
+case6 <- fpCheck(lmProcessingCon(pathsCon[45]))
+case7 <- fpCheck(lmProcessingCon(pathsCon[54]))
+accuracies <- data.frame(chrom = as.numeric(case1[[1]]$Chromosome), 
+                         "10000" = case1[[1]]$Accuracy,
+                         "25000" = case2[[1]]$Accuracy,
+                         "50000" = case3[[1]]$Accuracy,
+                         "75000" = case4[[1]]$Accuracy,
+                         "1e+05" = case5[[1]]$Accuracy,
+                         "5e+05" = case6[[1]]$Accuracy,
+                         "1e+06" = case7[[1]]$Accuracy)%>% 
+  dplyr::arrange(chrom) %>% 
+  pivot_longer(
+    cols = starts_with("X"), 
+    names_to = "BinSize", 
+    values_to = "Accuracies"  
+  )
+ggplot(accuracies, aes(group = chrom, y = Accuracies, x = chrom)) +
+  geom_boxplot() + facet_wrap(~BinSize, scale="free") + geom_point() +
+  labs(title = "203219650162_R08C01 Accuracy Across Different Bins")

@@ -1,7 +1,7 @@
 library(ggplot2)
 library(dplyr)
 
-plot_cnv_segments <- function(df) {
+plot_cnv_segments <- function(df, anno = NULL) {
   
   df <- df %>%
     mutate(
@@ -16,13 +16,15 @@ plot_cnv_segments <- function(df) {
     arrange(chrom) %>%
     mutate(chr_start = lag(cumsum(chr_len), default = 0)) %>%
     mutate(chr_mid = chr_start + chr_len / 2)
+  print(chr_lengths)
   # Join to get cumulative start and end positions
   df <- df %>%
     left_join(chr_lengths, by = "chrom") %>%
     mutate(
       start_cum = loc.start + chr_start,
       end_cum = loc.end + chr_start
-    ) %>%mutate(type = ifelse(type == "SNP", "SNP Array", type)) %>% mutate(type = as.factor(type))
+    ) %>%mutate(type = ifelse(type == "SNP", "SNP Array", type)) %>% 
+    mutate(type = as.factor(type))
   
   # Vertical chromosome boundaries
   chr_boundaries <- chr_lengths %>%
@@ -31,16 +33,23 @@ plot_cnv_segments <- function(df) {
   
   x_breaks <- chr_lengths$chr_mid
   x_labels <- paste0("chr", chr_lengths$chrom)
+  x_labels <- c(x_labels)
   print(x_labels)
   print(df)
   
   # Plot
   p <- ggplot(df, aes(x = start_cum, xend = end_cum, y = seg.mean, yend = seg.mean)) +
     geom_segment(aes(color = type), size = 0.7, alpha = 0.8) +
+    geom_vline(data = subset(df, type == "Gene"), aes(xintercept = start_cum, label = Gene), color = "orange") + 
+    #geom_text(data = subset(df, type == "Gene"), mapping = aes(x = start_cum,
+                           # y = 0,
+                           # label = Gene,
+                           # hjust = -1,
+                           # vjust = -1)) + 
     geom_vline(data = chr_boundaries, aes(xintercept = x), color = "grey70", linetype = "dashed") +
     # scale_color_manual(values = c("Amplification" = "red", "Deletion" = "blue", "Normal" = "black")) +
     scale_x_continuous(breaks = x_breaks, labels = x_labels) +
-    scale_color_manual(values = c("SeSAMe" = "red", "MethylMaster" = "blue", "Conumee" = "green", "SNP Array" = "black")) +
+    scale_color_manual(values = c("SeSAMe" = "red", "MethylMaster" = "blue", "Conumee" = "green", "SNP Array" = "black", "Gene" = "orange")) +
     labs(
       x = "Genomic Position (across chromosomes)",
       y = "Segment Mean (log2 ratio)",

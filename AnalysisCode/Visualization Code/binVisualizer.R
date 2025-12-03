@@ -1,4 +1,23 @@
 labLMSProc <- function(STTq, Technology, binSize){
+  data(cytobandLocations)
+  reference <- data.frame(
+    Cytoband = c("8q24.21", "17p11.2", "9q12", "9q34.3", "10q23.31", "13q14.2", 
+                 "17p13.1"),
+    Gene = c("MYC", "MYOCD", "CCNE1", "CDKN2A", "PTEN", "RB1", "TP53"),
+    CNVStatus = c("Deletion", "Deletion","Deletion","Amplification", 
+                  "Amplification", "Amplification", "Amplification"),
+    seg.mean = c(-0.2, -0.2, -0.2, 0.2, 0.2, 0.2, 0.2),
+    type = c("Gene")
+  ) 
+  reference2 <- reference %>% rowwise() %>% 
+    mutate(loc.start = as.numeric(convert_band_to_genomic(Cytoband)[["start"]][["loc.start"]]),
+           loc.end = as.numeric(convert_band_to_genomic(Cytoband)[["end"]][["loc.end"]]),
+           chrom = as.numeric(str_remove_all(convert_band_to_genomic(Cytoband)[["chromosome"]][["Chromosome"]], 
+                                             "chr")),
+           type = as.factor(type)) %>% 
+    ungroup() %>% select(c("CNVStatus", "loc.start", "loc.end", "seg.mean", "chrom", "type", "Gene"))
+  
+  
   # Correlate by STT information between methylation Sentrix and SNP data.
   correlationSheet <- read.csv("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/correlative.csv") %>% filter(STT == STTq)
   
@@ -39,7 +58,7 @@ labLMSProc <- function(STTq, Technology, binSize){
         seg.mean >= 0.2 ~ "Amplification", 
         TRUE ~ "Normal"
       ))
-    combinedSet <- rbind(methylMatch, cnvMatch) %>% arrange(chrom)
+    combinedSet <- rbind(methylMatch, cnvMatch) %>% mutate(Gene = as.character(0)) %>% arrange(chrom)
   }
   
   if(Technology == "Conumee"){
@@ -48,7 +67,7 @@ labLMSProc <- function(STTq, Technology, binSize){
       seg.mean >= 0.2 ~ "Amplification", 
       TRUE ~ "Normal"
     )) %>% mutate(chrom = as.numeric(gsub("chr", "", chrom))) %>% mutate(type = "Conumee")
-    combinedSet <- rbind(conumeeMatch, cnvMatch) %>% arrange(chrom)
+    combinedSet <- rbind(conumeeMatch, cnvMatch) %>% mutate(Gene = as.character(0)) %>% arrange(chrom)
   }
   
   if(Technology == "Sesame"){
@@ -60,12 +79,12 @@ labLMSProc <- function(STTq, Technology, binSize){
                                                            CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
                                                                                  seg.mean < -0.3 ~ "Deletion",
                                                                                  TRUE ~ "Normal"), type = "SeSAMe") 
-    combinedSet <- rbind(sesameMatch, cnvMatch) %>% arrange(chrom)
+    combinedSet <- rbind(sesameMatch, cnvMatch) %>% mutate(Gene = as.character(0)) %>% arrange(chrom)
   }
   
   
   
-  combinedSet
+  rbind(combinedSet, reference2)
 }
 labNmrlProc <- function(Sentrix, Technology, binSize){
   # Correlate by STT information between methylation Sentrix and SNP data.
@@ -253,7 +272,8 @@ binLength <- c(10000,25000,50000,75000,1e+05, 5e+05, 1e+06)
 lablmsCodes <- read.csv("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/correlative.csv")$STT
 LabNmrlsCodes <- read.csv(
   "~/Work/Analysis/LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv")$Basename
-
+plot_cnv_segments(rbind(labLMSProc(lablmsCodes[1], "Conumee", 10000), 
+                        labLMSProc(lablmsCodes[1], "Sesame", 10000)))
 labLMSPlots <- c()
 labNmrlPlots <- c()
 
@@ -296,6 +316,9 @@ for(llC in lablmsCodes){
          width = 1920, height = 1080, units = "px")
 }
 
+plot_cnvns(rbind(labNmrlProc(LabNmrlsCodes[1],"Sesame","10000"), 
+                 labNmrlProc(LabNmrlsCodes[1],"Conumee","10000")))
+
 # Plotting for lab normals.
 plot_cnvns <- function(df){
   df <- df %>%
@@ -319,7 +342,7 @@ plot_cnvns <- function(df){
       start_cum = loc.start + chr_start,
       end_cum = loc.end + chr_start
     ) %>%mutate(type = ifelse(type == "SNP", "SNP Array", type)) %>% mutate(type = as.factor(type))
-  
+  print(df)
   # Vertical chromosome boundaries
   chr_boundaries <- chr_lengths %>%
     mutate(x = chr_start) %>%

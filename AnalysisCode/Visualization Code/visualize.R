@@ -29,7 +29,7 @@ plot_cnv_segments <- function(df, anno = NULL) {
   # Vertical chromosome boundaries
   chr_boundaries <- chr_lengths %>%
     mutate(x = chr_start) %>%
-    select(chrom, x)
+    dplyr::select(chrom, x)
   
   x_breaks <- chr_lengths$chr_mid
   x_labels <- paste0("chr", chr_lengths$chrom)
@@ -40,7 +40,7 @@ plot_cnv_segments <- function(df, anno = NULL) {
   # Plot
   p <- ggplot(df, aes(x = start_cum, xend = end_cum, y = seg.mean, yend = seg.mean)) +
     geom_segment(aes(color = type), size = 0.7, alpha = 0.8) +
-    geom_vline(data = subset(df, type == "Gene"), aes(xintercept = start_cum, label = Gene), color = "orange") + 
+    geom_point(data = subset(df, type == "Gene"), aes(x = start_cum, y = seg.mean, label = Gene), color = "orange") + 
     #geom_text(data = subset(df, type == "Gene"), mapping = aes(x = start_cum,
                            # y = 0,
                            # label = Gene,

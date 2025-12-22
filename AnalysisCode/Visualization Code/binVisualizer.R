@@ -1,21 +1,4 @@
 labLMSProc <- function(STTq, Technology, binSize){
-  data(cytobandLocations)
-  reference <- data.frame(
-    Cytoband = c("8q24.21", "17p11.2", "9q12", "9q34.3", "10q23.31", "13q14.2", 
-                 "17p13.1"),
-    Gene = c("MYC", "MYOCD", "CCNE1", "CDKN2A", "PTEN", "RB1", "TP53"),
-    CNVStatus = c("Deletion", "Deletion","Deletion","Amplification", 
-                  "Amplification", "Amplification", "Amplification"),
-    seg.mean = c(-0.2, -0.2, -0.2, 0.2, 0.2, 0.2, 0.2),
-    type = c("Gene")
-  ) 
-  reference2 <- reference %>% rowwise() %>% 
-    mutate(loc.start = as.numeric(convert_band_to_genomic(Cytoband)[["start"]][["loc.start"]]),
-           loc.end = as.numeric(convert_band_to_genomic(Cytoband)[["end"]][["loc.end"]]),
-           chrom = as.numeric(str_remove_all(convert_band_to_genomic(Cytoband)[["chromosome"]][["Chromosome"]], 
-                                             "chr")),
-           type = as.factor(type)) %>% 
-    ungroup() %>% select(c("CNVStatus", "loc.start", "loc.end", "seg.mean", "chrom", "type", "Gene"))
   
   
   # Correlate by STT information between methylation Sentrix and SNP data.
@@ -81,10 +64,12 @@ labLMSProc <- function(STTq, Technology, binSize){
                                                                                  TRUE ~ "Normal"), type = "SeSAMe") 
     combinedSet <- rbind(sesameMatch, cnvMatch) %>% mutate(Gene = as.character(0)) %>% arrange(chrom)
   }
-  
-  
-  
-  rbind(combinedSet, reference2)
+  combinedSet
+}
+Gene <- c("MYC", "MYOCD", "CCNE1", "CDKN2A", "PTEN", "RB1", "TP53") 
+geneAnno <- function(Gene, db = NULL){
+  reference2 <- geneGen(Gene = Gene, db = db)[[2]]
+  unique(rbind(db, reference2))
 }
 labNmrlProc <- function(Sentrix, Technology, binSize){
   # Correlate by STT information between methylation Sentrix and SNP data.
@@ -274,6 +259,8 @@ LabNmrlsCodes <- read.csv(
   "~/Work/Analysis/LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv")$Basename
 plot_cnv_segments(rbind(labLMSProc(lablmsCodes[1], "Conumee", 10000), 
                         labLMSProc(lablmsCodes[1], "Sesame", 10000)))
+rbind(labLMSProc(lablmsCodes[1], "Conumee", 10000), 
+      labLMSProc(lablmsCodes[1], "Sesame", 10000))
 labLMSPlots <- c()
 labNmrlPlots <- c()
 
@@ -346,7 +333,7 @@ plot_cnvns <- function(df){
   # Vertical chromosome boundaries
   chr_boundaries <- chr_lengths %>%
     mutate(x = chr_start) %>%
-    select(chrom, x)
+    dplyr::select(chrom, x)
   
   x_breaks <- chr_lengths$chr_mid
   x_labels <- paste0("chr", chr_lengths$chrom)

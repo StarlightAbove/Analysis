@@ -9,13 +9,13 @@ library("rentrez")
 library("pheatmap")
 library("GenomicRanges")
 library(RColorBrewer)
-hs <- org.Hs.eg.db
 
 # Enter the genes you want here!
 Gene <- c("MYC", "MYOCD", "CCNE1", "CDKN2A", "PTEN", "RB1", "TP53") 
 
 # Function, either gives you details about the genes, or annotates a dataset 
 # with genes.
+# References the Entrez database via API.
 geneGen <- function(Gene, db = NULL){
   entrez_idsDB <- mapIds(org.Hs.eg.db, 
                          keys=Gene, 

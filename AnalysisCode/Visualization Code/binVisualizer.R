@@ -1,3 +1,8 @@
+library(patchwork)
+library(cowplot)
+library(gridGraphics)
+library(gridExtra)
+library(ggplotify)
 labLMSProc <- function(STTq, Technology, binSize){
   
   
@@ -68,8 +73,13 @@ labLMSProc <- function(STTq, Technology, binSize){
 }
 Gene <- c("MYC", "MYOCD", "CCNE1", "CDKN2A", "PTEN", "RB1", "TP53") 
 geneAnno <- function(Gene, db = NULL){
-  reference2 <- geneGen(Gene = Gene, db = db)[[2]]
-  unique(rbind(db, reference2))
+  reference <- geneGen(Gene = Gene, db = db)
+  print(reference[[1]])
+  pheatmap_ggplot <- as.ggplot(reference[[1]]$gtable)
+  reference2 <- reference[[2]]
+  db <- unique(rbind(db, reference2))
+  img2 <- plot_cnv_segments(db)
+  return(list((img2 + pheatmap_ggplot), db))
 }
 labNmrlProc <- function(Sentrix, Technology, binSize){
   # Correlate by STT information between methylation Sentrix and SNP data.

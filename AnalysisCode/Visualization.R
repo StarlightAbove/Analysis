@@ -98,6 +98,7 @@ plot_cnv_segments <- function(df, anno = NULL) {
   return(p)
 }
 # Dependency for geneAnno
+Gene <- c("MYC", "MYOCD", "CCNE1", "CDKN2A", "PTEN", "RB1", "TP53") 
 geneGen <- function(Gene, db = NULL){
   entrez_idsDB <- mapIds(org.Hs.eg.db, 
                          keys=Gene, 
@@ -187,3 +188,6 @@ geneGen <- function(Gene, db = NULL){
     coords_final
   }
 }
+
+# Sample
+geneGen(Gene = Gene)

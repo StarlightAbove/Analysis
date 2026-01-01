@@ -183,5 +183,18 @@ pccB <- function(dset){
   
 }
 
+LMMethylCalling <- function(df){
+  
+} # FOCAL CNV CALLING METHYLATION DATA
+LMSMethylCalling <- function(df){} # WIDE CNV CALLING METHYLATION DATA
+LMcallingSNP <- function(Sample) {} # Focal CNV SNP
+LMScallingSNP <- function(Sample) {
+  commonCSVFolder <- "~/Documents/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/CNVCallsCSV"
+  readEvents <- read.csv(paste0(commonCSVFolder, "/", Sample, "_events.csv"))
+  
+} # Wide CNV SNP
+CorrelativeBetweenCallers <- function(dfCH3, dfSNP){
+  
+}
 
 

@@ -193,3 +193,6 @@ geneGen <- function(Gene, db = NULL){
 # Sample
 
 geneGen(Gene = Gene)
+
+# ‘sesame’, ‘sesameData’, ‘cnAnalysis450k’, ‘ENmix’, ‘ungeviz’, ‘ChAMPdata’, ‘matter’ are not available for package ‘MethylMasteR’
+# Dowload in Delhi

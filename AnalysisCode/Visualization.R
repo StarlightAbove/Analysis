@@ -189,5 +189,7 @@ geneGen <- function(Gene, db = NULL){
   }
 }
 
+
 # Sample
+
 geneGen(Gene = Gene)

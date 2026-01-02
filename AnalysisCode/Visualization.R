@@ -194,5 +194,5 @@ geneGen <- function(Gene, db = NULL){
 
 geneGen(Gene = Gene)
 
-# ‘sesame’, ‘sesameData’, ‘cnAnalysis450k’, ‘ENmix’, ‘ungeviz’, ‘ChAMPdata’, ‘matter’ are not available for package ‘MethylMasteR’
-# Dowload in Delhi
+# ‘cnAnalysis450k’ are not available for package ‘MethylMasteR’
+

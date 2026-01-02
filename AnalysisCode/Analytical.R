@@ -190,11 +190,83 @@ LMSMethylCalling <- function(df){} # WIDE CNV CALLING METHYLATION DATA
 LMcallingSNP <- function(Sample) {} # Focal CNV SNP
 LMScallingSNP <- function(Sample) {
   commonCSVFolder <- "~/Documents/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/CNVCallsCSV"
-  readEvents <- read.csv(paste0(commonCSVFolder, "/", Sample, "_events.csv"))
+  readEvents <- read.csv(paste0(commonCSVFolder, "/", Sample, "_events.csv")) %>%
+    dplyr::select("Chromosome.Region", "Probe.Median", "Event", "Length") %>%
+    separate_wider_delim(
+      cols = "Chromosome.Region",
+      delim = ":",
+      names = c("chrom", "locs")
+    ) %>%
+    separate_wider_delim(
+      cols = "locs",
+      delim = "-",
+      names = c("loc.start", "loc.end")
+    ) %>% dplyr::mutate(loc.start = as.numeric(str_remove_all(loc.start, ",")), 
+                        loc.end = as.numeric(str_remove_all(loc.end, ",")),
+                        chrom = as.numeric(str_remove_all(chrom, "chr"))) %>%
+    dplyr::mutate(CNVStatus = ifelse(Event == "CN Loss", "Deletion", "Amplification")) %>%
+    dplyr::select(-c("Event")) %>% dplyr::rename(seg.mean = Probe.Median) %>% 
+    dplyr::filter(!is.na(chrom))
+  
+  # Filtering for wider SNPs (200 probes as provided in planning document)
+  # Developed via oncoscanR for sourcing the OncoScan manifest. - Write w/ internet
+  # OncoScan.na33.r4 is also of interest for this bit
+  
+  
   
 } # Wide CNV SNP
-CorrelativeBetweenCallers <- function(dfCH3, dfSNP){
+
+
+# Genomic Index = A^2/22 (A being gains & losses sum.)
+GenomicIndex <- function(dfCH3, sw){
+  if(sw == F){
+    dfSNP <- dfCH3 %>% dplyr::filter(type == "SNP") %>%
+      dplyr::filter(CNVStatus != "Normal")
+    CNVCount <- nrow(dfSNP)
+    ret <- (CNVCount^2)/22
+    return(ret)
+  } else {
   
+  # Filter out for clinically significant segments %>% filter(CNVStatus != Normal)
+  dfCH3f <- dfCH3 %>% dplyr::filter(type == "Conumee" || type == "MethylMasteR" || type == "SeSAMe") %>%
+    dplyr::filter(CNVStatus != "Normal")
+  print(nrow(dfCH3))
+  # Count
+  CNVCount <- nrow(dfCH3f)
+  
+  
+  # Return value
+  ret <- (CNVCount^2)/22
+  print(CNVCount)
+  return(ret) 
+  }
 }
 
+# Genomic Index runner.
+correlative <- read_csv("LabData/LMS_SNP_EPIC_array_data/correlative.csv")$STT
+Def <- c()
+kb10<- c()
+kb100 <- c()
+mb1 <- c()
+trt <- c()
+for(cr in correlative){
+  Def <- c(Def, GenomicIndex(labLMSProc(cr, "Conumee", 50000), sw = T))
+  kb10 <- c(kb10, GenomicIndex(labLMSProc(cr, "Conumee", 10000), sw = T))
+  kb100 <- c(kb100, GenomicIndex(labLMSProc(cr, "Conumee", 1e+05), sw = T))
+  mb1 <- c(mb1, GenomicIndex(labLMSProc(cr, "Conumee", 1e+06), sw = T))
+  trt <- c(trt, GenomicIndex(labLMSProc(cr, "Conumee", 50000), sw = F))
+}
+GIndex <- data.frame(STT = correlative, ConumeeDefault = Def, Conumee10kb = kb10, Conumee100kb = kb100, Conumee1mb = mb1, BaseTruth = trt)
 
+Def <- c()
+kb10<- c()
+kb100 <- c()
+mb1 <- c()
+for(cr in correlative){
+  Def <- c(Def, GenomicIndex(labLMSProc(cr, "Sesame", 50000), sw = T))
+  kb10 <- c(kb10, GenomicIndex(labLMSProc(cr, "Sesame", 10000), sw = T))
+  kb100 <- c(kb100, GenomicIndex(labLMSProc(cr, "Sesame", 1e+05), sw = T))
+  mb1 <- c(mb1, GenomicIndex(labLMSProc(cr, "Sesame", 1e+06), sw = T))
+}
+GIndex <- GIndex %>% dplyr::mutate(SesameDefault = Def, Sesame10kb = kb10, 
+                                   Sesame100kb = kb100, Sesame1mb = mb1)

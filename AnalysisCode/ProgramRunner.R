@@ -117,5 +117,9 @@ methyl_master(
   ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding 
   #overlaps
   simplify.reduce           = weightedmean #Equation to use during reduction
-)
+) 
+# Ext. packages: JADE, fastICA, Illumina450ProbeVariants.db, plotly, permute, 
+# IlluminaHumanMethylationEPICanno.ilm10b4.hg19, statmod, GO.db, geneLenDataBase,
+# BiasedUrn, kpmt, sesame 1.8.x.
+# Add to package manifest,
 

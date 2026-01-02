@@ -174,12 +174,12 @@ lmProcessingCon <- function(outputDir){
   rbind(chasFiltered, fasst2filtered, cnvCon) %>% arrange(chrom) %>% dplyr::filter(!(is.na(chrom)))
 } # Conumee.
 labLMSProc <- function(STTq, Technology, binSize){
-  
+  basePath <- getwd()
   
   # Correlate by STT information between methylation Sentrix and SNP data.
-  correlationSheet <- read.csv("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/correlative.csv") %>% filter(STT == STTq)
+  correlationSheet <- read.csv(paste0(basePath,"/LabData/LMS_SNP_EPIC_array_data/correlative.csv")) %>% filter(STT == STTq)
   
-  cnvMatch <- read.csv(paste0("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/CNVCallsCSV/", 
+  cnvMatch <- read.csv(paste0(basePath,"/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/CNVCallsCSV/", 
                               correlationSheet$CNV_Label[1], "_events.csv"))
   
   # methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", 
@@ -187,10 +187,10 @@ labLMSProc <- function(STTq, Technology, binSize){
   #     correlationSheet$Sentrix_Position[1], "/"), 
   # "autocorrected_regions.csv"))
   
-  conumeeMatch <- read.csv(paste0("~/Work/Analysis/Outputs/Conumee/LabLMS/", binSize,"/", paste0(correlationSheet$Sentrix_ID[1],"_", 
+  conumeeMatch <- read.csv(paste0(basePath,"/Outputs/Conumee/LabLMS/", binSize,"/", paste0(correlationSheet$Sentrix_ID[1],"_", 
                                                                                                  correlationSheet$Sentrix_Position[1],".csv")))
   
-  sesameMatch <- read.csv(paste0("~/Work/Analysis/Outputs/SeSAMe/LabLMS/", binSize,"/", paste0("segments_",correlationSheet$Sentrix_ID[1],"_", 
+  sesameMatch <- read.csv(paste0(basePath,"/Outputs/SeSAMe/LabLMS/", binSize,"/", paste0("segments_",correlationSheet$Sentrix_ID[1],"_", 
                                                                                                correlationSheet$Sentrix_Position[1],".csv")))
   
   cnvMatch <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(cnvMatch, `Chromosome.Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
@@ -414,21 +414,22 @@ lmProcessing <- function(outputDir){
 }
 # Lab data.
 labLMSProc <- function(STTq, Technology){
+  basePath <- getwd()
   # Correlate by STT information between methylation Sentrix and SNP data.
-  correlationSheet <- read.csv("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/correlative.csv") %>% filter(STT == STTq)
+  correlationSheet <- read.csv(paste0(basePath, "/LabData/LMS_SNP_EPIC_array_data/correlative.csv")) %>% filter(STT == STTq)
   
-  cnvMatch <- read.csv(paste0("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/CNVCallsCSV/", 
+  cnvMatch <- read.csv(paste0(basePath,"/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/CNVCallsCSV/", 
                               correlationSheet$CNV_Label[1], "_events.csv"))
   
-  methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", 
+  methylMatch <- read.csv(paste0(basePath,"/Outputs/MethylMaster/LabLMS/", 
                                  paste0(correlationSheet$Sentrix_ID[1],"_", 
                                         correlationSheet$Sentrix_Position[1], "/"), 
                                  "autocorrected_regions.csv"))
   
-  conumeeMatch <- read.csv(paste0("~/Work/Analysis/Outputs/Conumee/LabLMS/", paste0(correlationSheet$Sentrix_ID[1],"_", 
+  conumeeMatch <- read.csv(paste0(basePath,"/Outputs/Conumee/LabLMS/", paste0(correlationSheet$Sentrix_ID[1],"_", 
                                                                                     correlationSheet$Sentrix_Position[1],".csv")))
   
-  sesameMatch <- read.csv(paste0("~/Work/Analysis/Outputs/SeSAMe/LabLMS/", paste0("segments_",correlationSheet$Sentrix_ID[1],"_", 
+  sesameMatch <- read.csv(paste0(basePath,"/Outputs/SeSAMe/LabLMS/", paste0("segments_",correlationSheet$Sentrix_ID[1],"_", 
                                                                                   correlationSheet$Sentrix_Position[1],".csv")))
   
   cnvMatch <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(cnvMatch, `Chromosome.Region`, names = c("chrom", "loc"), delim = ":"), `loc`,

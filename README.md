@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: sentence
----
-
 # Benchmarking detection of DNA copy number variation using high-density methylation microarrays
 
 Codebase of the project developed over the summer at the Przybyl Lab, RI-MUHC. A key and guide to this repo and other details are being added to this README.

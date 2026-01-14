@@ -7,8 +7,17 @@ require(GenomicRanges)
 require(tidyverse)
 library(stringr)
 genomicLoc <- data.frame(chromosome = 1, start = 160000000, end = 200000000)
-dipRecenterAndCorrect <- function(cbs, genomicLoc){
+dipRecenterAndCorrect <- function(cbs, genomicLoc == NULL){
   cbsF <- read_delim(cbs)
+  if(is.null(genomicLoc)){
+    # Read <SUH>.SegmentedBAF.txt, filter for balanced, homo or hetero (preferring homozygous),and present those regions as options for recentering.
+    # If that option is chosen or a custom genomic location is given, take the data from that, calculate the median (very rough system but should approximately work), and summarily subtract from the rest of the system.
+    # Alternatively, to add BAF-based filtering to further account for strange artifacts, calculate the highest delta on a diploid state with a massive dissonance in copy number variation, and recommend that as the option for diploid recentering, automating a major part of the pipeline. 
+    # Pseudocode:
+    #   print(options_based_on_automatic_analysis);
+    #   readLine(Select an option: );
+    #   based on that, dynamically switch to using that particular option for the rest of the code. 
+  }
   std <- cbsF %>% dplyr::filter(Chr == genomicLoc$chromosome[1])
   std_gr <- makeGRangesFromDataFrame(std, keep.extra.columns = TRUE)
   gLoc_gr <- makeGRangesFromDataFrame(genomicLoc)

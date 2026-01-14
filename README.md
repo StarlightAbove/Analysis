@@ -564,6 +564,7 @@ The graphs have been computed and can be found at: Analysis/Statistics/Normals/b
 # CEL Processing
 
 Located at: /Analysis/LabData/ReprocessedLMS for LMS data (Laboratory) and /Analysis/LabData/ReprocessedLM for LM data.
+Currently, due to new information, B-allele data is being integrated into the analysis in order to further refine data-collection from ASCAT & SEQUENZA, and to solve issues related to over-calling of certain genotypes. This approach is based upon Connolly et al., 2014 & Wang, 2007. 
 
 Things to note: The **correlation_w_FASST2.csv** file is the core characterization of this new data and shows its alignment with FASST2.
 If you are trying to evaluate alignment, please look for that data first.

@@ -10,13 +10,26 @@ genomicLoc <- data.frame(chromosome = 1, start = 160000000, end = 200000000)
 dipRecenterAndCorrect <- function(cbs, genomicLoc == NULL){
   cbsF <- read_delim(cbs)
   if(is.null(genomicLoc)){
-    # Read <SUH>.SegmentedBAF.txt, filter for balanced, homo or hetero (preferring homozygous),and present those regions as options for recentering.
-    # If that option is chosen or a custom genomic location is given, take the data from that, calculate the median (very rough system but should approximately work), and summarily subtract from the rest of the system.
-    # Alternatively, to add BAF-based filtering to further account for strange artifacts, calculate the highest delta on a diploid state with a massive dissonance in copy number variation, and recommend that as the option for diploid recentering, automating a major part of the pipeline. 
-    # Pseudocode:
-    #   print(options_based_on_automatic_analysis);
-    #   readLine(Select an option: );
-    #   based on that, dynamically switch to using that particular option for the rest of the code. 
+    # Plan:
+    # .RDS value first passed, raw.
+    # genome.pkg <- data$meta$basic$genome.pkg -> data being the read RDS.
+    # BSg.obj <- getExportedValue(genome.pkg, genome.pkg)
+    # cs <- chromobjector(BSg.obj) -> function in EaCoN, imports BSgenome.
+    # l2r.chr <- unname(unlist(cs$chrom2chr[as.character(data$data$SNPpos$chrs)]))
+    # baf.value <- data.frame(Chr = l2r.chr,
+    # Start = as.integer(data$data$SNPpos$pos),
+    # End = as.integer(data$data$SNPpos$pos),
+    # Value = data$data$Tumor_BAF[,1],
+    # stringsAsFactors = FALSE)
+    #
+    # All of this hijacked from EaCoN.
+    #
+    # Now, read the B-allele frequencies and via their locations, look for homozygous (0.0) as candidate regions.
+    # Determine erroneous significance by matching that to anomalous log2 ratio by passing SEG.SEGMENTER.RDS and filter.
+    # Check against Gene database to determine whether there are any genes in the candidate region and filter.
+    # Print candidates and ask for input or select best.
+    # Subtract median across all log-2 ratios in the SEG RDS.
+    
   }
   std <- cbsF %>% dplyr::filter(Chr == genomicLoc$chromosome[1])
   std_gr <- makeGRangesFromDataFrame(std, keep.extra.columns = TRUE)

@@ -22,7 +22,7 @@ geneAnno <- function(Gene, db = NULL){
   reference2 <- reference[[2]]
   db <- unique(rbind(db, reference2))
   img2 <- plot_cnv_segments(db)
-  return(list((img2 + pheatmap_ggplot), db))
+  return(list((img2 + pheatmap_ggplot + plot_layout(widths = unit(c(20,8), c("null","null")))), db))
 }
 plot_cnv_segments <- function(df, anno = NULL) {
   
@@ -46,7 +46,7 @@ plot_cnv_segments <- function(df, anno = NULL) {
     mutate(
       start_cum = loc.start + chr_start,
       end_cum = loc.end + chr_start
-    ) %>%mutate(type = ifelse(type == "SNP", "SNP Array", type)) %>% 
+    ) %>%mutate(type = ifelse(type == "SNP", "SNP", type)) %>% 
     mutate(type = as.factor(type))
   
   # Vertical chromosome boundaries
@@ -67,21 +67,17 @@ plot_cnv_segments <- function(df, anno = NULL) {
     geom_point(data = subset(df, type == "Gene_Conumee"), aes(x = start_cum, y = seg.mean, label = Gene), color = "green", size = 3) + 
     geom_point(data = subset(df, type == "Gene_SNP"), aes(x = start_cum, y = seg.mean, label = Gene), color = "gray40", size = 3) + 
     geom_point(data = subset(df, type == "Gene_SeSAMe"), aes(x = start_cum, y = seg.mean, label = Gene), color = "red", size = 3) + 
+    geom_point(data = subset(df, type == "Gene_MMasteR"), aes(x = start_cum, y = seg.mean, label = Gene), color = "blue", size = 3) + 
     geom_text_repel(
       box.padding = unit(0.35, "lines"), # Adjust padding around the label
       point.padding = unit(0.3, "lines"), # Adjust padding around the point
       segment.color = 'grey' # Color of the connecting lines
     ) +
-    #geom_text(data = subset(df, type == "Gene"), mapping = aes(x = start_cum,
-    # y = 0,
-    # label = Gene,
-    # hjust = -1,
-    # vjust = -1)) + 
     geom_vline(data = chr_boundaries, aes(xintercept = x), color = "grey70", linetype = "dashed") +
     # scale_color_manual(values = c("Amplification" = "red", "Deletion" = "blue", "Normal" = "black")) +
     scale_x_continuous(breaks = x_breaks, labels = x_labels) +
     scale_color_manual(values = c("SeSAMe" = "red", "MethylMaster" = "blue", 
-                                  "Conumee" = "green", "SNP Array" = "black", "Gene" = "orange")) +
+                                  "Conumee" = "green", "SNP" = "black", "Gene" = "orange")) +
     labs(
       x = "Genomic Position (across chromosomes)",
       y = "Segment Mean (log2 ratio)",
@@ -98,7 +94,6 @@ plot_cnv_segments <- function(df, anno = NULL) {
   return(p)
 }
 # Dependency for geneAnno
-Gene <- c("MYC", "MYOCD", "CCNE1", "CDKN2A", "PTEN", "RB1", "TP53") 
 geneGen <- function(Gene, db = NULL){
   entrez_idsDB <- mapIds(org.Hs.eg.db, 
                          keys=Gene, 
@@ -153,12 +148,13 @@ geneGen <- function(Gene, db = NULL){
     overlapping_regions$type <- ifelse(
       overlapping_regions$type == "Conumee", "Gene_Conumee",
       ifelse(overlapping_regions$type == "SeSAMe", "Gene_SeSAMe", 
-             ifelse(overlapping_regions$type == "MethylMasteR", "Gene_MMasteR",
+             ifelse(overlapping_regions$type == "MethylMaster", "Gene_MMasteR",
                     ifelse(overlapping_regions$type == "SNP", "Gene_SNP", "Unknown")))
     )
     print(overlapping_regions)
     # Developing visualization
-    mat <- matrix(NA, nrow = 3, ncol = 7)
+    mat <- matrix(NA, nrow = 4, ncol = length(Gene))
+    overlapping_regions <- overlapping_regions %>% drop_na()
     colnames(mat) <- unique(overlapping_regions$Gene)
     rownames(mat) <- unique(overlapping_regions$type)
     for (i in 1:nrow(overlapping_regions)) {
@@ -193,6 +189,18 @@ geneGen <- function(Gene, db = NULL){
 # Sample
 
 geneGen(Gene = Gene)
-
+ap <- geneAnno(Gene = Gene, db = rbind(labLMSProc(9202, "MethylMaster", 50000), labLMSProc(9202, "Conumee", 50000), labLMSProc(9202, "Sesame", 50000)))
 # ‘cnAnalysis450k’ are not available for package ‘MethylMasteR’
+
+# Visualization Runner
+Gene <- c("MYC", "MYOCD", "CCNE1", "CDKN2A", "PTEN", "RB1", "TP53") 
+stts <- c(9202, 9203, 9327, 9328, 9337, 9338, 9350, 9353, 9354, 9355, 9356, 9357, 9358)
+bins <- c(10000, 50000, 1e+05, 1e+06)
+output.dir <- "~/Work/Analysis/Statistics/LabLMS/byBin/"
+for(bin in bins){
+  for(stt in stts){
+    ap <- geneAnno(Gene = Gene, db = rbind(labLMSProc(stt, "MethylMaster", bin), labLMSProc(stt, "Conumee", bin), labLMSProc(stt, "Sesame", bin)))
+    ggsave(paste0(output.dir, bin,"/",stt,".png"), plot = ap[[1]], width = 25, height = 10, units = "in")
+  }
+}
 

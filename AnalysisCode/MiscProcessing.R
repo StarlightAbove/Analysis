@@ -182,10 +182,10 @@ labLMSProc <- function(STTq, Technology, binSize){
   cnvMatch <- read.csv(paste0(basePath,"/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/CNVCallsCSV/", 
                               correlationSheet$CNV_Label[1], "_events.csv"))
   
-  # methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", 
-  #paste0(correlationSheet$Sentrix_ID[1],"_", 
-  #     correlationSheet$Sentrix_Position[1], "/"), 
-  # "autocorrected_regions.csv"))
+  methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/",binSize,"/", 
+  paste0(correlationSheet$Sentrix_ID[1],"_", 
+       correlationSheet$Sentrix_Position[1], "/"), 
+  "autocorrected_regions.csv"))
   
   conumeeMatch <- read.csv(paste0(basePath,"/Outputs/Conumee/LabLMS/", binSize,"/", paste0(correlationSheet$Sentrix_ID[1],"_", 
                                                                                                  correlationSheet$Sentrix_Position[1],".csv")))

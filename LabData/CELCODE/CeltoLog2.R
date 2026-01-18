@@ -64,7 +64,7 @@ furtherProcFilesLM <- list.files(
   pattern = "\\.RDS$",    # Regex pattern to match files ending with '.csv'
   recursive = TRUE,       # Search within all subdirectories
   full.names = TRUE       # Return the full relative path to the files
-)
+) # RDS file is used for plotting.
 for(fpfL in furtherProcFilesLM){
   Segment.ff(RDS.file = fpfL, segmenter = "ASCAT", BAF.filter = 0.9)
   Segment.ff(RDS.file = fpfL, segmenter = "SEQUENZA", BAF.filter = 0.9)
@@ -80,4 +80,6 @@ for(CNVCall in CNVCallsAscat){
   ASCN.ff(RDS.file = CNVCall)
 }
 setwd("~/Documents/Analysis") # On MacBook
+
+
 

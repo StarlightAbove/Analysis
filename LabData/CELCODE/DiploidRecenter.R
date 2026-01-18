@@ -7,7 +7,7 @@ require(GenomicRanges)
 require(tidyverse)
 library(stringr)
 genomicLoc <- data.frame(chromosome = 1, start = 160000000, end = 200000000)
-dipRecenterAndCorrect <- function(cbs, genomicLoc == NULL){
+dipRecenterAndCorrect <- function(cbs, genomicLoc = NULL){
   cbsF <- read_delim(cbs)
   if(is.null(genomicLoc)){
     # Plan:

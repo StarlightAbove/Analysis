@@ -40,7 +40,6 @@ plot_cnv_segments <- function(df, anno = NULL) {
     mutate(chr_start = lag(cumsum(chr_len), default = 0)) %>%
     mutate(chr_mid = chr_start + chr_len / 2)
   print(chr_lengths)
-  # Join to get cumulative start and end positions
   df <- df %>%
     left_join(chr_lengths, by = "chrom") %>%
     mutate(
@@ -190,9 +189,8 @@ geneGen <- function(Gene, db = NULL){
 
 geneGen(Gene = Gene)
 ap <- geneAnno(Gene = Gene, db = rbind(labLMSProc(9202, "MethylMaster", 50000), labLMSProc(9202, "Conumee", 50000), labLMSProc(9202, "Sesame", 50000)))
-# ‘cnAnalysis450k’ are not available for package ‘MethylMasteR’
 
-# Visualization Runner
+# Visualization Runner - LabLMS
 Gene <- c("MYC", "MYOCD", "CCNE1", "CDKN2A", "PTEN", "RB1", "TP53") 
 stts <- c(9202, 9203, 9327, 9328, 9337, 9338, 9350, 9353, 9354, 9355, 9356, 9357, 9358)
 bins <- c(10000, 50000, 1e+05, 1e+06)
@@ -201,6 +199,23 @@ for(bin in bins){
   for(stt in stts){
     ap <- geneAnno(Gene = Gene, db = rbind(labLMSProc(stt, "MethylMaster", bin), labLMSProc(stt, "Conumee", bin), labLMSProc(stt, "Sesame", bin)))
     ggsave(paste0(output.dir, bin,"/",stt,".png"), plot = ap[[1]], width = 25, height = 10, units = "in")
+  }
+}
+
+# Visualization Runner - LM
+IDATSampleSheet <- read.csv("./LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv") %>%
+  dplyr::select(c("Sentrix_ID", "Sentrix_Position"))
+
+bins <- c(10000, 50000, 1e+05, 1e+06)
+sentrixs <- paste0(IDATSampleSheet$Sentrix_ID,"/", IDATSampleSheet$Sentrix_Position)
+output.dir <- "~/Work/Analysis/Statistics/LM/byBin/"
+
+for(bin in bins){
+  for(sent in sentrixs){
+    sentID <- str_split(sent, pattern = "/")[[1]][1]
+    sentPos <- str_split(sent, pattern = "/")[[1]][2]
+    ap <- plot_cnv_segments(plottableLM(sentID, sentPos, 50000))
+    ggsave(paste0(output.dir, bin,"/",sentID, "_", sentPos,".png"), plot = ap, width = 25, height = 10, units = "in")
   }
 }
 

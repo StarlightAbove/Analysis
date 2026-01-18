@@ -260,18 +260,18 @@ softOutputProcessingLM <- function(outputDir){
   sentrixID <- caseNameCorrelation[2]
   sentrixPos <- gsub(".csv", replacement = "", x = caseNameCorrelation[3])
   SUHMatch <- IDATSampleSheet %>% filter(Sentrix_ID == sentrixID, 
-                                         Sentrix_Position == sentrixPos) %>% select(SUH) %>% dplyr::pull(SUH)
+                                         Sentrix_Position == sentrixPos) %>% dplyr::select(SUH) %>% dplyr::pull(SUH)
   chasFiltered <- chasFile[str_detect(chasFile$File, SUHMatch), ]
   chasFiltered <-  tidyr::separate_wider_delim(tidyr::separate_wider_delim(chasFiltered, `Full Location`, names = c("chromosome", "loc"), delim = ":"), `loc`,
-                                               names = c("loc.start", "loc.end"), delim = "-") %>% select(-c("chromosome")) %>% dplyr::rename(CNVStatus = "Type", seg.mean = "Mean Log2Ratio", chrom = "Chromosome") %>%
+                                               names = c("loc.start", "loc.end"), delim = "-") %>% dplyr::select(-c("chromosome")) %>% dplyr::rename(CNVStatus = "Type", seg.mean = "Mean Log2Ratio", chrom = "Chromosome") %>%
     mutate(
       type = "SNP", 
       CNVStatus = case_when(CNVStatus == "Loss" ~ "Deletion", 
                             CNVStatus == "Gain" ~ "Amplification", 
                             TRUE ~ "Normal")
-    ) %>% select(-c("File"))
+    ) %>% dplyr::select(-c("File"))
   fasst2filtered <- fasst2file[str_detect(fasst2file$Sample, SUHMatch), ] %>%
-    select(c("Probe Median", "Event", "Chromosome Region"))
+    dplyr::select(c("Probe Median", "Event", "Chromosome Region"))
   fasst2filtered <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(fasst2filtered, `Chromosome Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
                                                 names = c("loc.start", "loc.end"), delim = "-") %>% mutate(type = "SNP") %>% dplyr::rename(CNVStatus = "Event") %>%
     mutate(CNVStatus = case_when(
@@ -326,7 +326,7 @@ softOutputProcessingLMS <- function(caseName){
 #grangesMethyl.R
 # LMS.
 lmsProcessing <- function(caseName){
-  sampSheet <- read.csv("./cases/SingleFileCase/SampleSheet.csv") %>% select("Basename", "caseNames")
+  sampSheet <- read.csv("./cases/SingleFileCase/SampleSheet.csv") %>% dplyr::select("Basename", "caseNames")
   match <- sampSheet %>% filter(caseNames == caseName) %>% dplyr::pull("Basename")
   
   # Processing methylation data.
@@ -361,14 +361,14 @@ lmsProcessing <- function(caseName){
 # LM.
 lmProcessing <- function(outputDir){
   IDATSampleSheet <- read.csv("./LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv")
-  chasFile <- readxl::read_excel("./LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_ChAS_CNVs.xlsx") %>% select(File, `Mean Log2Ratio`, Chromosome, Type, `Full Location`)
+  chasFile <- readxl::read_excel("./LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_ChAS_CNVs.xlsx") %>% dplyr::select(File, `Mean Log2Ratio`, Chromosome, Type, `Full Location`)
   fasst2file <- readxl::read_excel("./LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_FASST2_CNVs.xlsx")
   
   caseNameCorrelation <- str_split(str_split(outputDir, "/")[[1]][5], pattern = "_")[[1]]
   sentrixID <- caseNameCorrelation[[1]]
   sentrixPos <- caseNameCorrelation[[2]]
   SUHMatch <- IDATSampleSheet %>% filter(Sentrix_ID == sentrixID, 
-                                         Sentrix_Position == sentrixPos) %>% select(SUH) %>% dplyr::pull(SUH)
+                                         Sentrix_Position == sentrixPos) %>% dplyr::select(SUH) %>% dplyr::pull(SUH)
   cnvMethyl <- read.csv(outputDir) %>%
     dplyr::select(c("Chromosome", "bp.Start", "bp.End", "Mean")) %>% dplyr::rename(
       chrom = "Chromosome",
@@ -386,15 +386,15 @@ lmProcessing <- function(outputDir){
   # SNP Processing
   chasFiltered <- chasFile[str_detect(chasFile$File, SUHMatch), ]
   chasFiltered <-  tidyr::separate_wider_delim(tidyr::separate_wider_delim(chasFiltered, `Full Location`, names = c("chromosome", "loc"), delim = ":"), `loc`,
-                                               names = c("loc.start", "loc.end"), delim = "-") %>% select(-c("chromosome")) %>% dplyr::rename(CNVStatus = "Type", seg.mean = "Mean Log2Ratio", chrom = "Chromosome") %>%
+                                               names = c("loc.start", "loc.end"), delim = "-") %>% dplyr::select(-c("chromosome")) %>% dplyr::rename(CNVStatus = "Type", seg.mean = "Mean Log2Ratio", chrom = "Chromosome") %>%
     mutate(
       type = "SNP", 
       CNVStatus = case_when(CNVStatus == "Loss" ~ "Deletion", 
                             CNVStatus == "Gain" ~ "Amplification", 
                             TRUE ~ "Normal")
-    ) %>% select(-c("File"))
+    ) %>% dplyr::select(-c("File"))
   fasst2filtered <- fasst2file[str_detect(fasst2file$Sample, SUHMatch), ] %>%
-    select(c("Probe Median", "Event", "Chromosome Region"))
+    dplyr::select(c("Probe Median", "Event", "Chromosome Region"))
   fasst2filtered <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(fasst2filtered, `Chromosome Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
                                                 names = c("loc.start", "loc.end"), delim = "-") %>% mutate(type = "SNP") %>% dplyr::rename(CNVStatus = "Event") %>%
     mutate(CNVStatus = case_when(
@@ -588,7 +588,7 @@ matchingAlgo <- function(caseName, tech, whichData){
 }
 matchingAlgoLM <- function(outputDir){
   IDATSampleSheet <- read.csv("./LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv")
-  chasFile <- readxl::read_excel("./LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_ChAS_CNVs.xlsx") %>% select(File, `Mean Log2Ratio`, Chromosome, Type, `Full Location`)
+  chasFile <- readxl::read_excel("./LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_ChAS_CNVs.xlsx") %>% dplyr::select(File, `Mean Log2Ratio`, Chromosome, Type, `Full Location`)
   fasst2file <- readxl::read_excel("./LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_FASST2_CNVs.xlsx")
   
   caseNameCorrelation <- str_split(outputDir, "/")[[1]][[5]]
@@ -596,7 +596,7 @@ matchingAlgoLM <- function(outputDir){
   sentrixID <- caseNameCorrelation[1]
   sentrixPos <- gsub(".csv", replacement = "", x = caseNameCorrelation[2])
   SUHMatch <- IDATSampleSheet %>% filter(Sentrix_ID == sentrixID, 
-                                         Sentrix_Position == sentrixPos) %>% select(SUH) %>% dplyr::pull(SUH)
+                                         Sentrix_Position == sentrixPos) %>% dplyr::select(SUH) %>% dplyr::pull(SUH)
   
   case <- read.csv(outputDir)
   case <- case %>% dplyr::select(-c("ID", "bstat")) %>% 
@@ -611,15 +611,15 @@ matchingAlgoLM <- function(outputDir){
   # SNP Filter.
   chasFiltered <- chasFile[str_detect(chasFile$File, SUHMatch), ]
   chasFiltered <-  tidyr::separate_wider_delim(tidyr::separate_wider_delim(chasFiltered, `Full Location`, names = c("chromosome", "loc"), delim = ":"), `loc`,
-                                               names = c("loc.start", "loc.end"), delim = "-") %>% select(-c("chromosome")) %>% dplyr::rename(CNVStatus = "Type", seg.mean = "Mean Log2Ratio", chrom = "Chromosome") %>%
+                                               names = c("loc.start", "loc.end"), delim = "-") %>% dplyr::select(-c("chromosome")) %>% dplyr::rename(CNVStatus = "Type", seg.mean = "Mean Log2Ratio", chrom = "Chromosome") %>%
     mutate(
       type = "SNP", 
       CNVStatus = case_when(CNVStatus == "Loss" ~ "Deletion", 
                             CNVStatus == "Gain" ~ "Amplification", 
                             TRUE ~ "Normal")
-    ) %>% select(-c("File"))
+    ) %>% dplyr::select(-c("File"))
   fasst2filtered <- fasst2file[str_detect(fasst2file$Sample, SUHMatch), ] %>%
-    select(c("Probe Median", "Event", "Chromosome Region"))
+    dplyr::select(c("Probe Median", "Event", "Chromosome Region"))
   fasst2filtered <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(fasst2filtered, `Chromosome Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
                                                 names = c("loc.start", "loc.end"), delim = "-") %>% mutate(type = "SNP") %>% dplyr::rename(CNVStatus = "Event") %>%
     mutate(CNVStatus = case_when(
@@ -637,3 +637,87 @@ matchingAlgoLM <- function(outputDir){
   
   rbind(case, chasFiltered, fasst2filtered) %>% dplyr::arrange(chrom) %>% dplyr::filter(!(is.na(chrom)))
 }
+
+# Extra functions
+plottableLM <- function(SentrixID, SentrixPos, bin){
+  IDATSampleSheet <- read.csv("./LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv")
+  chasFile <- readxl::read_excel("./LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_ChAS_CNVs.xlsx") %>% dplyr::select(File, `Mean Log2Ratio`, Chromosome, Type, `Full Location`)
+  fasst2file <- readxl::read_excel("./LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_FASST2_CNVs.xlsx")
+
+  sentrixID <- SentrixID
+  sentrixPos <- SentrixPos
+  
+  SUHMatch <- IDATSampleSheet %>% filter(Sentrix_ID == sentrixID, 
+                                         Sentrix_Position == sentrixPos) %>% dplyr::select(SUH) %>% dplyr::pull(SUH)
+  
+  # MethylMasteR
+  outputDirMethyl <- paste0("~/Work/Analysis/Outputs/MethylMaster/LM/",bin,"/",sentrixID,"_",sentrixPos,"/autocorrected_regions.csv")
+  cnvMethyl <- read.csv(outputDirMethyl) %>%
+    dplyr::select(c("Chromosome", "bp.Start", "bp.End", "Mean")) %>% dplyr::rename(
+      chrom = "Chromosome",
+      loc.start = "bp.Start",
+      loc.end = "bp.End",
+      seg.mean = "Mean"
+    ) %>% dplyr::mutate(
+      CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
+                            seg.mean < -0.3 ~ "Deletion",
+                            TRUE ~ "Normal"), type = "MethylMaster", Gene = "0"
+    )
+  cnvMethyl$chrom <- as.numeric(str_remove_all(cnvMethyl$chrom, pattern = "chr"))
+  cnvMethyl <- cnvMethyl %>% filter(!(is.na(chrom))) %>% arrange(chrom)
+  
+  # SeSAMe
+  outputDirSesame <- paste0("~/Work/Analysis/Outputs/SeSAMe/LM/bins/",bin,"/","segments_",sentrixID, "_", sentrixPos, ".csv")
+  sesameOutput <- read.csv(outputDirSesame) %>% dplyr::select(c("chrom", "loc.start", 
+                                                          "loc.end", "seg.mean")) %>% dplyr::mutate(
+                                                            chrom = str_remove_all(chrom, "chr")) %>% filter(
+                                                              !(chrom == "X") & !(chrom == "Y")) %>% mutate(
+                                                                chrom = as.numeric(chrom)) %>% arrange(chrom) %>% mutate(
+                                                                  CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
+                                                                                        seg.mean < -0.3 ~ "Deletion",
+                                                                                        TRUE ~ "Normal"), type = "SeSAMe", Gene = "0") 
+  
+  # Conumee
+  outputDirConumee <- paste0("~/Work/Analysis/Outputs/Conumee/LMData/bins/",bin,"/",sentrixID,"_",sentrixPos,".csv")
+  case <- read.csv(outputDirConumee)
+  case <- case %>% dplyr::select(-c("ID", "bstat")) %>% 
+    mutate(CNVStatus = case_when(case$seg.mean > 0.2 ~ "Amplification",
+                                 case$seg.mean < -0.2 ~ "Deletion",
+                                 TRUE ~ "Normal"), 
+           chrom = as.numeric(str_remove_all(chrom, "chr")), Gene = "0") %>% 
+    dplyr::arrange(chrom) %>% mutate(type = "Conumee") %>%
+    dplyr::select(-c("num.mark", "pval", "seg.median", "X"))
+  
+  # SNP Processing
+  chasFiltered <- chasFile[str_detect(chasFile$File, SUHMatch), ]
+  chasFiltered <-  tidyr::separate_wider_delim(tidyr::separate_wider_delim(chasFiltered, `Full Location`, names = c("chromosome", "loc"), delim = ":"), `loc`,
+                                               names = c("loc.start", "loc.end"), delim = "-") %>% dplyr::select(-c("chromosome")) %>% dplyr::rename(CNVStatus = "Type", seg.mean = "Mean Log2Ratio", chrom = "Chromosome") %>%
+    mutate(
+      type = "SNP", 
+      CNVStatus = case_when(CNVStatus == "Loss" ~ "Deletion", 
+                            CNVStatus == "Gain" ~ "Amplification", 
+                            TRUE ~ "Normal"),
+      Gene = "0"
+    ) %>% dplyr::select(-c("File"))
+  fasst2filtered <- fasst2file[str_detect(fasst2file$Sample, SUHMatch), ] %>%
+    dplyr::select(c("Probe Median", "Event", "Chromosome Region"))
+  fasst2filtered <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(fasst2filtered, `Chromosome Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
+                                                names = c("loc.start", "loc.end"), delim = "-") %>% mutate(type = "SNP") %>% dplyr::rename(CNVStatus = "Event") %>%
+    mutate(CNVStatus = case_when(
+      CNVStatus == "CN Loss" ~ "Deletion", 
+      CNVStatus == "CN Gain" ~ "Amplification", 
+      TRUE ~ "Normal"
+    ), Gene = "0") %>% dplyr::rename(seg.mean = "Probe Median")
+  fasst2filtered$loc.start <- as.numeric(str_replace_all(fasst2filtered$loc.start, ",", ""))
+  fasst2filtered$loc.end <- as.numeric(str_replace_all(fasst2filtered$loc.end, ",", ""))
+  fasst2filtered$chrom <- as.numeric(str_replace_all(fasst2filtered$chrom, "chr", ""))
+  chasFiltered$chrom <- as.numeric(chasFiltered$chrom)
+  chasFiltered$loc.start <- as.numeric(chasFiltered$loc.start)
+  chasFiltered$loc.end <- as.numeric(chasFiltered$loc.end)
+  chasFiltered$seg.mean <- as.numeric(chasFiltered$seg.mean)
+  
+  rbind(chasFiltered, fasst2filtered, cnvMethyl, case, sesameOutput) %>% arrange(chrom) %>% dplyr::filter(!(is.na(chrom)))
+  
+}
+IDATSampleSheet <- read.csv("./LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv")
+plot_cnv_segments(plottableLM(IDATSampleSheet$Sentrix_ID[1], IDATSampleSheet$Sentrix_Position[1],50000))

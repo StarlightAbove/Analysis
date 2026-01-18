@@ -542,17 +542,19 @@ Most accurate Manhattan plots are usually labelled as mAcc.png, and least accura
 
 ## LabLMS
 
-Graphs Path: Analysis/Statistics/LabLMS/byBin It is organized by the binsize, and then also the case that it comes from.
+Graphs Path: Analysis/Statistics/LabLMS/byBin. 
+It is organized by the binsize, and then also the case that it comes from.
+This includes all software examined. 
+It also includes pHeatMaps attached to the interesting genes.
 
 ## LMS
 
-Graphs path: currently under computation.
-Holding off till MethylMasteR stable.
+TCGA Data has not been computed due to varying priorities in computation and focus on inhouse data.
 
 ## LM
 
-Graphs path: currently under computation.
-Holding off till MethylMasteR stable.
+Graphs path: Graphs Path: Analysis/Statistics/LM/byBin
+This includes all software examined.
 
 ## Normals
 
@@ -565,6 +567,7 @@ The graphs have been computed and can be found at: Analysis/Statistics/Normals/b
 
 Located at: /Analysis/LabData/ReprocessedLMS for LMS data (Laboratory) and /Analysis/LabData/ReprocessedLM for LM data.
 Currently, due to new information, B-allele data is being integrated into the analysis in order to further refine data-collection from ASCAT & SEQUENZA, and to solve issues related to over-calling of certain genotypes. This approach is based upon Connolly et al., 2014 & Wang, 2007. 
+If you wish to examine the approach being used, see LabData/CELCODE/DiploidRecenter.R for comments providing detail on the strategy.
 
 Things to note: The **correlation_w_FASST2.csv** file is the core characterization of this new data and shows its alignment with FASST2.
 If you are trying to evaluate alignment, please look for that data first.

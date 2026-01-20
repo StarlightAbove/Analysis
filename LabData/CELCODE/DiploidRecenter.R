@@ -7,20 +7,21 @@ require(GenomicRanges)
 require(tidyverse)
 library(stringr)
 genomicLoc <- data.frame(chromosome = 1, start = 160000000, end = 200000000)
-dipRecenterAndCorrect <- function(cbs, genomicLoc = NULL){
-  cbsF <- read_delim(cbs)
+dipRecenterAndCorrect <- function(rds, genomicLoc = NULL){
+  rdsR <- readRDS(rds)
   if(is.null(genomicLoc)){
     # Plan:
     # .RDS value first passed, raw.
-    # genome.pkg <- data$meta$basic$genome.pkg -> data being the read RDS.
-    # BSg.obj <- getExportedValue(genome.pkg, genome.pkg)
-    # cs <- chromobjector(BSg.obj) -> function in EaCoN, imports BSgenome.
-    # l2r.chr <- unname(unlist(cs$chrom2chr[as.character(data$data$SNPpos$chrs)]))
-    # baf.value <- data.frame(Chr = l2r.chr,
-    # Start = as.integer(data$data$SNPpos$pos),
-    # End = as.integer(data$data$SNPpos$pos),
-    # Value = data$data$Tumor_BAF[,1],
-    # stringsAsFactors = FALSE)
+    genome.pkg <- rdsR$meta$basic$genome.pkg
+    BSg.obj <- getExportedValue(genome.pkg, genome.pkg)
+    cs <- chromobjector(BSg.obj)
+    l2r.chr <- unname(unlist(cs$chrom2chr[as.character(rdsR$data$SNPpos$chrs)]))
+    baf.value <- data.frame(Chr = l2r.chr,
+    Start = as.integer(rdsR$data$SNPpos$pos),
+    End = as.integer(rdsR$data$SNPpos$pos),
+    Value = rdsR$data$Tumor_BAF[,1],
+    stringsAsFactors = FALSE)
+    print(baf.value)
     #
     # All of this hijacked from EaCoN.
     #
@@ -31,144 +32,17 @@ dipRecenterAndCorrect <- function(cbs, genomicLoc = NULL){
     # Subtract median across all log-2 ratios in the SEG RDS.
     
   }
-  std <- cbsF %>% dplyr::filter(Chr == genomicLoc$chromosome[1])
-  std_gr <- makeGRangesFromDataFrame(std, keep.extra.columns = TRUE)
-  gLoc_gr <- makeGRangesFromDataFrame(genomicLoc)
-  ovl <- findOverlaps(std_gr, gLoc_gr)
-  overlaps_intervals <- pintersect(std_gr[queryHits(ovl)], gLoc_gr[subjectHits(ovl)])
-  finalDf <- as.data.frame(overlaps_intervals) %>% select(c("seqnames", "start", "end", "Log2Ratio")) %>%
-    dplyr::rename(chr = "seqnames", seg.mean = "Log2Ratio", loc.start = "start", loc.end = "end")
-  stdMed <- median(finalDf$seg.mean)
-  cbsF <- cbsF %>% dplyr::mutate(Log2Ratio = Log2Ratio - stdMed) %>% dplyr::filter(Chr != 23 && Chr != 24)
+  #std <- cbsF %>% dplyr::filter(Chr == genomicLoc$chromosome[1])
+  #std_gr <- makeGRangesFromDataFrame(std, keep.extra.columns = TRUE)
+  #gLoc_gr <- makeGRangesFromDataFrame(genomicLoc)
+  #ovl <- findOverlaps(std_gr, gLoc_gr)
+  #overlaps_intervals <- pintersect(std_gr[queryHits(ovl)], gLoc_gr[subjectHits(ovl)])
+  #finalDf <- as.data.frame(overlaps_intervals) %>% select(c("seqnames", "start", "end", "Log2Ratio")) %>%
+  #  dplyr::rename(chr = "seqnames", seg.mean = "Log2Ratio", loc.start = "start", loc.end = "end")
+  #stdMed <- median(finalDf$seg.mean)
+  #cbsF <- cbsF %>% dplyr::mutate(Log2Ratio = Log2Ratio - stdMed) %>% dplyr::filter(Chr != 23 && Chr != 24)
   # write_tsv(cbsF, file = cbs)
-  cbsF
+  #cbsF
 }
 
-# Sample tester to compare and contrast the two outputs.
-testCorr <- function(sampleName){
-  tst <- dipRecenterAndCorrect(paste0("~/Documents/Analysis/LabData/ReprocessedLMS/",sampleName,"/ASCAT/L2R/",sampleName,".NoCut.cbs"),
-                               genomicLoc = genomicLoc)
-  tstSEQ <- dipRecenterAndCorrect(paste0("~/Documents/Analysis/LabData/ReprocessedLMS/",sampleName,"/SEQUENZA/L2R/",sampleName,".NoCut.cbs"),
-                                  genomicLoc = genomicLoc)
-  FASST2 <- read_tsv(paste0("~/Documents/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/",sampleName,"_events.txt"), 
-                     skip = 36) 
-  FASST2 <- rbind(FASST2 %>% dplyr::filter(Event == "CN Loss"), 
-                  FASST2 %>% dplyr::filter(Event == "CN Gain")) %>%
-    dplyr::select(c("Probe Median", "Event", "Chromosome Region"))
-  FASST2 <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(FASST2, `Chromosome Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
-                                        names = c("loc.start", "loc.end"), delim = "-")
-  FASST2$loc.start <- as.numeric(str_replace_all(FASST2$loc.start, ",", ""))
-  FASST2$loc.end <- as.numeric(str_replace_all(FASST2$loc.end, ",", ""))
-  FASST2$chrom <- as.numeric(str_replace_all(FASST2$chrom, "chr", ""))
-  FASST2 <- drop_na(FASST2) 
-  tst_gr <- makeGRangesFromDataFrame(tst, keep.extra.columns = TRUE)
-  FASST2_gr <- makeGRangesFromDataFrame(FASST2, keep.extra.columns = TRUE)
-  ovl <- findOverlaps(tst_gr, FASST2_gr)
-  gr1_overlap <- tst_gr[queryHits(ovl)]
-  gr2_overlap <- FASST2_gr[subjectHits(ovl)]
-  mcols(gr1_overlap) <- cbind(mcols(gr1_overlap), mcols(gr2_overlap))
-  comp_df <- as.data.frame(gr1_overlap) %>% 
-    select(c("seqnames", "start", "end", "Log2Ratio", "Probe.Median")) %>% 
-    dplyr::rename(chrom = "seqnames", loc.start = "start", loc.end = "end", 
-                  ASCAT = "Log2Ratio", FASST2 = "Probe.Median") %>%
-    dplyr::mutate(FASST2 = as.numeric(FASST2))
-  cor(comp_df$ASCAT, comp_df$FASST2, method = "pearson")
-}
-testCorrSEQUENZA <- function(sampleName){
-  tst <- dipRecenterAndCorrect(paste0("~/Documents/Analysis/LabData/ReprocessedLMS/",sampleName,"/SEQUENZA/L2R/",sampleName,".NoCut.cbs"),
-                                  genomicLoc = genomicLoc)
-  FASST2 <- read_tsv(paste0("~/Documents/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/",sampleName,"_events.txt"), 
-                     skip = 36) 
-  FASST2 <- rbind(FASST2 %>% dplyr::filter(Event == "CN Loss"), 
-                  FASST2 %>% dplyr::filter(Event == "CN Gain")) %>%
-    dplyr::select(c("Probe Median", "Event", "Chromosome Region"))
-  FASST2 <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(FASST2, `Chromosome Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
-                                        names = c("loc.start", "loc.end"), delim = "-")
-  FASST2$loc.start <- as.numeric(str_replace_all(FASST2$loc.start, ",", ""))
-  FASST2$loc.end <- as.numeric(str_replace_all(FASST2$loc.end, ",", ""))
-  FASST2$chrom <- as.numeric(str_replace_all(FASST2$chrom, "chr", ""))
-  FASST2 <- drop_na(FASST2) 
-  tst_gr <- makeGRangesFromDataFrame(tst, keep.extra.columns = TRUE)
-  FASST2_gr <- makeGRangesFromDataFrame(FASST2, keep.extra.columns = TRUE)
-  ovl <- findOverlaps(tst_gr, FASST2_gr)
-  gr1_overlap <- tst_gr[queryHits(ovl)]
-  gr2_overlap <- FASST2_gr[subjectHits(ovl)]
-  mcols(gr1_overlap) <- cbind(mcols(gr1_overlap), mcols(gr2_overlap))
-  comp_df <- as.data.frame(gr1_overlap) %>% 
-    select(c("seqnames", "start", "end", "Log2Ratio", "Probe.Median")) %>% 
-    dplyr::rename(chrom = "seqnames", loc.start = "start", loc.end = "end", 
-                  ASCAT = "Log2Ratio", FASST2 = "Probe.Median") %>%
-    dplyr::mutate(FASST2 = as.numeric(FASST2))
-  cor(comp_df$ASCAT, comp_df$FASST2, method = "pearson")
-  
-}
-testCorrLM <- function(sampleName){
-  tst <- read_tsv(paste0("~/Documents/Analysis/LabData/ReprocessedLM/",sampleName,"/ASCAT/L2R/",sampleName,".NoCut.cbs"))
-  tstSEQ <- read_tsv(paste0("~/Documents/Analysis/LabData/ReprocessedLM/",sampleName,"/SEQUENZA/L2R/",sampleName,".NoCut.cbs"))
-  FASST2 <- read_xlsx(paste0("~/Documents/Analysis/LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CNVs_LM/LM_FASST2_CNVs.xlsx"))
-  FASST2 <- subset(FASST2, grepl(sampleName, Sample)) %>% dplyr::select(c("Probe Median", "Event", "Chromosome Region"))
-  FASST2 <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(FASST2, `Chromosome Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
-                              names = c("loc.start", "loc.end"), delim = "-")
-  FASST2 <- FASST2 %>% dplyr::mutate(loc.start = as.numeric(str_remove_all(FASST2$loc.start, ",")), 
-                                      loc.end = as.numeric(str_remove_all(FASST2$loc.end, ",")))
-  FASST2$chrom <- as.numeric(str_remove_all(FASST2$chrom, "chr"))
-  print(FASST2)
-  
-  tst_gr <- makeGRangesFromDataFrame(tst, keep.extra.columns = TRUE)
-  FASST2_gr <- makeGRangesFromDataFrame(FASST2, keep.extra.columns = TRUE)
-  print(FASST2_gr)
-  tstSEQ_gr <- makeGRangesFromDataFrame(tstSEQ, keep.extra.columns = TRUE)
-  
-  ovl <- findOverlaps(tst_gr, FASST2_gr)
-  print(ovl)
-  gr1_overlap <- tst_gr[queryHits(ovl)]
-  gr2_overlap <- FASST2_gr[subjectHits(ovl)]
-  mcols(gr1_overlap) <- cbind(mcols(gr1_overlap), mcols(gr2_overlap))
-  comp_df <- as.data.frame(gr1_overlap) %>% 
-    select(c("seqnames", "start", "end", "Log2Ratio", "Probe.Median")) %>% 
-    dplyr::rename(chrom = "seqnames", loc.start = "start", loc.end = "end", 
-                  ASCAT = "Log2Ratio", FASST2 = "Probe.Median") %>%
-    dplyr::mutate(FASST2 = as.numeric(FASST2))
-
-  ovlSEQ <- findOverlaps(tstSEQ_gr, FASST2_gr)
-  print(ovlSEQ)
-  gr1S_overlap <- tstSEQ_gr[queryHits(ovlSEQ)]
-  gr2S_overlap <- FASST2_gr[subjectHits(ovlSEQ)]
-  mcols(gr1S_overlap) <- cbind(mcols(gr1S_overlap), mcols(gr2S_overlap))
-  comp_dfSEQ <- as.data.frame(gr1S_overlap) %>% 
-    select(c("seqnames", "start", "end", "Log2Ratio", "Probe.Median")) %>% 
-    dplyr::rename(chrom = "seqnames", loc.start = "start", loc.end = "end", 
-                  SEQUENZA = "Log2Ratio", FASST2 = "Probe.Median") %>%
-    dplyr::mutate(FASST2 = as.numeric(FASST2))
-  df <- left_join(comp_df, comp_dfSEQ)
-  print(df)
-  
-  if(nrow(df) == 1){
-    ret <- list(Sample = sampleName, ASC = paste0((df$FASST2 - df$ASCAT), "[abs]"), SEQ = paste0((df$FASST2 - df$SEQUENZA), "[abs]"))
-  }
-  if(nrow(df) == 0){
-    message(error("Unavailable at this time."))
-  }
-  if(nrow(df) > 1){
-    ret <- list(Sample = sampleName, ASC = cor(df$ASCAT, df$FASST2, method = "pearson"), SEQ = cor(df$ASCAT, df$FASST2, method = "pearson"))
-  }
-  
-  ret
-}
-
-sp <- testCorrLM("SUH130")
-
-spExtra <- read_excel("~/Documents/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/design_13LMS_CNVs_other_info_12Aug2025.xlsx")
-correlations <- c()
-correlationsSEQ <- c()
-for(sp in spExtra$Sample){
-  correlations <- c(testCorr(sp), correlations)
-  correlationsSEQ <- c(testCorrSEQUENZA(sp), correlationsSEQ)
-}
-spExtra <- spExtra %>% dplyr::mutate(correlation_to_ASCAT = correlations, correlation_to_SEQUENZA = correlationsSEQ) %>%
-  dplyr::select("Sample", "STT", "Region used for              diploid re-centering", "correlation_to_ASCAT", "correlation_to_SEQUENZA")
-write.csv(spExtra, file = "~/Documents/Analysis/LabData/ReprocessedLMS/correlation_w_FASST2.csv")
-
-
-I <- read_excel("~/Documents/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/design_13LMS_CNVs_other_info_12Aug2025.xlsx")
-
+dipRecenterAndCorrect("~/Work/Analysis/LabData/ReprocessedLMS/10_CAD_9355_LMS_Rec3/10_CAD_9355_LMS_Rec3_OncoScan_hg19_processed.RDS")

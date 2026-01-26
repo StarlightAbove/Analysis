@@ -16,21 +16,39 @@ dipRecenterAndCorrect <- function(rds, genomicLoc = NULL){
     BSg.obj <- getExportedValue(genome.pkg, genome.pkg)
     cs <- chromobjector(BSg.obj)
     l2r.chr <- unname(unlist(cs$chrom2chr[as.character(rdsR$data$SNPpos$chrs)]))
+    
+    my_tibble <- data.frame(Bafseg = rdsR$data$Tumor_BAF_segmented[[1]])
+    keeps <- rownames(my_tibble)
+    correl <- rdsR$data$SNPpos %>% dplyr::filter(rownames(rdsR$data$SNPpos) %in% keeps) # Contains location data for each SNP.
+    
+    
     baf.value <- data.frame(Chr = l2r.chr,
     Start = as.integer(rdsR$data$SNPpos$pos),
     End = as.integer(rdsR$data$SNPpos$pos),
     Value = rdsR$data$Tumor_BAF[,1],
     stringsAsFactors = FALSE)
     print(baf.value)
-    #
-    # All of this hijacked from EaCoN.
-    #
-    # Now, read the B-allele frequencies and via their locations, look for homozygous (0.0) as candidate regions.
+    print(my_tibble)
+    Segmented_BAF_loc <- merge(correl, my_tibble, by = "row.names")
+    Segmented_BAF_loc$chrs <- as.numeric(str_remove_all(Segmented_BAF_loc$chrs, "chr"))
+    Segmented_BAF_loc <- Segmented_BAF_loc %>% dplyr::filter(!is.na(chrs)) %>% 
+      dplyr::arrange(chrs, pos) %>% dplyr::mutate(group_id = consecutive_id(chrs, Bafseg)) 
+    SegmentLoc <- Segmented_BAF_loc %>% group_by(group_id) %>%
+      summarise(
+        chrom = mean(chrs),
+        Min_Value = min(pos, na.rm = TRUE),
+        Max_Value = max(pos, na.rm = TRUE),
+        BAF = median(Bafseg),
+        .groups = 'drop'
+      ) %>% dplyr::filter(BAF == 0 | BAF == 0.5 | BAF == 1.0)
+    # We've gotten the candidate regions based on BAF.
+    
+    l2s <- rdsR[["cbs"]][["cut"]] %>% dplyr::select(c("Chr", "Start", "End", "Log2Ratio"))
+    SegmentLoc
     # Determine erroneous significance by matching that to anomalous log2 ratio by passing SEG.SEGMENTER.RDS and filter.
     # Check against Gene database to determine whether there are any genes in the candidate region and filter.
     # Print candidates and ask for input or select best.
     # Subtract median across all log-2 ratios in the SEG RDS.
-    
   }
   #std <- cbsF %>% dplyr::filter(Chr == genomicLoc$chromosome[1])
   #std_gr <- makeGRangesFromDataFrame(std, keep.extra.columns = TRUE)
@@ -45,4 +63,4 @@ dipRecenterAndCorrect <- function(rds, genomicLoc = NULL){
   #cbsF
 }
 
-dipRecenterAndCorrect("~/Work/Analysis/LabData/ReprocessedLMS/10_CAD_9355_LMS_Rec3/10_CAD_9355_LMS_Rec3_OncoScan_hg19_processed.RDS")
+abc <- dipRecenterAndCorrect("~/Work/Analysis/LabData/ReprocessedLMS/8_KAN_9337_LMS_Rec/ASCAT/L2R/8_KAN_9337_LMS_Rec.SEG.ASCAT.RDS")

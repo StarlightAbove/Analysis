@@ -27,8 +27,6 @@ dipRecenterAndCorrect <- function(rds, genomicLoc = NULL){
     End = as.integer(rdsR$data$SNPpos$pos),
     Value = rdsR$data$Tumor_BAF[,1],
     stringsAsFactors = FALSE)
-    print(baf.value)
-    print(my_tibble)
     Segmented_BAF_loc <- merge(correl, my_tibble, by = "row.names")
     Segmented_BAF_loc$chrs <- as.numeric(str_remove_all(Segmented_BAF_loc$chrs, "chr"))
     Segmented_BAF_loc <- Segmented_BAF_loc %>% dplyr::filter(!is.na(chrs)) %>% 
@@ -36,15 +34,30 @@ dipRecenterAndCorrect <- function(rds, genomicLoc = NULL){
     SegmentLoc <- Segmented_BAF_loc %>% group_by(group_id) %>%
       summarise(
         chrom = mean(chrs),
-        Min_Value = min(pos, na.rm = TRUE),
-        Max_Value = max(pos, na.rm = TRUE),
+        Start = min(pos, na.rm = TRUE),
+        End = max(pos, na.rm = TRUE),
         BAF = median(Bafseg),
         .groups = 'drop'
-      ) %>% dplyr::filter(BAF == 0 | BAF == 0.5 | BAF == 1.0)
+      ) %>% dplyr::filter(BAF == 0 | BAF == 0.5 | BAF == 1.0) %>% dplyr::select(-c("group_id"))
     # We've gotten the candidate regions based on BAF.
     
     l2s <- rdsR[["cbs"]][["cut"]] %>% dplyr::select(c("Chr", "Start", "End", "Log2Ratio"))
-    SegmentLoc
+    l2s_gr <- GenomicRanges::makeGRangesFromDataFrame(l2s, keep.extra.columns = T)
+    segLoc_gr <- GenomicRanges::makeGRangesFromDataFrame(SegmentLoc, keep.extra.columns = T)
+    sub <- findOverlaps(l2s_gr, segLoc_gr)
+    overlaps_intervals <- pintersect(l2s_gr[queryHits(sub)], segLoc_gr[subjectHits(sub)])
+    overlaps_intervals$BAF <- 0.5
+    overlaps_intervals <- as.data.frame(overlaps_intervals) %>% dplyr::select(-c("hit")) %>%
+      dplyr::filter(!(Log2Ratio < 0.2 & Log2Ratio > -0.2) ) %>% dplyr::arrange(desc(width), desc(Log2Ratio))
+    
+    # Question to ask, which corrective factor to use?
+    options <- c(paste0("chr",overlaps_intervals$seqnames,": ",overlaps_intervals$start, "-", overlaps_intervals$end, " (", overlaps_intervals$Log2Ratio,")"))
+    selected <- menu(options, title = "Select a correction location: ")
+    corrector <- overlaps_intervals[selected,]$Log2Ratio[1]
+    rdsR$cbs$cut$Log2Ratio <- rdsR$cbs$cut$Log2Ratio - corrector
+    write_rds(x = rdsR, file = paste0("~/Work/Analysis/LabData/ReprocessedLMS/DiploidCorr/",colnames(rdsR$data$Tumor_BAF),".ASCAT.RDS"))
+    
+    #print(overlaps_intervals[selected])
     # Determine erroneous significance by matching that to anomalous log2 ratio by passing SEG.SEGMENTER.RDS and filter.
     # Check against Gene database to determine whether there are any genes in the candidate region and filter.
     # Print candidates and ask for input or select best.

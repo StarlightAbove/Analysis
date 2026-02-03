@@ -720,4 +720,5 @@ plottableLM <- function(SentrixID, SentrixPos, bin){
   
 }
 IDATSampleSheet <- read.csv("./LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv")
+plottableLM(IDATSampleSheet$Sentrix_ID[1], IDATSampleSheet$Sentrix_Position[1],50000)
 plot_cnv_segments(plottableLM(IDATSampleSheet$Sentrix_ID[1], IDATSampleSheet$Sentrix_Position[1],50000))

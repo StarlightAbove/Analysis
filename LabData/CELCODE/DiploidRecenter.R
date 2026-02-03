@@ -49,14 +49,20 @@ dipRecenterAndCorrect <- function(rds, genomicLoc = NULL){
     overlaps_intervals$BAF <- 0.5
     overlaps_intervals <- as.data.frame(overlaps_intervals) %>% dplyr::select(-c("hit")) %>%
       dplyr::filter(!(Log2Ratio < 0.2 & Log2Ratio > -0.2) ) %>% dplyr::arrange(desc(width), desc(Log2Ratio))
-    
+    print(overlaps_intervals)
     # Question to ask, which corrective factor to use?
     options <- c(paste0("chr",overlaps_intervals$seqnames,": ",overlaps_intervals$start, "-", overlaps_intervals$end, " (", overlaps_intervals$Log2Ratio,")"))
     selected <- menu(options, title = "Select a correction location: ")
     corrector <- overlaps_intervals[selected,]$Log2Ratio[1]
     rdsR$cbs$cut$Log2Ratio <- rdsR$cbs$cut$Log2Ratio - corrector
     write_rds(x = rdsR, file = paste0("~/Work/Analysis/LabData/ReprocessedLMS/DiploidCorr/",colnames(rdsR$data$Tumor_BAF),".ASCAT.RDS"))
-    
+    outputDf <- data.frame(chrom = rdsR$cbs$cut$Chr, loc.start = rdsR$cbs$cut$Start, loc.end = rdsR$cbs$cut$End, seg.mean = rdsR$cbs$cut$Log2Ratio) %>%
+      dplyr::mutate(
+        CNVStatus = case_when(seg.mean > 0.2 ~ "Amplification",
+                              seg.mean < -0.2 ~ "Deletion",
+                              TRUE ~ "Normal"), type = "MethylMaster", Gene = "0"
+      )
+    outputDf
     #print(overlaps_intervals[selected])
     # Determine erroneous significance by matching that to anomalous log2 ratio by passing SEG.SEGMENTER.RDS and filter.
     # Check against Gene database to determine whether there are any genes in the candidate region and filter.
@@ -77,3 +83,4 @@ dipRecenterAndCorrect <- function(rds, genomicLoc = NULL){
 }
 
 abc <- dipRecenterAndCorrect("~/Work/Analysis/LabData/ReprocessedLMS/8_KAN_9337_LMS_Rec/ASCAT/L2R/8_KAN_9337_LMS_Rec.SEG.ASCAT.RDS")
+plot_cnv_segments(abc)

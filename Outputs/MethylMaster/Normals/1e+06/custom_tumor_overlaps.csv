@@ -1,0 +1,4 @@
+seqnames,start,end,width,strand,freq,type,pvalue
+15,20232279,22068372,1836094,*,1,loss,1
+X,2568744,155515448,152946705,*,5,gain,0
+Y,4568744,20998668,16429925,*,5,loss,0

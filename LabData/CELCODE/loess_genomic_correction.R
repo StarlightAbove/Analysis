@@ -18,8 +18,10 @@ loess_correct_chromosome <- function(truth_data, test_data, chromosome, span = 0
   #' @return: corrected test data for this chromosome
   
   # Filter data for this chromosome
-  truth_chr <- truth_data %>% filter(chr == chromosome)
-  test_chr <- test_data %>% filter(chr == chromosome)
+  truth_chr <- truth_data %>% dplyr::filter(chr == chromosome)
+  print(truth_chr)
+  test_chr <- test_data %>% dplyr::filter(chr == chromosome)
+  print(test_chr)
   
   # Check if we have enough truth points
   if (nrow(truth_chr) < 3) {
@@ -167,9 +169,9 @@ correct_all_chromosomes <- function(truth_data, test_data,
     cat(paste("Processing chromosome", chr, "...\n"))
     
     # Check if we have truth data for this chromosome
-    truth_chr <- truth_data %>% filter(chr == chr)
+    truth_chr <- truth_data %>% dplyr::filter(chr == chr)
     
-    if (nrow(truth_chr) == 0) {
+    if (nrow(truth_chr) <= 3) {
       cat(paste("  No truth data for chromosome", chr, "- using global linear correction\n"))
       # Fall back to global linear correction
       test_chr <- test_data %>% filter(chr == chr)
@@ -275,6 +277,43 @@ plot_span_optimization <- function(span_info, chromosome = NULL) {
 }
 
 # ==============================================================================
+# READER FUNCTION
+# ==============================================================================
+
+read_data_Corr <- function(Methyl_RDS, tech){
+  #' Read test data for using LOESS correction.
+  #' 
+  #' @param SNP_data: path to .txt file with SNP cnv calls.
+  #' @param Methyl_RDS: path to .RDS file after processing.
+  #' @return: correctly read and modified data for LOESS correction in a list.
+  
+  methylRDS <- readRDS(Methyl_RDS)
+  name <- methylRDS$meta$basic$samplename
+  path <- paste0("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/",name,"_events.txt")
+  
+  
+  cnvMatch <- read_delim(path, skip = 36)
+  
+  cnvMatch <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(cnvMatch, `Chromosome Region`, names = c("chr", "loc"), delim = ":", too_few = 'debug'), `loc`,
+                              names = c("loc.start", "loc.end"), delim = "-") %>% mutate(type = "SNP") %>% dplyr::rename(CNVStatus = "Event") %>%
+   mutate(CNVStatus = case_when(
+      CNVStatus == "CN Loss" ~ "Deletion", 
+      CNVStatus == "CN Gain" ~ "Amplification", 
+      TRUE ~ "Normal"
+    )) %>% dplyr::rename(log2ratio = "Probe Median") %>% 
+    dplyr::select(c(chr, loc.start, loc.end, CNVStatus, log2ratio, type)) %>% mutate(loc.start = as.numeric(gsub(",","",loc.start)), 
+                                                                                       loc.end = as.numeric(gsub(",","",loc.end))) %>% mutate(position = (loc.start + loc.end)/2)
+  cnvMatch$chr <- as.numeric(str_replace_all(cnvMatch$chr, "chr", ""))
+  cnvMatch <- cnvMatch %>% filter(!is.na(chr))
+  
+  methylRDS <- methylRDS$cbs$cut %>% dplyr::select("Chr", "Start", "End", "Log2Ratio") %>%
+    dplyr::rename(chr = Chr, loc.start = Start, loc.end = End, log2ratio = Log2Ratio) %>%
+    dplyr::mutate(position = (loc.start + loc.end)/2)
+  
+  return(list(cnvMatch, methylRDS)) 
+}
+
+# ==============================================================================
 # EXAMPLE USAGE
 # ==============================================================================
 
@@ -308,6 +347,13 @@ plot_span_optimization <- function(span_info, chromosome = NULL) {
 #
 # # Save corrected data
 # write.csv(corrected_data, "corrected_data.csv", row.names = FALSE)
+
+abc <- read_data_Corr("~/Work/Analysis/LabData/ReprocessedLMS/3_PL_9328_LMS_P/ASCAT/L2R/3_PL_9328_LMS_P.SEG.ASCAT.RDS", abc)
+truth_data <- abc[[1]]
+test_data <- abc[[2]]
+result <- correct_all_chromosomes(truth_data, test_data, optimize_spans = FALSE, default_span = 0.5)
+corrected_data <- result$corrected_data
+plot_chromosome_correction(truth_data, test_data, corrected_data, chromosome = "chr1")
 
 cat("LOESS correction functions loaded successfully!\n")
 cat("\nMain functions:\n")

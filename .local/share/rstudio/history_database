@@ -1,0 +1,778 @@
+0:BiocManager::install()
+0:sessionInfo()
+0:library(ChAMP)
+1771452598863:devtools::install_github("StarlightAbove/sesame@patch-2")
+1771452644617:devtools::install_github("StarlightAbove/MethylMasteR")
+1771452903626:sample <- read.csv(sample.sheet.path)
+1771452906731:sample.sheet.path <- paste0(getwd(), "/LabData/MethylMasteRCombined/Sample_Sheet_Combined.csv")
+1771452907070:sample <- read.csv(sample.sheet.path)
+1771452908868:View(sample)
+1771452932441:sample <- read.csv(sample.sheet.path) %>% filter(Sample_Group == "normal")
+1771452942137:library(dplyr)
+1771452943911:sample <- read.csv(sample.sheet.path) %>% filter(Sample_Group == "normal")
+1771452946223:View(sample)
+1771452995854:input.dir <- "~/LabData/Normal_smooth_muscle_EPIC_data/idat_files"
+1771452996232:output.dir <- "~/Outputs/MethylMaster/Normals"
+1771452996764:routine.run <- "custom"
+1771453001762:rm(sample)
+1771453004091:sample.sheet.path <- "~/LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv"
+1771453005199:bins <- c(10000, 50000, 1e+05, 1e+06)
+1771453005981:for(i in bins){
+1771453005982:methyl_master(
+1771453005982:routine                   = routine.run, #The routine to run
+1771453005983:input.dir                 = input.dir, #The input (idat.files) directory
+1771453005983:output.dir                = output.dir, #The output directory
+1771453005983:sample.sheet.path         = sample.sheet.path, #The path to the MethylMasteR sample sheet
+1771453005983:r.lib.path                = .libPaths()[1], #The path to the R Library path
+1771453005983:file.sep                  = "/", #For windows or "/" for Linux
+1771453005983:create.dir                = TRUE, #Whether to cretae directory if does not
+1771453005983:#exist?
+1771453005984:save.seg                  = TRUE, #Whether to save segmentation results
+1771453005984:n.cores                   = 1, #Multicore does not work for all routines
+1771453005984:#on all operating systems
+1771453005984:os.type                   = "linux", #Or "linux"
+1771453005984:proj                      = "TCGA-KIRC", #"TCGA-BLCA" etc.
+1771453005984:visualize                 = TRUE, #Whether to output plots,
+1771453005985:visualize.individual      = FALSE, #Whether to output indvidual sample plots,
+1771453005985:#only works for routine sesame
+1771453005985:reference                 = "internal", #"comparison" or 'internal"
+1771453005985:reference.name            = NA, #For Epicopy use NA for median,
+1771453005985:#"all" is not currently supported
+1771453005985:#by Epicopy
+1771453005986:comparison                = c("tumor","normal"), #Always required treatment
+1771453005986:#first then contro can also be more specific when
+1771453005986:#designing sample sheet and use values like
+1771453005986:# c("tumor_male","cord_male etc") etc.
+1771453005986:#Note: in routines where internal reference is
+1771453005986:#used, second argument is ignored
+1771453005986:form.thresholds           = c(-0.2, 0.2), #Used to calculate final CNV state.
+1771453005987:#If NULL, equation is is used;
+1771453005987:#otherwise, specify threshold vector
+1771453005987:#of lower and upper beta values such
+1771453005987:#as c(-0.3,0.3), we used c(-0.2,0.2)
+1771453005987:#in the paper
+1771453005988:overlap.density           = 0.1, #For combining final CNV calls for confidence
+1771453005988:sesame.data.cache         = "EPIC", #The default sesame reference platform
+1771453005988:sesame.data.normal        = 'EPIC.5.normal', #The default sesame and hm450
+1771453005988:#internal reference samples
+1771453005988:genome.version            = "hg19", #Or can set to "hg38"
+1771453005988:hm450.workflow            = "B", #The HM450 subworkflow to use - only B
+1771453005989:#is running currently.
+1771453005989:#"A" no correction,
+1771453005989:#"B" median correction (default),
+1771453005989:#"C" run Conumee
+1771453005989:champ.padj                = 0.05, #padj to filter champ results
+1771453005989:champ.control             = FALSE, #run champ.control etc.
+1771453005990:champ.run.combat          = FALSE, #run champ.run.combat etc.
+1771453005990:champ.run.dmp             = FALSE, #If only one pheno var must = FALSE
+1771453005990:champ.run.dmr             = FALSE, #If only one pheno var must = FALSE
+1771453005990:champ.run.block           = FALSE, #If only one pheno var must = FALSE
+1771453005990:champ.run.gsea            = FALSE, #Requires dmp and dmr results
+1771453005990:champ.run.epimod          = FALSE, #If only one pheno var must = FALSE
+1771453005991:epi.run.gistic            = TRUE, #Whether to Run GISTIC in Epicopy workflow
+1771453005991:olaps.split.field         = "Sample_ID", #Split field to ise during overlaps
+1771453005991:#Don't change unless you know what
+1771453005991:#you are doing
+1771453005991:estimate.recurrence       = TRUE, #Estimate recursion to produce p values when
+1771453005991:#finding overlaps with population_ranges
+1771453005992:#functions
+1771453005992:ov.pvalue                 = 0.05, #pvalue threshold for overlaps identified
+1771453005992:ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding
+1771453005992:#overlaps
+1771453005992:simplify.reduce           = weightedmean, #Equation to use during reduction
+1771453005992:custom.bin.size           = i
+1771453005993:)
+1771453005993:}
+1771453018422:library(MethylMasteR)
+1771453034538:warnings()
+1771453039364:for(i in bins){
+1771453039364:methyl_master(
+1771453039364:routine                   = routine.run, #The routine to run
+1771453039365:input.dir                 = input.dir, #The input (idat.files) directory
+1771453039365:output.dir                = output.dir, #The output directory
+1771453039365:sample.sheet.path         = sample.sheet.path, #The path to the MethylMasteR sample sheet
+1771453039365:r.lib.path                = .libPaths()[1], #The path to the R Library path
+1771453039365:file.sep                  = "/", #For windows or "/" for Linux
+1771453039365:create.dir                = TRUE, #Whether to cretae directory if does not
+1771453039366:#exist?
+1771453039366:save.seg                  = TRUE, #Whether to save segmentation results
+1771453039366:n.cores                   = 1, #Multicore does not work for all routines
+1771453039366:#on all operating systems
+1771453039366:os.type                   = "linux", #Or "linux"
+1771453039366:proj                      = "TCGA-KIRC", #"TCGA-BLCA" etc.
+1771453039366:visualize                 = TRUE, #Whether to output plots,
+1771453039367:visualize.individual      = FALSE, #Whether to output indvidual sample plots,
+1771453039367:#only works for routine sesame
+1771453039367:reference                 = "internal", #"comparison" or 'internal"
+1771453039367:reference.name            = NA, #For Epicopy use NA for median,
+1771453039367:#"all" is not currently supported
+1771453039367:#by Epicopy
+1771453039368:comparison                = c("tumor","normal"), #Always required treatment
+1771453039368:#first then contro can also be more specific when
+1771453039368:#designing sample sheet and use values like
+1771453039368:# c("tumor_male","cord_male etc") etc.
+1771453039368:#Note: in routines where internal reference is
+1771453039368:#used, second argument is ignored
+1771453039368:form.thresholds           = c(-0.2, 0.2), #Used to calculate final CNV state.
+1771453039369:#If NULL, equation is is used;
+1771453039369:#otherwise, specify threshold vector
+1771453039369:#of lower and upper beta values such
+1771453039369:#as c(-0.3,0.3), we used c(-0.2,0.2)
+1771453039369:#in the paper
+1771453039369:overlap.density           = 0.1, #For combining final CNV calls for confidence
+1771453039369:sesame.data.cache         = "EPIC", #The default sesame reference platform
+1771453039370:sesame.data.normal        = 'EPIC.5.normal', #The default sesame and hm450
+1771453039370:#internal reference samples
+1771453039370:genome.version            = "hg19", #Or can set to "hg38"
+1771453039370:hm450.workflow            = "B", #The HM450 subworkflow to use - only B
+1771453039370:#is running currently.
+1771453039370:#"A" no correction,
+1771453039371:#"B" median correction (default),
+1771453039371:#"C" run Conumee
+1771453039371:champ.padj                = 0.05, #padj to filter champ results
+1771453039371:champ.control             = FALSE, #run champ.control etc.
+1771453039371:champ.run.combat          = FALSE, #run champ.run.combat etc.
+1771453039371:champ.run.dmp             = FALSE, #If only one pheno var must = FALSE
+1771453039372:champ.run.dmr             = FALSE, #If only one pheno var must = FALSE
+1771453039372:champ.run.block           = FALSE, #If only one pheno var must = FALSE
+1771453039372:champ.run.gsea            = FALSE, #Requires dmp and dmr results
+1771453039372:champ.run.epimod          = FALSE, #If only one pheno var must = FALSE
+1771453039372:epi.run.gistic            = TRUE, #Whether to Run GISTIC in Epicopy workflow
+1771453039372:olaps.split.field         = "Sample_ID", #Split field to ise during overlaps
+1771453039373:#Don't change unless you know what
+1771453039373:#you are doing
+1771453039373:estimate.recurrence       = TRUE, #Estimate recursion to produce p values when
+1771453039373:#finding overlaps with population_ranges
+1771453039373:#functions
+1771453039373:ov.pvalue                 = 0.05, #pvalue threshold for overlaps identified
+1771453039374:ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding
+1771453039374:#overlaps
+1771453039374:simplify.reduce           = weightedmean, #Equation to use during reduction
+1771453039374:custom.bin.size           = i
+1771453039374:)
+1771453039375:}
+1771453093148:methyl_master(
+1771453093149:routine                   = routine.run, #The routine to run
+1771453093149:input.dir                 = input.dir, #The input (idat.files) directory
+1771453093150:output.dir                = output.dir, #The output directory
+1771453093150:sample.sheet.path         = sample.sheet.path, #The path to the MethylMasteR sample sheet
+1771453093150:r.lib.path                = .libPaths()[1], #The path to the R Library path
+1771453093150:file.sep                  = "/", #For windows or "/" for Linux
+1771453093150:create.dir                = TRUE, #Whether to cretae directory if does not
+1771453093150:#exist?
+1771453093150:save.seg                  = TRUE, #Whether to save segmentation results
+1771453093151:n.cores                   = 1, #Multicore does not work for all routines
+1771453093151:#on all operating systems
+1771453093151:os.type                   = "linux", #Or "linux"
+1771453093151:proj                      = "TCGA-KIRC", #"TCGA-BLCA" etc.
+1771453093151:visualize                 = TRUE, #Whether to output plots,
+1771453093151:visualize.individual      = FALSE, #Whether to output indvidual sample plots,
+1771453093151:#only works for routine sesame
+1771453093152:reference                 = "internal", #"comparison" or 'internal"
+1771453093152:reference.name            = NA, #For Epicopy use NA for median,
+1771453093152:#"all" is not currently supported
+1771453093152:#by Epicopy
+1771453093152:comparison                = c("tumor","normal"), #Always required treatment
+1771453093152:#first then contro can also be more specific when
+1771453093153:#designing sample sheet and use values like
+1771453093153:# c("tumor_male","cord_male etc") etc.
+1771453093153:#Note: in routines where internal reference is
+1771453093153:#used, second argument is ignored
+1771453093153:form.thresholds           = c(-0.2, 0.2), #Used to calculate final CNV state.
+1771453093153:#If NULL, equation is is used;
+1771453093154:#otherwise, specify threshold vector
+1771453093154:#of lower and upper beta values such
+1771453093154:#as c(-0.3,0.3), we used c(-0.2,0.2)
+1771453093154:#in the paper
+1771453093154:overlap.density           = 0.1, #For combining final CNV calls for confidence
+1771453093154:sesame.data.cache         = "EPIC", #The default sesame reference platform
+1771453093154:sesame.data.normal        = 'EPIC.5.normal', #The default sesame and hm450
+1771453093155:#internal reference samples
+1771453093155:genome.version            = "hg19", #Or can set to "hg38"
+1771453093155:hm450.workflow            = "B", #The HM450 subworkflow to use - only B
+1771453093155:#is running currently.
+1771453093155:#"A" no correction,
+1771453093155:#"B" median correction (default),
+1771453093156:#"C" run Conumee
+1771453093156:champ.padj                = 0.05, #padj to filter champ results
+1771453093156:champ.control             = FALSE, #run champ.control etc.
+1771453093156:champ.run.combat          = FALSE, #run champ.run.combat etc.
+1771453093156:champ.run.dmp             = FALSE, #If only one pheno var must = FALSE
+1771453093156:champ.run.dmr             = FALSE, #If only one pheno var must = FALSE
+1771453093157:champ.run.block           = FALSE, #If only one pheno var must = FALSE
+1771453093157:champ.run.gsea            = FALSE, #Requires dmp and dmr results
+1771453093157:champ.run.epimod          = FALSE, #If only one pheno var must = FALSE
+1771453093157:epi.run.gistic            = TRUE, #Whether to Run GISTIC in Epicopy workflow
+1771453093157:olaps.split.field         = "Sample_ID", #Split field to ise during overlaps
+1771453093157:#Don't change unless you know what
+1771453093158:#you are doing
+1771453093158:estimate.recurrence       = TRUE, #Estimate recursion to produce p values when
+1771453093158:#finding overlaps with population_ranges
+1771453093158:#functions
+1771453093158:ov.pvalue                 = 0.05, #pvalue threshold for overlaps identified
+1771453093158:ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding
+1771453093159:#overlaps
+1771453093159:simplify.reduce           = weightedmean, #Equation to use during reduction
+1771453093159:custom.bin.size           = 10000
+1771453093159:)
+1771453237233:rm(i)
+1771453253742:methyl_master(
+1771453253743:routine                   = routine.run, #The routine to run
+1771453253743:input.dir                 = input.dir, #The input (idat.files) directory
+1771453253743:output.dir                = output.dir, #The output directory
+1771453253743:sample.sheet.path         = sample.sheet.path, #The path to the MethylMasteR sample sheet
+1771453253743:r.lib.path                = .libPaths()[1], #The path to the R Library path
+1771453253744:file.sep                  = "/", #For windows or "/" for Linux
+1771453253744:create.dir                = TRUE, #Whether to cretae directory if does not
+1771453253744:#exist?
+1771453253744:save.seg                  = TRUE, #Whether to save segmentation results
+1771453253744:n.cores                   = 1, #Multicore does not work for all routines
+1771453253744:#on all operating systems
+1771453253744:os.type                   = "linux", #Or "linux"
+1771453253745:proj                      = "TCGA-KIRC", #"TCGA-BLCA" etc.
+1771453253745:visualize                 = TRUE, #Whether to output plots,
+1771453253745:visualize.individual      = FALSE, #Whether to output indvidual sample plots,
+1771453253745:#only works for routine sesame
+1771453253745:reference                 = "internal", #"comparison" or 'internal"
+1771453253745:reference.name            = NA, #For Epicopy use NA for median,
+1771453253745:#"all" is not currently supported
+1771453253746:#by Epicopy
+1771453253746:comparison                = c("tumor","normal"), #Always required treatment
+1771453253746:#first then contro can also be more specific when
+1771453253746:#designing sample sheet and use values like
+1771453253746:# c("tumor_male","cord_male etc") etc.
+1771453253746:#Note: in routines where internal reference is
+1771453253747:#used, second argument is ignored
+1771453253747:form.thresholds           = c(-0.2, 0.2), #Used to calculate final CNV state.
+1771453253747:#If NULL, equation is is used;
+1771453253747:#otherwise, specify threshold vector
+1771453253747:#of lower and upper beta values such
+1771453253747:#as c(-0.3,0.3), we used c(-0.2,0.2)
+1771453253748:#in the paper
+1771453253748:overlap.density           = 0.1, #For combining final CNV calls for confidence
+1771453253748:sesame.data.cache         = "EPIC", #The default sesame reference platform
+1771453253748:sesame.data.normal        = 'EPIC.5.normal', #The default sesame and hm450
+1771453253748:#internal reference samples
+1771453253748:genome.version            = "hg19", #Or can set to "hg38"
+1771453253748:hm450.workflow            = "B", #The HM450 subworkflow to use - only B
+1771453253749:#is running currently.
+1771453253749:#"A" no correction,
+1771453253749:#"B" median correction (default),
+1771453253749:#"C" run Conumee
+1771453253749:champ.padj                = 0.05, #padj to filter champ results
+1771453253749:champ.control             = FALSE, #run champ.control etc.
+1771453253750:champ.run.combat          = FALSE, #run champ.run.combat etc.
+1771453253750:champ.run.dmp             = FALSE, #If only one pheno var must = FALSE
+1771453253750:champ.run.dmr             = FALSE, #If only one pheno var must = FALSE
+1771453253750:champ.run.block           = FALSE, #If only one pheno var must = FALSE
+1771453253750:champ.run.gsea            = FALSE, #Requires dmp and dmr results
+1771453253750:champ.run.epimod          = FALSE, #If only one pheno var must = FALSE
+1771453253751:epi.run.gistic            = TRUE, #Whether to Run GISTIC in Epicopy workflow
+1771453253751:olaps.split.field         = "Sample_ID", #Split field to ise during overlaps
+1771453253751:#Don't change unless you know what
+1771453253751:#you are doing
+1771453253751:estimate.recurrence       = TRUE, #Estimate recursion to produce p values when
+1771453253751:#finding overlaps with population_ranges
+1771453253752:#functions
+1771453253752:ov.pvalue                 = 0.05, #pvalue threshold for overlaps identified
+1771453253752:ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding
+1771453253752:#overlaps
+1771453253752:simplify.reduce           = weightedmean #Equation to use during reduction
+1771453253752:)
+1771453259750:sesameDataCacheAll()
+1771453265761:library(sesame)
+1771453268637:sesameDataCacheAll()
+1771453420938:methyl_master(
+1771453420939:routine                   = routine.run, #The routine to run
+1771453420939:input.dir                 = input.dir, #The input (idat.files) directory
+1771453420939:output.dir                = output.dir, #The output directory
+1771453420939:sample.sheet.path         = sample.sheet.path, #The path to the MethylMasteR sample sheet
+1771453420940:r.lib.path                = .libPaths()[1], #The path to the R Library path
+1771453420940:file.sep                  = "/", #For windows or "/" for Linux
+1771453420940:create.dir                = TRUE, #Whether to cretae directory if does not
+1771453420940:#exist?
+1771453420940:save.seg                  = TRUE, #Whether to save segmentation results
+1771453420940:n.cores                   = 1, #Multicore does not work for all routines
+1771453420941:#on all operating systems
+1771453420941:os.type                   = "linux", #Or "linux"
+1771453420941:proj                      = "TCGA-KIRC", #"TCGA-BLCA" etc.
+1771453420941:visualize                 = TRUE, #Whether to output plots,
+1771453420941:visualize.individual      = FALSE, #Whether to output indvidual sample plots,
+1771453420941:#only works for routine sesame
+1771453420941:reference                 = "internal", #"comparison" or 'internal"
+1771453420942:reference.name            = NA, #For Epicopy use NA for median,
+1771453420942:#"all" is not currently supported
+1771453420942:#by Epicopy
+1771453420942:comparison                = c("tumor","normal"), #Always required treatment
+1771453420942:#first then contro can also be more specific when
+1771453420942:#designing sample sheet and use values like
+1771453420942:# c("tumor_male","cord_male etc") etc.
+1771453420943:#Note: in routines where internal reference is
+1771453420943:#used, second argument is ignored
+1771453420943:form.thresholds           = c(-0.2, 0.2), #Used to calculate final CNV state.
+1771453420943:#If NULL, equation is is used;
+1771453420943:#otherwise, specify threshold vector
+1771453420943:#of lower and upper beta values such
+1771453420944:#as c(-0.3,0.3), we used c(-0.2,0.2)
+1771453420944:#in the paper
+1771453420944:overlap.density           = 0.1, #For combining final CNV calls for confidence
+1771453420944:sesame.data.cache         = "EPIC", #The default sesame reference platform
+1771453420944:sesame.data.normal        = 'EPIC.5.normal', #The default sesame and hm450
+1771453420944:#internal reference samples
+1771453420945:genome.version            = "hg19", #Or can set to "hg38"
+1771453420945:hm450.workflow            = "B", #The HM450 subworkflow to use - only B
+1771453420945:#is running currently.
+1771453420945:#"A" no correction,
+1771453420945:#"B" median correction (default),
+1771453420946:#"C" run Conumee
+1771453420946:champ.padj                = 0.05, #padj to filter champ results
+1771453420946:champ.control             = FALSE, #run champ.control etc.
+1771453420946:champ.run.combat          = FALSE, #run champ.run.combat etc.
+1771453420946:champ.run.dmp             = FALSE, #If only one pheno var must = FALSE
+1771453420946:champ.run.dmr             = FALSE, #If only one pheno var must = FALSE
+1771453420947:champ.run.block           = FALSE, #If only one pheno var must = FALSE
+1771453420947:champ.run.gsea            = FALSE, #Requires dmp and dmr results
+1771453420947:champ.run.epimod          = FALSE, #If only one pheno var must = FALSE
+1771453420947:epi.run.gistic            = TRUE, #Whether to Run GISTIC in Epicopy workflow
+1771453420947:olaps.split.field         = "Sample_ID", #Split field to ise during overlaps
+1771453420947:#Don't change unless you know what
+1771453420947:#you are doing
+1771453420948:estimate.recurrence       = TRUE, #Estimate recursion to produce p values when
+1771453420948:#finding overlaps with population_ranges
+1771453420948:#functions
+1771453420948:ov.pvalue                 = 0.05, #pvalue threshold for overlaps identified
+1771453420948:ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding
+1771453420949:#overlaps
+1771453420949:simplify.reduce           = weightedmean, #Equation to use during reduction
+1771453420949:custom.binsize            = 10000
+1771453420949:)
+1771453602405:methyl_master(
+1771453602406:routine                   = routine.run, #The routine to run
+1771453602406:input.dir                 = input.dir, #The input (idat.files) directory
+1771453602406:output.dir                = output.dir, #The output directory
+1771453602406:sample.sheet.path         = sample.sheet.path, #The path to the MethylMasteR sample sheet
+1771453602406:r.lib.path                = .libPaths()[1], #The path to the R Library path
+1771453602407:file.sep                  = "/", #For windows or "/" for Linux
+1771453602407:create.dir                = TRUE, #Whether to cretae directory if does not
+1771453602407:#exist?
+1771453602407:save.seg                  = TRUE, #Whether to save segmentation results
+1771453602407:n.cores                   = 1, #Multicore does not work for all routines
+1771453602407:#on all operating systems
+1771453602407:os.type                   = "linux", #Or "linux"
+1771453602408:proj                      = "TCGA-KIRC", #"TCGA-BLCA" etc.
+1771453602408:visualize                 = TRUE, #Whether to output plots,
+1771453602408:visualize.individual      = FALSE, #Whether to output indvidual sample plots,
+1771453602408:#only works for routine sesame
+1771453602408:reference                 = "internal", #"comparison" or 'internal"
+1771453602408:reference.name            = NA, #For Epicopy use NA for median,
+1771453602409:#"all" is not currently supported
+1771453602409:#by Epicopy
+1771453602409:comparison                = c("tumor","normal"), #Always required treatment
+1771453602409:#first then contro can also be more specific when
+1771453602409:#designing sample sheet and use values like
+1771453602410:# c("tumor_male","cord_male etc") etc.
+1771453602410:#Note: in routines where internal reference is
+1771453602410:#used, second argument is ignored
+1771453602410:form.thresholds           = c(-0.2, 0.2), #Used to calculate final CNV state.
+1771453602410:#If NULL, equation is is used;
+1771453602411:#otherwise, specify threshold vector
+1771453602411:#of lower and upper beta values such
+1771453602411:#as c(-0.3,0.3), we used c(-0.2,0.2)
+1771453602411:#in the paper
+1771453602411:overlap.density           = 0.1, #For combining final CNV calls for confidence
+1771453602411:sesame.data.cache         = "EPIC", #The default sesame reference platform
+1771453602411:sesame.data.normal        = 'EPIC.5.normal', #The default sesame and hm450
+1771453602412:#internal reference samples
+1771453602412:genome.version            = "hg19", #Or can set to "hg38"
+1771453602412:hm450.workflow            = "B", #The HM450 subworkflow to use - only B
+1771453602412:#is running currently.
+1771453602412:#"A" no correction,
+1771453602413:#"B" median correction (default),
+1771453602413:#"C" run Conumee
+1771453602413:champ.padj                = 0.05, #padj to filter champ results
+1771453602413:champ.control             = FALSE, #run champ.control etc.
+1771453602413:champ.run.combat          = FALSE, #run champ.run.combat etc.
+1771453602413:champ.run.dmp             = FALSE, #If only one pheno var must = FALSE
+1771453602414:champ.run.dmr             = FALSE, #If only one pheno var must = FALSE
+1771453602414:champ.run.block           = FALSE, #If only one pheno var must = FALSE
+1771453602414:champ.run.gsea            = FALSE, #Requires dmp and dmr results
+1771453602414:champ.run.epimod          = FALSE, #If only one pheno var must = FALSE
+1771453602414:epi.run.gistic            = TRUE, #Whether to Run GISTIC in Epicopy workflow
+1771453602414:olaps.split.field         = "Sample_ID", #Split field to ise during overlaps
+1771453602415:#Don't change unless you know what
+1771453602415:#you are doing
+1771453602415:estimate.recurrence       = TRUE, #Estimate recursion to produce p values when
+1771453602415:#finding overlaps with population_ranges
+1771453602415:#functions
+1771453602415:ov.pvalue                 = 0.05, #pvalue threshold for overlaps identified
+1771453602416:ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding
+1771453602416:#overlaps
+1771453602416:simplify.reduce           = weightedmean, #Equation to use during reduction
+1771453602416:custom.binsize            = 10000
+1771453602416:)
+1771453690468:source("~/LabData/CELCODE/Log2MedianCalc.R")
+1771453706255:methyl_master(
+1771453706256:routine                   = routine.run, #The routine to run
+1771453706256:input.dir                 = input.dir, #The input (idat.files) directory
+1771453706256:output.dir                = output.dir, #The output directory
+1771453706256:sample.sheet.path         = sample.sheet.path, #The path to the MethylMasteR sample sheet
+1771453706256:r.lib.path                = .libPaths()[1], #The path to the R Library path
+1771453706256:file.sep                  = "/", #For windows or "/" for Linux
+1771453706256:create.dir                = TRUE, #Whether to cretae directory if does not
+1771453706257:#exist?
+1771453706257:save.seg                  = TRUE, #Whether to save segmentation results
+1771453706257:n.cores                   = 1, #Multicore does not work for all routines
+1771453706257:#on all operating systems
+1771453706257:os.type                   = "linux", #Or "linux"
+1771453706257:proj                      = "TCGA-KIRC", #"TCGA-BLCA" etc.
+1771453706258:visualize                 = TRUE, #Whether to output plots,
+1771453706258:visualize.individual      = FALSE, #Whether to output indvidual sample plots,
+1771453706258:#only works for routine sesame
+1771453706258:reference                 = "internal", #"comparison" or 'internal"
+1771453706258:reference.name            = NA, #For Epicopy use NA for median,
+1771453706258:#"all" is not currently supported
+1771453706259:#by Epicopy
+1771453706259:comparison                = c("tumor","normal"), #Always required treatment
+1771453706259:#first then contro can also be more specific when
+1771453706259:#designing sample sheet and use values like
+1771453706259:# c("tumor_male","cord_male etc") etc.
+1771453706259:#Note: in routines where internal reference is
+1771453706260:#used, second argument is ignored
+1771453706260:form.thresholds           = c(-0.2, 0.2), #Used to calculate final CNV state.
+1771453706260:#If NULL, equation is is used;
+1771453706260:#otherwise, specify threshold vector
+1771453706260:#of lower and upper beta values such
+1771453706260:#as c(-0.3,0.3), we used c(-0.2,0.2)
+1771453706260:#in the paper
+1771453706261:overlap.density           = 0.1, #For combining final CNV calls for confidence
+1771453706261:sesame.data.cache         = "EPIC", #The default sesame reference platform
+1771453706261:sesame.data.normal        = 'EPIC.5.normal', #The default sesame and hm450
+1771453706261:#internal reference samples
+1771453706261:genome.version            = "hg19", #Or can set to "hg38"
+1771453706262:hm450.workflow            = "B", #The HM450 subworkflow to use - only B
+1771453706262:#is running currently.
+1771453706262:#"A" no correction,
+1771453706262:#"B" median correction (default),
+1771453706262:#"C" run Conumee
+1771453706263:champ.padj                = 0.05, #padj to filter champ results
+1771453706263:champ.control             = FALSE, #run champ.control etc.
+1771453706263:champ.run.combat          = FALSE, #run champ.run.combat etc.
+1771453706263:champ.run.dmp             = FALSE, #If only one pheno var must = FALSE
+1771453706263:champ.run.dmr             = FALSE, #If only one pheno var must = FALSE
+1771453706263:champ.run.block           = FALSE, #If only one pheno var must = FALSE
+1771453706263:champ.run.gsea            = FALSE, #Requires dmp and dmr results
+1771453706264:champ.run.epimod          = FALSE, #If only one pheno var must = FALSE
+1771453706264:epi.run.gistic            = TRUE, #Whether to Run GISTIC in Epicopy workflow
+1771453706264:olaps.split.field         = "Sample_ID", #Split field to ise during overlaps
+1771453706264:#Don't change unless you know what
+1771453706264:#you are doing
+1771453706264:estimate.recurrence       = TRUE, #Estimate recursion to produce p values when
+1771453706265:#finding overlaps with population_ranges
+1771453706265:#functions
+1771453706265:ov.pvalue                 = 0.05, #pvalue threshold for overlaps identified
+1771453706265:ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding
+1771453706266:#overlaps
+1771453706266:simplify.reduce           = weightedmean #Equation to use during reduction
+1771453706266:)
+1771453767963:methyl_master_custom(custom.idat.files.dir       = input.dir,
+1771453767965:custom.output.dir           = output.dir,
+1771453767965:custom.ref                  = NULL,
+1771453767965:custom.sample.sheet.path    = sample.sheet.path,
+1771453767965:custom.comparison           = NULL,
+1771453767966:custom.file.sep             = NULL,
+1771453767966:custom.data.cache           = "EPIC",
+1771453767966:custom.data.normal          = "EPIC.5.normal",
+1771453767966:custom.ref.version          = "hg19",
+1771453767966:custom.reference            = "internal",
+1771453767966:custom.save.seg             = FALSE,
+1771453767967:custom.bin.size             = 50000)
+1771453879777:methyl_master_custom(custom.idat.files.dir       = input.dir,
+1771453879778:custom.output.dir           = output.dir,
+1771453879778:custom.ref                  = NULL,
+1771453879778:custom.sample.sheet.path    = sample.sheet.path,
+1771453879778:custom.comparison           = NULL,
+1771453879778:custom.file.sep             = "/",
+1771453879778:custom.data.cache           = "EPIC",
+1771453879778:custom.data.normal          = "EPIC.5.normal",
+1771453879779:custom.ref.version          = "hg19",
+1771453879779:custom.reference            = "internal",
+1771453879779:custom.save.seg             = FALSE,
+1771453879779:custom.bin.size             = 50000)
+1771454077618:methyl_master(
+1771454077618:routine                   = routine.run, #The routine to run
+1771454077618:input.dir                 = input.dir, #The input (idat.files) directory
+1771454077619:output.dir                = output.dir, #The output directory
+1771454077619:sample.sheet.path         = sample.sheet.path, #The path to the MethylMasteR sample sheet
+1771454077619:r.lib.path                = .libPaths()[1], #The path to the R Library path
+1771454077619:file.sep                  = "/", #For windows or "/" for Linux
+1771454077619:create.dir                = TRUE, #Whether to cretae directory if does not
+1771454077619:#exist?
+1771454077619:save.seg                  = FALSE, #Whether to save segmentation results
+1771454077620:n.cores                   = 1, #Multicore does not work for all routines
+1771454077620:#on all operating systems
+1771454077620:os.type                   = "linux", #Or "linux"
+1771454077620:proj                      = "TCGA-KIRC", #"TCGA-BLCA" etc.
+1771454077620:visualize                 = TRUE, #Whether to output plots,
+1771454077620:visualize.individual      = FALSE, #Whether to output indvidual sample plots,
+1771454077620:#only works for routine sesame
+1771454077621:reference                 = "internal", #"comparison" or 'internal"
+1771454077621:reference.name            = NA, #For Epicopy use NA for median,
+1771454077621:#"all" is not currently supported
+1771454077621:#by Epicopy
+1771454077621:comparison                = c("tumor"), #Always required treatment
+1771454077621:#first then contro can also be more specific when
+1771454077621:#designing sample sheet and use values like
+1771454077622:# c("tumor_male","cord_male etc") etc.
+1771454077622:#Note: in routines where internal reference is
+1771454077622:#used, second argument is ignored
+1771454077622:form.thresholds           = c(-0.2, 0.2), #Used to calculate final CNV state.
+1771454077622:#If NULL, equation is is used;
+1771454077622:#otherwise, specify threshold vector
+1771454077623:#of lower and upper beta values such
+1771454077623:#as c(-0.3,0.3), we used c(-0.2,0.2)
+1771454077623:#in the paper
+1771454077623:overlap.density           = 0.1, #For combining final CNV calls for confidence
+1771454077623:sesame.data.cache         = "EPIC", #The default sesame reference platform
+1771454077623:sesame.data.normal        = 'EPIC.5.normal', #The default sesame and hm450
+1771454077623:#internal reference samples
+1771454077624:genome.version            = "hg19", #Or can set to "hg38"
+1771454077624:hm450.workflow            = "B", #The HM450 subworkflow to use - only B
+1771454077624:#is running currently.
+1771454077624:#"A" no correction,
+1771454077624:#"B" median correction (default),
+1771454077624:#"C" run Conumee
+1771454077625:champ.padj                = 0.05, #padj to filter champ results
+1771454077625:champ.control             = FALSE, #run champ.control etc.
+1771454077625:champ.run.combat          = FALSE, #run champ.run.combat etc.
+1771454077625:champ.run.dmp             = FALSE, #If only one pheno var must = FALSE
+1771454077625:champ.run.dmr             = FALSE, #If only one pheno var must = FALSE
+1771454077625:champ.run.block           = FALSE, #If only one pheno var must = FALSE
+1771454077626:champ.run.gsea            = FALSE, #Requires dmp and dmr results
+1771454077626:champ.run.epimod          = FALSE, #If only one pheno var must = FALSE
+1771454077626:epi.run.gistic            = TRUE, #Whether to Run GISTIC in Epicopy workflow
+1771454077626:olaps.split.field         = "Sample_ID", #Split field to ise during overlaps
+1771454077626:#Don't change unless you know what
+1771454077626:#you are doing
+1771454077627:estimate.recurrence       = TRUE, #Estimate recursion to produce p values when
+1771454077627:#finding overlaps with population_ranges
+1771454077627:#functions
+1771454077627:ov.pvalue                 = 0.05, #pvalue threshold for overlaps identified
+1771454077627:ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding
+1771454077627:#overlaps
+1771454077628:simplify.reduce           = weightedmean, #Equation to use during reduction
+1771454077628:custom.binsize            = 10000
+1771454077628:)
+1771454829730:methyl_master(
+1771454829731:routine                   = routine.run, #The routine to run
+1771454829731:input.dir                 = input.dir, #The input (idat.files) directory
+1771454829731:output.dir                = output.dir, #The output directory
+1771454829731:sample.sheet.path         = sample.sheet.path, #The path to the MethylMasteR sample sheet
+1771454829732:r.lib.path                = .libPaths()[1], #The path to the R Library path
+1771454829732:file.sep                  = "/", #For windows or "/" for Linux
+1771454829732:create.dir                = TRUE, #Whether to cretae directory if does not
+1771454829732:#exist?
+1771454829732:save.seg                  = FALSE, #Whether to save segmentation results
+1771454829732:n.cores                   = 1, #Multicore does not work for all routines
+1771454829733:#on all operating systems
+1771454829733:os.type                   = "linux", #Or "linux"
+1771454829733:proj                      = "TCGA-KIRC", #"TCGA-BLCA" etc.
+1771454829733:visualize                 = TRUE, #Whether to output plots,
+1771454829733:visualize.individual      = FALSE, #Whether to output indvidual sample plots,
+1771454829733:#only works for routine sesame
+1771454829733:reference                 = "internal", #"comparison" or 'internal"
+1771454829734:reference.name            = NA, #For Epicopy use NA for median,
+1771454829734:#"all" is not currently supported
+1771454829734:#by Epicopy
+1771454829734:comparison                = c("tumor"), #Always required treatment
+1771454829734:#first then contro can also be more specific when
+1771454829734:#designing sample sheet and use values like
+1771454829735:# c("tumor_male","cord_male etc") etc.
+1771454829735:#Note: in routines where internal reference is
+1771454829735:#used, second argument is ignored
+1771454829735:form.thresholds           = c(-0.2, 0.2), #Used to calculate final CNV state.
+1771454829735:#If NULL, equation is is used;
+1771454829735:#otherwise, specify threshold vector
+1771454829736:#of lower and upper beta values such
+1771454829736:#as c(-0.3,0.3), we used c(-0.2,0.2)
+1771454829736:#in the paper
+1771454829736:overlap.density           = 0.1, #For combining final CNV calls for confidence
+1771454829736:sesame.data.cache         = "EPIC", #The default sesame reference platform
+1771454829736:sesame.data.normal        = 'EPIC.5.normal', #The default sesame and hm450
+1771454829737:#internal reference samples
+1771454829737:genome.version            = "hg19", #Or can set to "hg38"
+1771454829737:hm450.workflow            = "B", #The HM450 subworkflow to use - only B
+1771454829737:#is running currently.
+1771454829737:#"A" no correction,
+1771454829737:#"B" median correction (default),
+1771454829738:#"C" run Conumee
+1771454829738:champ.padj                = 0.05, #padj to filter champ results
+1771454829738:champ.control             = FALSE, #run champ.control etc.
+1771454829738:champ.run.combat          = FALSE, #run champ.run.combat etc.
+1771454829738:champ.run.dmp             = FALSE, #If only one pheno var must = FALSE
+1771454829738:champ.run.dmr             = FALSE, #If only one pheno var must = FALSE
+1771454829739:champ.run.block           = FALSE, #If only one pheno var must = FALSE
+1771454829739:champ.run.gsea            = FALSE, #Requires dmp and dmr results
+1771454829739:champ.run.epimod          = FALSE, #If only one pheno var must = FALSE
+1771454829739:epi.run.gistic            = TRUE, #Whether to Run GISTIC in Epicopy workflow
+1771454829740:olaps.split.field         = "Sample_ID", #Split field to ise during overlaps
+1771454829740:#Don't change unless you know what
+1771454829740:#you are doing
+1771454829740:estimate.recurrence       = TRUE, #Estimate recursion to produce p values when
+1771454829740:#finding overlaps with population_ranges
+1771454829741:#functions
+1771454829741:ov.pvalue                 = 0.05, #pvalue threshold for overlaps identified
+1771454829741:ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding
+1771454829741:#overlaps
+1771454829741:simplify.reduce           = weightedmean, #Equation to use during reduction
+1771454829742:custom.binsize            = 50000
+1771454829742:)
+1771454872090:library(dplyr)
+1771454872461:library(MethylMasteR)
+1771454903009:library(sesame)
+1771454904968:input.dir <- "~/LabData/Normal_smooth_muscle_EPIC_data/idat_files"
+1771454905815:output.dir <- "~/Outputs/MethylMaster/Normals/10000"
+1771454928251:routine.run <- "custom"
+1771454929099:sample.sheet.path <- "~/LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv"
+1771454930571:bins <- c(10000, 50000, 1e+05, 1e+06)
+1771454931731:for(bin in bins){
+1771454931731:output.dir <- paste0("~/Outputs/MethylMaster/Normals/",bin)
+1771454931731:methyl_master(
+1771454931731:routine                   = routine.run, #The routine to run
+1771454931732:input.dir                 = input.dir, #The input (idat.files) directory
+1771454931732:output.dir                = output.dir, #The output directory
+1771454931732:sample.sheet.path         = sample.sheet.path, #The path to the MethylMasteR sample sheet
+1771454931732:r.lib.path                = .libPaths()[1], #The path to the R Library path
+1771454931732:file.sep                  = "/", #For windows or "/" for Linux
+1771454931732:create.dir                = TRUE, #Whether to cretae directory if does not
+1771454931733:#exist?
+1771454931733:save.seg                  = FALSE, #Whether to save segmentation results
+1771454931733:n.cores                   = 1, #Multicore does not work for all routines
+1771454931733:#on all operating systems
+1771454931733:os.type                   = "linux", #Or "linux"
+1771454931733:proj                      = "TCGA-KIRC", #"TCGA-BLCA" etc.
+1771454931734:visualize                 = TRUE, #Whether to output plots,
+1771454931734:visualize.individual      = FALSE, #Whether to output indvidual sample plots,
+1771454931734:#only works for routine sesame
+1771454931734:reference                 = "internal", #"comparison" or 'internal"
+1771454931734:reference.name            = NA, #For Epicopy use NA for median,
+1771454931735:#"all" is not currently supported
+1771454931735:#by Epicopy
+1771454931735:comparison                = c("tumor"), #Always required treatment
+1771454931735:#first then contro can also be more specific when
+1771454931735:#designing sample sheet and use values like
+1771454931735:# c("tumor_male","cord_male etc") etc.
+1771454931736:#Note: in routines where internal reference is
+1771454931736:#used, second argument is ignored
+1771454931736:form.thresholds           = c(-0.2, 0.2), #Used to calculate final CNV state.
+1771454931736:#If NULL, equation is is used;
+1771454931736:#otherwise, specify threshold vector
+1771454931736:#of lower and upper beta values such
+1771454931737:#as c(-0.3,0.3), we used c(-0.2,0.2)
+1771454931737:#in the paper
+1771454931737:overlap.density           = 0.1, #For combining final CNV calls for confidence
+1771454931737:sesame.data.cache         = "EPIC", #The default sesame reference platform
+1771454931737:sesame.data.normal        = 'EPIC.5.normal', #The default sesame and hm450
+1771454931737:#internal reference samples
+1771454931738:genome.version            = "hg19", #Or can set to "hg38"
+1771454931738:hm450.workflow            = "B", #The HM450 subworkflow to use - only B
+1771454931738:#is running currently.
+1771454931738:#"A" no correction,
+1771454931738:#"B" median correction (default),
+1771454931739:#"C" run Conumee
+1771454931739:champ.padj                = 0.05, #padj to filter champ results
+1771454931739:champ.control             = FALSE, #run champ.control etc.
+1771454931739:champ.run.combat          = FALSE, #run champ.run.combat etc.
+1771454931739:champ.run.dmp             = FALSE, #If only one pheno var must = FALSE
+1771454931739:champ.run.dmr             = FALSE, #If only one pheno var must = FALSE
+1771454931740:champ.run.block           = FALSE, #If only one pheno var must = FALSE
+1771454931740:champ.run.gsea            = FALSE, #Requires dmp and dmr results
+1771454931740:champ.run.epimod          = FALSE, #If only one pheno var must = FALSE
+1771454931740:epi.run.gistic            = TRUE, #Whether to Run GISTIC in Epicopy workflow
+1771454931741:olaps.split.field         = "Sample_ID", #Split field to ise during overlaps
+1771454931741:#Don't change unless you know what
+1771454931741:#you are doing
+1771454931741:estimate.recurrence       = TRUE, #Estimate recursion to produce p values when
+1771454931741:#finding overlaps with population_ranges
+1771454931741:#functions
+1771454931741:ov.pvalue                 = 0.05, #pvalue threshold for overlaps identified
+1771454931742:ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding
+1771454931742:#overlaps
+1771454931742:simplify.reduce           = weightedmean, #Equation to use during reduction
+1771454931742:custom.binsize            = bin
+1771454931743:)
+1771454931743:}
+1771455886714:samples <- read.csv(sample.sheet.path)$Sample_Name
+1771455897495:caseCorr <- function(IDs, bin){
+1771455897497:Methyl <- c()
+1771455897497:Ses <- c()
+1771455897497:Con <- c()
+1771455897497:for(ID in IDs){
+1771455897497:MethylMaster <- read.csv(paste0("~/Outputs/MethylMaster/Normals/",bin,"/",ID,"/autocorrected_regions.csv"))
+1771455897498:MethylMaster <- median(MethylMaster$Mean)
+1771455897498:Sesame <- read.csv(paste0("~/Outputs/SeSAMe/Normals/",bin,"/segments_",ID,".csv"))
+1771455897498:Sesame <- median(Sesame$seg.mean)
+1771455897498:Conumee <- read.csv(paste0("~/Outputs/SeSAMe/Normals/",bin,"/",ID,".csv"))
+1771455897498:Conumee <- median(Conumee$seg.mean)
+1771455897499:Methyl <- c(Methyl, MethylMaster)
+1771455897499:Ses <- c(Ses, Sesame)
+1771455897499:Con <- c(Con,Conumee)
+1771455897499:}
+1771455897499:acc <- data.frame(Conumee_Median = median(Con),
+1771455897500:Conumee_SD = sd(Con),
+1771455897500:Sesame_Median = median(Ses),
+1771455897500:Sesame_SD = sd(Ses),
+1771455897500:Methyl_Median = median(Methyl),
+1771455897500:Methyl_SD = sd(Methyl))
+1771455897501:}
+1771455911380:caseCorr(samples, 10000)
+1771455997617:caseCorr <- function(IDs, bin){
+1771455997618:Methyl <- c()
+1771455997618:Ses <- c()
+1771455997619:Con <- c()
+1771455997619:for(ID in IDs){
+1771455997619:MethylMaster <- read.csv(paste0("~/Outputs/MethylMaster/Normals/",bin,"/",ID,"/autocorrected_regions.csv"))
+1771455997619:MethylMaster <- median(MethylMaster$Mean)
+1771455997620:Sesame <- read.csv(paste0("~/Outputs/SeSAMe/Normals/",bin,"/segments_",ID,".csv"))
+1771455997620:Sesame <- median(Sesame$seg.mean)
+1771455997620:Conumee <- read.csv(paste0("~/Outputs/Conumee/LabNormals/",bin,"/",ID,".csv"))
+1771455997620:Conumee <- median(Conumee$seg.mean)
+1771455997620:Methyl <- c(Methyl, MethylMaster)
+1771455997621:Ses <- c(Ses, Sesame)
+1771455997621:Con <- c(Con,Conumee)
+1771455997621:}
+1771455997621:acc <- data.frame(Conumee_Median = median(Con),
+1771455997622:Conumee_SD = sd(Con),
+1771455997622:Sesame_Median = median(Ses),
+1771455997622:Sesame_SD = sd(Ses),
+1771455997622:Methyl_Median = median(Methyl),
+1771455997622:Methyl_SD = sd(Methyl))
+1771455997623:}
+1771455998145:caseCorr(samples, 10000)
+1771456006391:caseCorr(samples, 10000)
+1771456009718:caseCorr <- function(IDs, bin){
+1771456009719:Methyl <- c()
+1771456009719:Ses <- c()
+1771456009719:Con <- c()
+1771456009719:for(ID in IDs){
+1771456009720:MethylMaster <- read.csv(paste0("~/Outputs/MethylMaster/Normals/",bin,"/",ID,"/autocorrected_regions.csv"))
+1771456009720:MethylMaster <- median(MethylMaster$Mean)
+1771456009720:Sesame <- read.csv(paste0("~/Outputs/SeSAMe/Normals/",bin,"/segments_",ID,".csv"))
+1771456009720:Sesame <- median(Sesame$seg.mean)
+1771456009720:Conumee <- read.csv(paste0("~/Outputs/Conumee/LabNormals/",bin,"/",ID,".csv"))
+1771456009720:Conumee <- median(Conumee$seg.mean)
+1771456009721:Methyl <- c(Methyl, MethylMaster)
+1771456009721:Ses <- c(Ses, Sesame)
+1771456009721:Con <- c(Con,Conumee)
+1771456009721:}
+1771456009722:acc <- data.frame(Conumee_Median = median(Con),
+1771456009722:Conumee_SD = sd(Con),
+1771456009722:Sesame_Median = median(Ses),
+1771456009722:Sesame_SD = sd(Ses),
+1771456009722:Methyl_Median = median(Methyl),
+1771456009722:Methyl_SD = sd(Methyl))
+1771456009723:acc
+1771456009723:}
+1771456010230:caseCorr(samples, 10000)
+1771456061136:caseCorr(samples, 50000)
+1771456061924:caseCorr(samples, 1e+05)
+1771456062603:caseCorr(samples, 1e+06)

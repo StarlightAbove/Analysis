@@ -7,6 +7,15 @@ Codebase of the project developed over the summer at the Przybyl Lab, RI-MUHC. A
 -   **New Commit** (29/12/2025, 19:00 IST): Added sections towards the end of this document in relation to new heatmap graphs, genomic labeling, as well as CEL processing.
     Check commits bb4b265c8f5c2e99785f50b4278cb60ed6648bb1 and forward till 01/01/2026 for more details and tracking.
 
+# Currently Being Worked On
+- Fixing LOESS correction and plot relative corrections.
+- Generate genomic index w/ SD.
+- Create poster for March 25.
+- Calculate median log2 ratio w/ SD.
+- Regenerate graphs with new ChAS truth df.
+- Regenerate accuracies.
+- Organize all methods used.
+
 # Methods
 
 This section is currently being written, and will cover the algorithms and visualizers being used.

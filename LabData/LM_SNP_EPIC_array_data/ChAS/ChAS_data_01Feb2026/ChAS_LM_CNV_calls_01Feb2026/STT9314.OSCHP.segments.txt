@@ -1,0 +1,2 @@
+﻿Use In Export	File	CN State	Type	Chromosome	Cytoband Start	Cytoband End	Median BAF	Median Log2Ratio	Size (kbp)	Marker Count	Gene Count	Genes	OMIM ® Genes Count	OMIM ® Genes	DB Count Both	CytoRegions	Call	Segment Interpretation	Microarray Nomenclature	Curation By	Materially Modified Segment
+true	STT9314.OSCHP	1.0	Loss	19	p13.3	p13.3		-0.4559062421321869	60.38	39	8	STK11, CBARP, CBARP-DT, ATP5F1D, MIDN, CIRBP-AS1, CIRBP, FAM174C	4	STK11 (602216), ATP5F1D (603150), MIDN (606700), CIRBP (602649)		CytoRegions Not Set			arr[GRCh37] 19p13.3(1,222,809_1,283,188)x1		false

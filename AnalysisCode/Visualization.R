@@ -32,6 +32,8 @@ plot_cnv_segments <- function(df, anno = NULL) {
     ) %>%
     arrange(chrom, loc.start)
   
+  df$seg.mean <- as.numeric(df$seg.mean)
+  
   # Calculate chromosome cumulative positions
   chr_lengths <- df %>%
     dplyr::group_by(chrom) %>%
@@ -83,6 +85,7 @@ plot_cnv_segments <- function(df, anno = NULL) {
       title = "CNV Segments Across Genome"
     ) + geom_hline(yintercept = -0.2, linetype = "dotted", color = "black") + 
     geom_hline(yintercept = 0.2, linetype = "dotted", color = "black") + 
+    scale_y_continuous(breaks = c(-0.75, -0.5, -0.25, 0, 0.25,0.5,0.75)) +
     theme_minimal() +
     theme(
       panel.grid.major.y = element_line(color = "grey90"),
@@ -117,7 +120,7 @@ geneGen <- function(Gene, db = NULL){
   if(!is.null(db)){
     print("is here")
     dt <- db %>% dplyr::filter((Gene == "0")) %>% 
-      dplyr::mutate(Gene = NA) 
+      dplyr::mutate(Gene = NA)
     gcoords <- coords_final %>% 
       dplyr::mutate(loc.start = as.numeric(start), loc.end = as.numeric(end)) %>% 
       dplyr::mutate(seg.mean = 0, CNVStatus = "Normal", type = "Gene") %>%
@@ -150,16 +153,18 @@ geneGen <- function(Gene, db = NULL){
              ifelse(overlapping_regions$type == "MethylMaster", "Gene_MMasteR",
                     ifelse(overlapping_regions$type == "SNP", "Gene_SNP", "Unknown")))
     )
+    overlapping_regions <- overlapping_regions %>% drop_na()
     print(overlapping_regions)
     # Developing visualization
-    mat <- matrix(NA, nrow = 4, ncol = length(Gene))
+    mat <- matrix(NA, nrow = 4, ncol = length(unique(overlapping_regions$Gene)))
     overlapping_regions <- overlapping_regions %>% drop_na()
+    print(unique(overlapping_regions$type))
     colnames(mat) <- unique(overlapping_regions$Gene)
     rownames(mat) <- unique(overlapping_regions$type)
     for (i in 1:nrow(overlapping_regions)) {
       row_index <- match(overlapping_regions$type[i], rownames(mat))
       col_index <- match(overlapping_regions$Gene[i], colnames(mat))
-      mat[row_index, col_index] <- overlapping_regions$seg.mean[i]
+      mat[row_index, col_index] <- as.numeric(overlapping_regions$seg.mean[i])
     }
     mat[is.na(mat)] <- 0
     print(mat)
@@ -193,10 +198,12 @@ ap <- geneAnno(Gene = Gene, db = rbind(labLMSProc(9202, "MethylMaster", 50000), 
 # Visualization Runner - LabLMS
 Gene <- c("MYC", "MYOCD", "CCNE1", "CDKN2A", "PTEN", "RB1", "TP53") 
 stts <- c(9202, 9203, 9327, 9328, 9337, 9338, 9350, 9353, 9354, 9355, 9356, 9357, 9358)
+# Problem candidates: 9327 @ 1e+05 and 1e+06
 bins <- c(10000, 50000, 1e+05, 1e+06)
 output.dir <- "~/Work/Analysis/Statistics/LabLMS/byBin/"
 for(bin in bins){
   for(stt in stts){
+    print(stt)
     ap <- geneAnno(Gene = Gene, db = rbind(labLMSProc(stt, "MethylMaster", bin), labLMSProc(stt, "Conumee", bin), labLMSProc(stt, "Sesame", bin)))
     ggsave(paste0(output.dir, bin,"/",stt,".png"), plot = ap[[1]], width = 25, height = 10, units = "in")
   }

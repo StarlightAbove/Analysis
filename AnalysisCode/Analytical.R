@@ -228,7 +228,7 @@ GenomicIndex <- function(dfCH3, sw){
   } else {
   
   # Filter out for clinically significant segments %>% filter(CNVStatus != Normal)
-  dfCH3f <- dfCH3 %>% dplyr::filter(type == "Conumee" || type == "MethylMasteR" || type == "SeSAMe") %>%
+  dfCH3f <- dfCH3 %>% dplyr::filter(type == "Conumee" | type == "MethylMaster" | type == "SeSAMe") %>%
     dplyr::filter(CNVStatus != "Normal")
   print(nrow(dfCH3))
   # Count
@@ -256,7 +256,18 @@ for(cr in correlative){
   mb1 <- c(mb1, GenomicIndex(labLMSProc(cr, "Conumee", 1e+06), sw = T))
   trt <- c(trt, GenomicIndex(labLMSProc(cr, "Conumee", 50000), sw = F))
 }
-GIndex <- data.frame(STT = correlative, ConumeeDefault = Def, Conumee10kb = kb10, Conumee100kb = kb100, Conumee1mb = mb1, BaseTruth = trt)
+GIndex <- data.frame(STT = correlative, ConumeeDefault = Def, 
+                     Conumee10kb = kb10, Conumee100kb = kb100, 
+                     Conumee1mb = mb1, BaseTruth = trt)
+GIndexAvg <- data.frame(ConumeeDefault = mean(GIndex$ConumeeDefault),  
+                        ConumeeDefaultSD = sd(GIndex$ConumeeDefault),
+                        Conumee10kb = mean(GIndex$Conumee10kb), 
+                        Conumee10kbSD = sd(GIndex$Conumee10kb),
+                        Conumee100kb = mean(GIndex$Conumee100kb), 
+                        Conumee100kbSD = sd(GIndex$Conumee100kb),
+                        Conumee1mb = mean(GIndex$Conumee1mb),
+                        Conumee1mbSD = sd(GIndex$Conumee1mb))
+
 
 Def <- c()
 kb10<- c()
@@ -269,4 +280,49 @@ for(cr in correlative){
   mb1 <- c(mb1, GenomicIndex(labLMSProc(cr, "Sesame", 1e+06), sw = T))
 }
 GIndex <- GIndex %>% dplyr::mutate(SesameDefault = Def, Sesame10kb = kb10, 
-                                   Sesame100kb = kb100, Sesame1mb = mb1)
+                                   Sesame100kb = kb100, Sesame1mb = mb1) 
+GIndexAvg <- data.frame(SesameDefault = mean(GIndex$SesameDefault),  
+                        SesameDefaultSD = sd(GIndex$SesameDefault),
+                        Sesame10kb = mean(GIndex$Sesame10kb), 
+                        Sesame10kbSD = sd(GIndex$Sesame10kb),
+                        Sesame100kb = mean(GIndex$Sesame100kb), 
+                        Sesame100kbSD = sd(GIndex$Sesame100kb),
+                        Sesame1mb = mean(GIndex$Sesame1mb),
+                        Sesame1mbSD = sd(GIndex$Sesame1mb))
+
+Def <- c()
+kb10<- c()
+kb100 <- c()
+mb1 <- c()
+for(cr in correlative){
+  Def <- c(Def, GenomicIndex(labLMSProc(cr, "MethylMaster", 50000), sw = T))
+  kb10 <- c(kb10, GenomicIndex(labLMSProc(cr, "MethylMaster", 10000), sw = T))
+  kb100 <- c(kb100, GenomicIndex(labLMSProc(cr, "MethylMaster", 1e+05), sw = T))
+  mb1 <- c(mb1, GenomicIndex(labLMSProc(cr, "MethylMaster", 1e+06), sw = T))
+}
+GIndex <- GIndex %>% dplyr::mutate(MethylMasterDefault = Def, MethylMaster10kb = kb10, 
+                                   MethylMaster100kb = kb100, MethylMaster1mb = mb1) 
+GIndexAvg <- data.frame(MethylMasterDefault = mean(GIndex$MethylMasterDefault),  
+                        MethylMasterDefaultSD = sd(GIndex$MethylMasterDefault),
+                        MethylMaster10kb = mean(GIndex$MethylMaster10kb), 
+                        MethylMaster10kbSD = sd(GIndex$MethylMaster10kb),
+                        MethylMaster100kb = mean(GIndex$MethylMaster100kb), 
+                        MethylMaster100kbSD = sd(GIndex$MethylMaster100kb),
+                        MethylMaster1mb = mean(GIndex$MethylMaster1mb),
+                        MethylMaster1mbSD = sd(GIndex$MethylMaster1mb))
+
+# Correlations of Genomic Index in Ground Truth
+GIPCC <- data.frame(ConumeeDef = cor.test(GIndex$ConumeeDefault, GIndex$BaseTruth)$estimate,
+                    Conumee10kb = cor.test(GIndex$Conumee10kb, GIndex$BaseTruth)$estimate,
+                    Conumee100kb = cor.test(GIndex$Conumee100kb, GIndex$BaseTruth)$estimate,
+                    Conumee1mb = cor.test(GIndex$Conumee1mb, GIndex$BaseTruth)$estimate,
+                    SesameDefault = cor.test(GIndex$SesameDefault, GIndex$BaseTruth)$estimate,
+                    Sesame10kb = cor.test(GIndex$Sesame10kb, GIndex$BaseTruth)$estimate,
+                    Sesame100kb = cor.test(GIndex$Sesame100kb, GIndex$BaseTruth)$estimate,
+                    Sesame1mb = cor.test(GIndex$Sesame1mb, GIndex$BaseTruth)$estimate,
+                    MethylMasterDefault = cor.test(GIndex$MethylMasterDefault, GIndex$BaseTruth)$estimate,
+                    MethylMaster10kb = cor.test(GIndex$MethylMaster10kb, GIndex$BaseTruth)$estimate,
+                    MethylMaster100kb = cor.test(GIndex$MethylMaster100kb, GIndex$BaseTruth)$estimate,
+                    MethylMaster1mb = cor.test(GIndex$MethylMaster1mb, GIndex$BaseTruth)$estimate)
+
+

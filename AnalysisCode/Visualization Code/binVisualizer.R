@@ -9,8 +9,8 @@ labLMSProc <- function(STTq, Technology, binSize){
   # Correlate by STT information between methylation Sentrix and SNP data.
   correlationSheet <- read.csv("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/correlative.csv") %>% filter(STT == STTq)
   
-  cnvMatch <- read.csv(paste0("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/CNVCallsCSV/", 
-                              correlationSheet$CNV_Label[1], "_events.csv"))
+  cnvMatch <- read_delim(paste0("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LMS_Probe_and_segment_level_data_01Feb2026/STT", 
+                              STTq, "_Recentered_Segment_level_data_01Feb2026.segment.txt"))
   
   # methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", 
   #paste0(correlationSheet$Sentrix_ID[1],"_", 
@@ -23,17 +23,19 @@ labLMSProc <- function(STTq, Technology, binSize){
   sesameMatch <- read.csv(paste0("~/Work/Analysis/Outputs/SeSAMe/LabLMS/", binSize,"/", paste0("segments_",correlationSheet$Sentrix_ID[1],"_", 
                                                                                                correlationSheet$Sentrix_Position[1],".csv")))
   
-  cnvMatch <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(cnvMatch, `Chromosome.Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
-                                          names = c("loc.start", "loc.end"), delim = "-") %>% mutate(type = "SNP") %>% dplyr::rename(CNVStatus = "Event") %>%
-    mutate(CNVStatus = case_when(
-      CNVStatus == "CN Loss" ~ "Deletion", 
-      CNVStatus == "CN Gain" ~ "Amplification", 
-      TRUE ~ "Normal"
-    )) %>% dplyr::rename(seg.mean = "Probe.Median") %>% 
-    dplyr::select(c(chrom, loc.start, loc.end, CNVStatus, seg.mean, type)) %>% mutate(loc.start = as.numeric(gsub(",","",loc.start)), loc.end = as.numeric(gsub(",","",loc.end)))
-  cnvMatch$chrom <- as.numeric(str_replace_all(cnvMatch$chrom, "chr", ""))
-  cnvMatch <- cnvMatch %>% filter(!is.na(chrom))
+  methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", binSize,"/", 
+                                 correlationSheet$Sentrix_ID[1],"_", correlationSheet$Sentrix_Position[1],"/autocorrected_regions.csv"))
   
+  cnvMatch <- cnvMatch %>% dplyr::filter(!(Type == "LOH")) %>% dplyr::filter(Chromosome != 24 & Chromosome != 25) %>% dplyr::select("Chromosome", "StartPosition", "StopPosition", "Median Log2 Ratio") %>% 
+    dplyr::rename(chrom = "Chromosome", loc.start = "StartPosition", loc.end = "StopPosition", seg.mean = "Median Log2 Ratio") %>%
+    dplyr::mutate(seg.mean = as.numeric(seg.mean)) %>%
+    dplyr::mutate(CNVStatus = case_when(
+      seg.mean <= -0.2 ~ "Deletion", 
+      seg.mean >= 0.2 ~ "Amplification", 
+      TRUE ~ "Normal"
+    ), type = "SNP")
+  
+  print(cnvMatch)
   if(Technology == "MethylMaster") {
     methylMatch <- methylMatch %>% dplyr::rename(
       seg.mean = "Mean", loc.start = "bp.Start", 
@@ -67,7 +69,7 @@ labLMSProc <- function(STTq, Technology, binSize){
                                                            CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
                                                                                  seg.mean < -0.3 ~ "Deletion",
                                                                                  TRUE ~ "Normal"), type = "SeSAMe") 
-    combinedSet <- rbind(sesameMatch, cnvMatch) %>% mutate(Gene = as.character(0)) %>% arrange(chrom)
+    combinedSet <- rbind(sesameMatch, cnvMatch) %>% mutate(Gene = as.character(0), seg.mean = as.numeric(seg.mean)) %>% arrange(chrom)
   }
   combinedSet
 }
@@ -409,8 +411,6 @@ for(nmls in LabNmrlsCodes){
          width = 1920, height = 1080, units = "px")
   
 }
-
-# Plotting for TCGA LMS.
 
 ## Plotting for LM.
 binLength <- c(10000,25000,50000,75000,1e+05, 5e+05, 1e+06)

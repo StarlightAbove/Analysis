@@ -295,10 +295,126 @@ ap10000 <- ap10000 %>% dplyr::mutate(bin = 10000)
 ap50000 <- ap50000 %>% dplyr::mutate(bin = 50000)
 ap1e05 <- ap1e05 %>% dplyr::mutate(bin = 1e+05)
 ap1e06 <- ap1e06 %>% dplyr::mutate(bin = 1e+06)
-ap <- rbind(ap10000, ap50000, ap1e05, ap1e06) %>% dplyr::select(-c("chrom", "loc.start", "loc.end"))
+ap <- rbind(ap10000, ap50000, ap1e05, ap1e06) %>% dplyr::select(-c("chrom")) %>%
+  dplyr::mutate(width = loc.end - loc.start)
 ap <- split(ap, ap$Gene)
 
 for (i in seq_along(ap)) {
   file_name <- paste0(names(ap)[i], ".csv")
   write.csv(ap[[i]], file = paste0("~/Work/Analysis/Statistics/LabLMS/GeneConcordance/rawData/", file_name), row.names = FALSE)
 }
+ap[[Gene[1]]] <- split(ap[[Gene[1]]], ap[[Gene[1]]]$bin)
+ap[[Gene[2]]] <- split(ap[[Gene[2]]], ap[[Gene[2]]]$bin)
+ap[[Gene[3]]] <- split(ap[[Gene[3]]], ap[[Gene[3]]]$bin)
+ap[[Gene[4]]] <- split(ap[[Gene[4]]], ap[[Gene[4]]]$bin)
+ap[[Gene[5]]] <- split(ap[[Gene[5]]], ap[[Gene[5]]]$bin)
+ap[[Gene[6]]] <- split(ap[[Gene[6]]], ap[[Gene[6]]]$bin)
+ap[[Gene[7]]] <- split(ap[[Gene[7]]], ap[[Gene[7]]]$bin)
+
+# Looking for concordance
+genes <- names(ap)
+bins <- c("50000", "10000", "1e+05", "1e+06")
+states <- c("Conumee – default bin size",
+            "Conumee – 10kb",
+            "Conumee – 100kb",
+            "Conumee – 1Mb",            
+            "Sesame – default bin size",
+            "Sesame – 10kb",
+            "Sesame – 100kb",
+            "Sesame – 1Mb",
+            "MethylMasteR – default bin size",
+            "MethylMasteR – 10kb",
+            "MethylMasteR – 100kb",
+            "MethylMasteR – 1Mb"
+)
+
+Methyl <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_MMasteR")
+Ses <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SeSAMe")
+Con <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_Conumee")
+Snp <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SNP")
+Snp <- Snp %>% group_by(case) %>%
+  summarize(
+    log2ratio = mean(log2ratio)
+  )
+
+CCNE1 <- c(1:length(states))
+CDKN2A <- c(1:length(states))
+MYC <- c(1:length(states))
+MYOCD <- c(1:length(states))
+PTEN <- c(1:length(states))
+RB1 <- c(1:length(states))
+TP53 <- c(1:length(states))
+
+output.df <- data.frame(states, CCNE1,
+                        CDKN2A,
+                        MYC,
+                        MYOCD, 
+                        PTEN ,
+                        RB1 ,
+                        TP53)
+for(i in seq_along(ap)){
+  for(j in bins){
+    print(genes[i])
+    print(j)
+    Methyl <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_MMasteR")
+    Ses <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SeSAMe")
+    Con <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_Conumee")
+    Snp <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SNP")
+    Snp <- Snp %>% group_by(case) %>%
+      summarize(
+        log2ratio = mean(log2ratio)
+      )
+    mCorr <- cor(Methyl$log2ratio, Snp$log2ratio)
+    sCorr <- cor(Ses$log2ratio, Snp$log2ratio)
+    cCorr <- cor(Con$log2ratio, Snp$log2ratio)
+    print(paste0(mCorr, " ", sCorr, " ", cCorr))
+    tag <- 0
+    if(j == "50000"){
+      tag <- 1
+    }
+    if(j == "10000"){
+      tag <- 2
+    }
+    if(j == "1e+05"){
+      tag <- 3
+    }
+    if(j == "1e+06"){
+      tag <- 4
+    }
+
+    output.df[tag, i + 1] <- mCorr
+    output.df[tag + 4, i + 1] <- sCorr 
+    output.df[tag + 8, i + 1] <- cCorr 
+  }
+}
+# Melt to long format
+df_long <- melt(output.df, id.vars = "states", variable.name = "gene", value.name = "correlation")
+
+# Keep row order
+df_long$state <- factor(df_long$state, levels = rev(data$state))
+
+# Plot
+p <- ggplot(df_long, aes(x = gene, y = states, fill = correlation)) +
+  geom_tile(color = "black", linewidth = 0.5) +
+  geom_text(aes(label = sprintf("%.2f", correlation)), size = 3, color = "black") +
+  scale_fill_gradient2(
+    low = "#2166ac", mid = "#f7f7f7", high = "#50C878",
+    midpoint = 0.5,
+    limits = c(min(df_long$correlation), 1),
+    name = "Correlation"
+  ) +
+  labs(
+    title = "CNV Method Comparison by Gene",
+    x = "Gene",
+    y = "Method & Bin Size"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    axis.text.x = element_text(angle = 30, hjust = 1, face = "bold"),
+    axis.text.y = element_text(size = 9),
+    panel.grid = element_blank(),
+    legend.position = "right"
+  )
+  
+

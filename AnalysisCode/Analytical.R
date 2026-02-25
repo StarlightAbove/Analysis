@@ -1,29 +1,6 @@
 library(GenomicRanges)
 library(dplyr)
 accuracyModel <- function(t1){
-  hg19ranges <- c(chr1 = 249250621, 
-                  chr2 = 243199373,
-                  chr3 = 198022430,
-                  chr4 = 191154276,
-                  chr5 = 180915260,
-                  chr6 = 171115067,
-                  chr7 = 159138663,
-                  chr8 = 146364022,
-                  chr9 = 141213431,
-                  chr10 = 135534747,
-                  chr11 = 135006516,
-                  chr12 = 133851895,
-                  chr13 = 115169878,
-                  chr14 = 107349540,
-                  chr15 = 102531392,
-                  chr16 = 90354753,
-                  chr17 = 81195210,
-                  chr18 = 78077248,
-                  chr19 = 59128983,
-                  chr20 = 63025520,
-                  chr21 = 48129895,
-                  chr22 = 51304566)
-  
   pred_df <- t1 %>% filter(!(type == "SNP"))
   truth_df <- t1 %>% filter(type == "SNP")
   
@@ -40,7 +17,7 @@ accuracyModel <- function(t1){
   # print(hits)
   
   overlap_ranges <- pintersect(pred_gr[queryHits(hits)], truth_gr[subjectHits(hits)])
-  # print(overlap_ranges)
+  print(overlap_ranges)
   
   overlap_df <- data.frame(
     Chromosome = as.character(seqnames(overlap_ranges)),
@@ -48,19 +25,19 @@ accuracyModel <- function(t1){
     pred_cnv = mcols(pred_gr)$CNV[queryHits(hits)],
     truth_cnv = mcols(truth_gr)$CNV[subjectHits(hits)]
   )
-  # print(overlap_df)
+  #print(overlap_df)
   
   weighted_matrix <- overlap_df %>%
     group_by(truth_cnv, pred_cnv) %>%
     summarise(total_bp = sum(width), .groups = "drop") %>%
     tidyr::pivot_wider(names_from = pred_cnv, values_from = total_bp, values_fill = 0)
-  # print(weighted_matrix)
+  #print(weighted_matrix)
   
   TP_weighted <- sum(overlap_df$width[overlap_df$truth_cnv == overlap_df$pred_cnv])
-  # print(TP_weighted)
+  #print(TP_weighted)
   
   Total_weighted <- sum(overlap_df$width)
-  # print(Total_weighted)
+  #print(Total_weighted)
   
   accuracy_by_chr <- overlap_df %>%
     group_by(Chromosome) %>%
@@ -82,13 +59,11 @@ fpCheck <- function(df) {
   truth_df$chrom <- as.character(truth_df$chrom)
   
   # ---- Step 1: hg19 chromosome sizes (numeric chromosomes 1 to 22) ----
+  hg19_info <- getChromInfoFromUCSC("hg19") %>% dplyr::filter(assembled == "TRUE")
+  hg19_info <- hg19_info[1:22,]
   hg19_chr_sizes <- data.frame(
     Chromosome = as.character(1:22),
-    Genome_bp = c(249250621, 243199373, 198022430, 191154276, 180915260,
-                  171115067, 159138663, 146364022, 141213431, 135534747,
-                  135006516, 133851895, 115169878, 107349540, 102531392,
-                  90354753, 81195210, 78077248, 59128983, 63025520,
-                  48129895, 51304566)
+    Genome_bp = hg19_info$size
   )
   
   # ---- Step 2: Convert to GRanges ----
@@ -112,7 +87,9 @@ fpCheck <- function(df) {
     width = width(overlap_ranges),
     pred_cnv = pred_cnv,
     truth_cnv = truth_cnv
-  ) %>%
+  ) 
+  print(tp_df)
+  tp_df <- tp_df %>%
     filter(pred_cnv == truth_cnv) %>%
     group_by(Chromosome) %>%
     summarise(TP_bp = sum(width), .groups = "drop")
@@ -390,6 +367,34 @@ for(bin in bins){
   
 }
 
+# How many CNVs do each recognize?
+CNVCounter <- function(df, caseNum, bin){
+  dfG <- df %>% dplyr::filter(CNVStatus != "Normal") %>% count(type) %>% dplyr::mutate(case = caseNum, bin = bin)
+  dfG
+}
+CNVCounter(labLMSProc(9202, "MethylMaster", 10000
+                      ), 9202, 10000)
+
+stts <- c(9202, 9203, 9327, 9328, 9337, 9338, 9350, 9353, 9354, 9355, 9356, 9357, 9358)
+bins <- c(10000, 50000, 1e+05, 1e+06)
+tech <- c("MethylMaster", "Conumee", "Sesame")
+df <- NULL
+for(stt in stts){
+  for(bin in bins){
+    for(t in tech){
+      df <- rbind(df, CNVCounter(labLMSProc(stt, t, bin), stt, bin))
+    }
+  }
+}
+snps <- df %>% dplyr::filter(type == "SNP") %>% dplyr::select(-c("bin"))
+snps <- unique(snps)
+sts <- df %>% dplyr::filter(type != "SNP")  %>% group_by(bin, type) %>%
+  summarize(
+    correlation = cor(n, snps$n),
+    .groups = "drop"
+  )
+
+# Reanalyze accuracy of all cases
 
 
 

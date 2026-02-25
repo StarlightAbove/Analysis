@@ -337,3 +337,62 @@ GenomeModified <- function(dfCH3){
   return((modifiedWidth/hg19_total) * 100)
   
 }
+
+stts <- c(9202, 9203, 9327, 9328, 9337, 9338, 9350, 9353, 9354, 9355, 9356, 9357, 9358)
+bins <- c(10000, 50000, 1e+05, 1e+06)
+tech <- c("MethylMaster", "Conumee", "Sesame")
+genomeCalc <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
+  dplyr::select("STT", "% Genome Changed") %>% dplyr::rename(gc = "% Genome Changed")
+bin10kb <- genomeCalc
+binDef <- genomeCalc
+bin100kb <- genomeCalc
+bin1Mb <- genomeCalc
+
+for(bin in bins){
+  print(bin)
+  valM <- c()
+  valS <- c()
+  valC <- c()
+  for(stt in stts){
+    valM <- c(valM, GenomeModified(labLMSProc(STTq = stt, Technology = "MethylMaster", binSize = bin)))
+    valS <- c(valS, GenomeModified(labLMSProc(STTq = stt, Technology = "Sesame", binSize = bin)))
+    valC <- c(valC, GenomeModified(labLMSProc(STTq = stt, Technology = "Conumee", binSize = bin)))
+  }
+  if(bin == 10000){
+    bin10kb <- data.frame(STT = bin10kb$STT, gc = bin10kb$gc, 
+                          pcentmodM = valM,
+                          pcentmodS = valS,
+                          pcentmodC = valC)
+  }
+  if(bin == 50000){
+    binDef <- data.frame(STT = binDef$STT, gc = binDef$gc, 
+                          pcentmodM = valM,
+                          pcentmodS = valS,
+                          pcentmodC = valC)
+  }
+  if(bin == 1e+05){
+    bin100kb <- data.frame(STT = bin100kb$STT, gc = bin100kb$gc, 
+                          pcentmodM = valM,
+                          pcentmodS = valS,
+                          pcentmodC = valC)
+  }
+  if(bin == 1e+06){
+    bin1Mb <- data.frame(STT = bin1Mb$STT, gc = bin1Mb$gc, 
+                          pcentmodM = valM,
+                          pcentmodS = valS,
+                          pcentmodC = valC)
+  }
+  
+  
+  print(paste0("MethylMasteR: ",cor(genomeCalc$gc, valM)))
+  print(paste0("SeSAMe: ",cor(genomeCalc$gc, valS)))
+  print(paste0("Conumee: ",cor(genomeCalc$gc, valC)))
+  
+}
+
+
+
+
+
+
+

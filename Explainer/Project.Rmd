@@ -1,0 +1,348 @@
+---
+title: "Benchmarking detection of DNA copy number variation using high-density methylation microarrays"
+output: html_document
+---
+
+# Code Paper for Benchmarking Project
+
+Hi! This is a very informally written document just to give the beats of what is happening in the code, and the analysis I am doing. It needs to be MUCH more formalized before being shown publicly, but it is useful for understanding!
+
+## Preprocessing
+
+All data is in disparate forms. So, I standardized it so that it can be easily utilized in the downstream without having to continuously redo work. I chose to standardize the notation to the Conumee notations, using
+
+-   chrom for chromosomes.
+
+-   loc.start for when the location of a segment starts.
+
+-   loc.end for when the location of a segment ends.
+
+-   seg.mean for the log2-ratio.
+
+-   CNVStatus for whether a block represents a deletion, amplification & normal segments.
+
+-   type is a representative factor to say what method gave that segment, because we compose a database for each case, and we need to distinguish the segments from each other.
+
+-   we also add an extra factor named "Gene" to label relevant segments which have a gene inside it.
+
+Attached are the pre-processing blocks.
+
+#### LMS Processing
+
+```{r}
+labLMSProc <- function(STTq, Technology, binSize){
+  
+  
+  # Correlate by STT information between methylation Sentrix and SNP data.
+  correlationSheet <- read.csv("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/correlative.csv") %>% filter(STT == STTq)
+  
+  cnvMatch <- read_delim(paste0("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LMS_Probe_and_segment_level_data_01Feb2026/STT", 
+                              STTq, "_Recentered_Segment_level_data_01Feb2026.segment.txt"))
+  
+  # methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", 
+  #paste0(correlationSheet$Sentrix_ID[1],"_", 
+  #     correlationSheet$Sentrix_Position[1], "/"), 
+  # "autocorrected_regions.csv"))
+  
+  conumeeMatch <- read.csv(paste0("~/Work/Analysis/Outputs/Conumee/LabLMS/", binSize,"/", paste0(correlationSheet$Sentrix_ID[1],"_", 
+                                                                                                 correlationSheet$Sentrix_Position[1],".csv")))
+  
+  sesameMatch <- read.csv(paste0("~/Work/Analysis/Outputs/SeSAMe/LabLMS/", binSize,"/", paste0("segments_",correlationSheet$Sentrix_ID[1],"_", 
+                                                                                               correlationSheet$Sentrix_Position[1],".csv")))
+  
+  methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", binSize,"/", 
+                                 correlationSheet$Sentrix_ID[1],"_", correlationSheet$Sentrix_Position[1],"/autocorrected_regions.csv"))
+  
+  cnvMatch <- cnvMatch %>% dplyr::filter(!(Type == "LOH")) %>% dplyr::filter(Chromosome != 24 & Chromosome != 25) %>% dplyr::select("Chromosome", "StartPosition", "StopPosition", "Median Log2 Ratio") %>% 
+    dplyr::rename(chrom = "Chromosome", loc.start = "StartPosition", loc.end = "StopPosition", seg.mean = "Median Log2 Ratio") %>%
+    dplyr::mutate(seg.mean = as.numeric(seg.mean)) %>%
+    dplyr::mutate(CNVStatus = case_when(
+      seg.mean <= -0.2 ~ "Deletion", 
+      seg.mean >= 0.2 ~ "Amplification", 
+      TRUE ~ "Normal"
+    ), type = "SNP")
+  
+  print(cnvMatch)
+  if(Technology == "MethylMaster") {
+    methylMatch <- methylMatch %>% dplyr::rename(
+      seg.mean = "Mean", loc.start = "bp.Start", 
+      loc.end = "bp.End") %>% dplyr::select(
+        seg.mean, loc.start, loc.end, Chromosome) %>% mutate(
+          type = "MethylMaster") %>% dplyr::rename(chrom = "Chromosome") %>% 
+      dplyr::mutate(chrom = as.numeric(gsub("chr", "", chrom))) %>% filter(!is.na(chrom)) %>%
+      dplyr::mutate(loc.start = as.numeric(loc.start), loc.end = as.numeric(loc.end), seg.mean = as.numeric(seg.mean)) %>% mutate(CNVStatus = case_when(
+        seg.mean <= -0.2 ~ "Deletion", 
+        seg.mean >= 0.2 ~ "Amplification", 
+        TRUE ~ "Normal"
+      ))
+    combinedSet <- rbind(methylMatch, cnvMatch) %>% mutate(Gene = as.character(0)) %>% arrange(chrom)
+  }
+  
+  if(Technology == "Conumee"){
+    conumeeMatch <- conumeeMatch %>% dplyr::select(chrom, loc.start, loc.end, seg.mean) %>% mutate(CNVStatus = case_when(
+      seg.mean <= -0.2 ~ "Deletion", 
+      seg.mean >= 0.2 ~ "Amplification", 
+      TRUE ~ "Normal"
+    )) %>% mutate(chrom = as.numeric(gsub("chr", "", chrom))) %>% mutate(type = "Conumee")
+    combinedSet <- rbind(conumeeMatch, cnvMatch) %>% mutate(Gene = as.character(0)) %>% arrange(chrom)
+  }
+  
+  if(Technology == "Sesame"){
+    sesameMatch <- sesameMatch %>% dplyr::select(c("chrom", "loc.start", 
+                                                   "loc.end", "seg.mean")) %>% dplyr::mutate(
+                                                     chrom = str_remove_all(chrom, "chr")) %>% filter(
+                                                       !(chrom == "X") & !(chrom == "Y")) %>% mutate(
+                                                         chrom = as.numeric(chrom)) %>% arrange(chrom) %>% mutate(
+                                                           CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
+                                                                                 seg.mean < -0.3 ~ "Deletion",
+                                                                                 TRUE ~ "Normal"), type = "SeSAMe") 
+    combinedSet <- rbind(sesameMatch, cnvMatch) %>% mutate(Gene = as.character(0), seg.mean = as.numeric(seg.mean)) %>% arrange(chrom)
+  }
+  combinedSet
+}
+```
+
+It utilizes an unique identifier (STT) to retrieve relevant datasets from inside the files and processes them into the correct format. It then returns the whole dataset.
+
+#### LM Processing
+
+```{r}
+LMStt <- function(STT, bin){
+  
+  corrSheet <- read.csv("~/Work/Analysis/LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv") %>%
+    dplyr::filter(STT == STT)
+  sentrixID <- corrSheet$Sentrix_ID[1]
+  sentrixPos <- corrSheet$Sentrix_Position[1]
+  
+  SNP <- read_delim(paste0("~/Work/Analysis/LabData/LM_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LM_Probe_and_segment_level_data_01Feb2026/STT",
+                 STT,"_Segment_level_data_01Feb2026.segment.txt"))
+  SNP <- SNP %>% dplyr::filter(!(Type == "LOH")) %>% dplyr::filter(Chromosome != 24 & Chromosome != 25) %>% dplyr::select("Chromosome", "StartPosition", "StopPosition", "Median Log2 Ratio") %>% 
+    dplyr::rename(chrom = "Chromosome", loc.start = "StartPosition", loc.end = "StopPosition", seg.mean = "Median Log2 Ratio") %>%
+    dplyr::mutate(seg.mean = as.numeric(seg.mean)) %>%
+    dplyr::mutate(CNVStatus = case_when(
+      seg.mean <= -0.2 ~ "Deletion", 
+      seg.mean >= 0.2 ~ "Amplification", 
+      TRUE ~ "Normal"
+    ), type = "SNP")
+  
+  
+  # MethylMasteR
+  outputDirMethyl <- paste0("~/Work/Analysis/Outputs/MethylMaster/LM/",bin,"/",sentrixID,"_",sentrixPos,"/autocorrected_regions.csv")
+  cnvMethyl <- read.csv(outputDirMethyl) %>%
+    dplyr::select(c("Chromosome", "bp.Start", "bp.End", "Mean")) %>% dplyr::rename(
+      chrom = "Chromosome",
+      loc.start = "bp.Start",
+      loc.end = "bp.End",
+      seg.mean = "Mean"
+    ) %>% dplyr::mutate(
+      CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
+                            seg.mean < -0.3 ~ "Deletion",
+                            TRUE ~ "Normal"), type = "MethylMaster"
+    )
+  cnvMethyl$chrom <- as.numeric(str_remove_all(cnvMethyl$chrom, pattern = "chr"))
+  cnvMethyl <- cnvMethyl %>% filter(!(is.na(chrom))) %>% arrange(chrom)
+  
+  # SeSAMe
+  outputDirSesame <- paste0("~/Work/Analysis/Outputs/SeSAMe/LM/bins/",bin,"/","segments_",sentrixID, "_", sentrixPos, ".csv")
+  sesameOutput <- read.csv(outputDirSesame) %>% dplyr::select(c("chrom", "loc.start", 
+                                                                "loc.end", "seg.mean")) %>% dplyr::mutate(
+                                                                  chrom = str_remove_all(chrom, "chr")) %>% filter(
+                                                                    !(chrom == "X") & !(chrom == "Y")) %>% mutate(
+                                                                      chrom = as.numeric(chrom)) %>% arrange(chrom) %>% mutate(
+                                                                        CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
+                                                                                              seg.mean < -0.3 ~ "Deletion",
+                                                                                              TRUE ~ "Normal"), type = "SeSAMe") 
+  
+  # Conumee
+  outputDirConumee <- paste0("~/Work/Analysis/Outputs/Conumee/LMData/bins/",bin,"/",sentrixID,"_",sentrixPos,".csv")
+  case <- read.csv(outputDirConumee)
+  case <- case %>% dplyr::select(-c("ID", "bstat")) %>% 
+    mutate(CNVStatus = case_when(case$seg.mean > 0.2 ~ "Amplification",
+                                 case$seg.mean < -0.2 ~ "Deletion",
+                                 TRUE ~ "Normal"), 
+           chrom = as.numeric(str_remove_all(chrom, "chr"))) %>% 
+    dplyr::arrange(chrom) %>% mutate(type = "Conumee") %>%
+    dplyr::select(-c("num.mark", "pval", "seg.median", "X"))
+  
+  rbind(SNP,case,sesameOutput,cnvMethyl)
+  
+}
+```
+
+This does basically the same thing, except for leiomyoma samples instead of leiomyosarcoma samples. It then returns the relevant dataset. The Gene factor is dropped because it is not evaluated for Leiomyoma.
+
+#### Normal Processing
+
+```{r}
+labNmrlProc <- function(Sentrix, Technology, binSize){
+  # Correlate by STT information between methylation Sentrix and SNP data.
+  correlationSheet <- read.csv(
+    "~/Work/Analysis/LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv") %>% filter(Basename == Sentrix)
+  
+  conumeeMatch <- read.csv(paste0("~/Work/Analysis/Outputs/Conumee/LabNormals/", binSize,"/", paste0(Sentrix,".csv")))
+  
+  sesameMatch <- read.csv(paste0("~/Work/Analysis/Outputs/SeSAMe/Normals/", binSize,"/", paste0("segments_",Sentrix,".csv")))
+  
+  if(Technology == "MethylMaster") {
+    methylMatch <- methylMatch %>% dplyr::rename(
+      seg.mean = "Mean", loc.start = "bp.Start", 
+      loc.end = "bp.End") %>% dplyr::select(
+        seg.mean, loc.start, loc.end, Chromosome) %>% mutate(
+          type = "MethylMaster") %>% dplyr::rename(chrom = "Chromosome") %>% 
+      dplyr::mutate(chrom = as.numeric(gsub("chr", "", chrom))) %>% filter(!is.na(chrom)) %>%
+      dplyr::mutate(loc.start = as.numeric(loc.start), loc.end = as.numeric(loc.end), seg.mean = as.numeric(seg.mean)) %>% mutate(CNVStatus = case_when(
+        seg.mean <= -0.2 ~ "Deletion", 
+        seg.mean >= 0.2 ~ "Amplification", 
+        TRUE ~ "Normal"
+      ))
+    combinedSet <- methylMatch %>% arrange(chrom)
+  }
+  
+  if(Technology == "Conumee"){
+    conumeeMatch <- conumeeMatch %>% dplyr::select(chrom, loc.start, loc.end, seg.mean) %>% mutate(CNVStatus = case_when(
+      seg.mean <= -0.2 ~ "Deletion", 
+      seg.mean >= 0.2 ~ "Amplification", 
+      TRUE ~ "Normal"
+    )) %>% mutate(chrom = as.numeric(gsub("chr", "", chrom))) %>% mutate(type = "Conumee")
+    combinedSet <- conumeeMatch %>% arrange(chrom)
+  }
+  
+  if(Technology == "Sesame"){
+    sesameMatch <- sesameMatch %>% dplyr::select(c("chrom", "loc.start", 
+                                                   "loc.end", "seg.mean")) %>% dplyr::mutate(
+                                                     chrom = str_remove_all(chrom, "chr")) %>% filter(
+                                                       !(chrom == "X") & !(chrom == "Y")) %>% mutate(
+                                                         chrom = as.numeric(chrom)) %>% arrange(chrom) %>% mutate(
+                                                           CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
+                                                                                 seg.mean < -0.3 ~ "Deletion",
+                                                                                 TRUE ~ "Normal"), type = "SeSAMe") 
+    combinedSet <- sesameMatch %>% arrange(chrom)
+  }
+  
+  
+  
+  combinedSet
+}
+```
+
+This is the final processing function to process out the normals, contributing to the genome-wide log2-ratio.
+
+## Analysis
+
+**We now move onto the actual meat of the analytic code. This will be split into statistics generation & visualization.**
+
+### Basic Metrics
+
+#### Bin size vs. accuracy – normal tissue 
+
+This was done to evaluate whether the tissues that were being used for normalization were actually normal. The code has been annotated with comments below to gain full understanding of the system.
+
+This entire evaluation is contained in a function, which asks for a set of IDs (essentially the IDs of the normals, and the bin that we want to evaluate the statistics for.
+
+```{r}
+  
+  Methyl <- c()
+  Ses <- c()
+  Con <- c()
+  
+  for(ID in IDs){
+    MethylMaster <- read.csv(paste0("~/Outputs/MethylMaster/Normals/",bin,"/",ID,"/autocorrected_regions.csv"))
+    MethylMaster <- median(MethylMaster$Mean)
+    Sesame <- read.csv(paste0("~/Outputs/SeSAMe/Normals/",bin,"/segments_",ID,".csv"))
+    Sesame <- median(Sesame$seg.mean)
+    Conumee <- read.csv(paste0("~/Outputs/Conumee/LabNormals/",bin,"/",ID,".csv"))
+    Conumee <- median(Conumee$seg.mean)
+    
+    Methyl <- c(Methyl, MethylMaster)
+    Ses <- c(Ses, Sesame)
+    Con <- c(Con,Conumee)
+    
+  }
+
+```
+
+It then takes the median log2 ratio of each sample for each software and bin, and returns it as a list, given by the initialized Methyl (MethylMasteR), Ses (SeSAMe) and Con (Conumee) values.
+
+```{r}
+acc <- data.frame(Conumee_Median = median(Con), 
+                    Conumee_SD = sd(Con), 
+                    Sesame_Median = median(Ses), 
+                    Sesame_SD = sd(Ses), 
+                    Methyl_Median = median(Methyl), 
+                    Methyl_SD = sd(Methyl))
+  acc
+```
+
+It then returns a data frame for easy post-processing.
+
+To add it to the word document, I just read it off the terminal, but I could also create a dataframe for this purpose quite quickly. The driver code just involves querying the samples across the 3 bin sizes being studied.
+
+#### Genomic Index for LMS
+
+```{r}
+GenomicIndex <- function(dfCH3, sw){
+  if(sw == F){
+    dfSNP <- dfCH3 %>% dplyr::filter(type == "SNP") %>%
+      dplyr::filter(CNVStatus != "Normal")
+    CNVCount <- nrow(dfSNP)
+    ret <- (CNVCount^2)/22
+    return(ret)
+  } else {
+  
+  # Filter out for clinically significant segments %>% filter(CNVStatus != Normal)
+  dfCH3f <- dfCH3 %>% dplyr::filter(type == "Conumee" | type == "MethylMaster" | type == "SeSAMe") %>%
+    dplyr::filter(CNVStatus != "Normal")
+  print(nrow(dfCH3))
+  # Count
+  CNVCount <- nrow(dfCH3f)
+  
+  
+  # Return value
+  ret <- (CNVCount^2)/22
+  print(CNVCount)
+  return(ret) 
+  }
+}
+```
+
+This code takes a single dataframe from one of the technologies (as given by the preprocessor above for the LMS), filters it out only for that technology, filters for whether it reflects an CNV, and the counts how many there are, then takes the formula:
+
+$$
+GI = \frac{CNV^2}{22}
+$$
+
+As given. It just then returns that value.
+
+"sw" as an argument in the function is because I wanted to use the function for both SNPs and the methylation CNVs, so it is a convenient way to work with both types without using more if-statements.
+
+#### Genome Modified
+
+This is a pretty basic metric which works very similarly to the GI calculation above.
+
+```{r}
+GenomeModified <- function(dfCH3){
+  df <- dfCH3 %>% dplyr::filter(type != "SNP", CNVStatus != "Normal") %>%
+    dplyr::mutate(width = loc.end - loc.start) 
+  modifiedWidth <- sum(df$width)
+  hg19_info <- getChromInfoFromUCSC("hg19") %>% dplyr::filter(assembled == "TRUE")
+  hg19_info <- hg19_info[1:22,]
+  hg19_total <- sum(hg19_info$size)
+  
+  return((modifiedWidth/hg19_total) * 100)
+  
+}
+```
+
+It simply queries the information for hg19, filters it to the 22 chromosomes we are studying, sums the whole length, and divided it by the length of modified segments we actually have, and returns a percentage.
+
+### Advanced Metrics
+
+#### Accuracy Across Bins
+
+#### **Gene level analysis**
+
+### Visualizations
+
+## A Run-through
+
+Talking about code feels very abstract, so below is a little runthrough of ALL the code, taking through how a typical set of samples would be analyzed. Some of the driver code is dropped because it muddles understanding, but can be explained if needed.

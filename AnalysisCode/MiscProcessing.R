@@ -3,28 +3,9 @@ labNmrlProc <- function(Sentrix, Technology, binSize){
   correlationSheet <- read.csv(
     "~/Work/Analysis/LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv") %>% filter(Basename == Sentrix)
   
-  # cnvMatch <- read.csv(paste0("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/CNVCallsCSV/", 
-  # correlationSheet$CNV_Label[1], "_events.csv"))
-  
-  # methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", 
-  #paste0(correlationSheet$Sentrix_ID[1],"_", 
-  #     correlationSheet$Sentrix_Position[1], "/"), 
-  # "autocorrected_regions.csv"))
-  
   conumeeMatch <- read.csv(paste0("~/Work/Analysis/Outputs/Conumee/LabNormals/", binSize,"/", paste0(Sentrix,".csv")))
   
   sesameMatch <- read.csv(paste0("~/Work/Analysis/Outputs/SeSAMe/Normals/", binSize,"/", paste0("segments_",Sentrix,".csv")))
-  
-  # cnvMatch <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(cnvMatch, `Chromosome.Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
-  #                                        names = c("loc.start", "loc.end"), delim = "-") %>% mutate(type = "SNP") %>% dplyr::rename(CNVStatus = "Event") %>%
-  # mutate(CNVStatus = case_when(
-  #   CNVStatus == "CN Loss" ~ "Deletion", 
-  #   CNVStatus == "CN Gain" ~ "Amplification", 
-  #   TRUE ~ "Normal"
-  # )) %>% dplyr::rename(seg.mean = "Probe.Median") %>% 
-  #  dplyr::select(c(chrom, loc.start, loc.end, CNVStatus, seg.mean, type)) %>% mutate(loc.start = as.numeric(gsub(",","",loc.start)), loc.end = as.numeric(gsub(",","",loc.end)))
-  #cnvMatch$chrom <- as.numeric(str_replace_all(cnvMatch$chrom, "chr", ""))
-  #cnvMatch <- cnvMatch %>% filter(!is.na(chrom))
   
   if(Technology == "MethylMaster") {
     methylMatch <- methylMatch %>% dplyr::rename(
@@ -722,3 +703,64 @@ plottableLM <- function(SentrixID, SentrixPos, bin){
 IDATSampleSheet <- read.csv("./LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv")
 plottableLM(IDATSampleSheet$Sentrix_ID[1], IDATSampleSheet$Sentrix_Position[1],50000)
 plot_cnv_segments(plottableLM(IDATSampleSheet$Sentrix_ID[1], IDATSampleSheet$Sentrix_Position[1],50000))
+
+LMStt <- function(STT, bin){
+  
+  corrSheet <- read.csv("~/Work/Analysis/LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv") %>%
+    dplyr::filter(STT == STT)
+  sentrixID <- corrSheet$Sentrix_ID[1]
+  sentrixPos <- corrSheet$Sentrix_Position[1]
+  
+  SNP <- read_delim(paste0("~/Work/Analysis/LabData/LM_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LM_Probe_and_segment_level_data_01Feb2026/STT",
+                 STT,"_Segment_level_data_01Feb2026.segment.txt"))
+  SNP <- SNP %>% dplyr::filter(!(Type == "LOH")) %>% dplyr::filter(Chromosome != 24 & Chromosome != 25) %>% dplyr::select("Chromosome", "StartPosition", "StopPosition", "Median Log2 Ratio") %>% 
+    dplyr::rename(chrom = "Chromosome", loc.start = "StartPosition", loc.end = "StopPosition", seg.mean = "Median Log2 Ratio") %>%
+    dplyr::mutate(seg.mean = as.numeric(seg.mean)) %>%
+    dplyr::mutate(CNVStatus = case_when(
+      seg.mean <= -0.2 ~ "Deletion", 
+      seg.mean >= 0.2 ~ "Amplification", 
+      TRUE ~ "Normal"
+    ), type = "SNP")
+  
+  
+  # MethylMasteR
+  outputDirMethyl <- paste0("~/Work/Analysis/Outputs/MethylMaster/LM/",bin,"/",sentrixID,"_",sentrixPos,"/autocorrected_regions.csv")
+  cnvMethyl <- read.csv(outputDirMethyl) %>%
+    dplyr::select(c("Chromosome", "bp.Start", "bp.End", "Mean")) %>% dplyr::rename(
+      chrom = "Chromosome",
+      loc.start = "bp.Start",
+      loc.end = "bp.End",
+      seg.mean = "Mean"
+    ) %>% dplyr::mutate(
+      CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
+                            seg.mean < -0.3 ~ "Deletion",
+                            TRUE ~ "Normal"), type = "MethylMaster"
+    )
+  cnvMethyl$chrom <- as.numeric(str_remove_all(cnvMethyl$chrom, pattern = "chr"))
+  cnvMethyl <- cnvMethyl %>% filter(!(is.na(chrom))) %>% arrange(chrom)
+  
+  # SeSAMe
+  outputDirSesame <- paste0("~/Work/Analysis/Outputs/SeSAMe/LM/bins/",bin,"/","segments_",sentrixID, "_", sentrixPos, ".csv")
+  sesameOutput <- read.csv(outputDirSesame) %>% dplyr::select(c("chrom", "loc.start", 
+                                                                "loc.end", "seg.mean")) %>% dplyr::mutate(
+                                                                  chrom = str_remove_all(chrom, "chr")) %>% filter(
+                                                                    !(chrom == "X") & !(chrom == "Y")) %>% mutate(
+                                                                      chrom = as.numeric(chrom)) %>% arrange(chrom) %>% mutate(
+                                                                        CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
+                                                                                              seg.mean < -0.3 ~ "Deletion",
+                                                                                              TRUE ~ "Normal"), type = "SeSAMe") 
+  
+  # Conumee
+  outputDirConumee <- paste0("~/Work/Analysis/Outputs/Conumee/LMData/bins/",bin,"/",sentrixID,"_",sentrixPos,".csv")
+  case <- read.csv(outputDirConumee)
+  case <- case %>% dplyr::select(-c("ID", "bstat")) %>% 
+    mutate(CNVStatus = case_when(case$seg.mean > 0.2 ~ "Amplification",
+                                 case$seg.mean < -0.2 ~ "Deletion",
+                                 TRUE ~ "Normal"), 
+           chrom = as.numeric(str_remove_all(chrom, "chr"))) %>% 
+    dplyr::arrange(chrom) %>% mutate(type = "Conumee") %>%
+    dplyr::select(-c("num.mark", "pval", "seg.median", "X"))
+  
+  rbind(SNP,case,sesameOutput,cnvMethyl)
+  
+}

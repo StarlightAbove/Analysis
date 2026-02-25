@@ -325,4 +325,15 @@ GIPCC <- data.frame(ConumeeDef = cor.test(GIndex$ConumeeDefault, GIndex$BaseTrut
                     MethylMaster100kb = cor.test(GIndex$MethylMaster100kb, GIndex$BaseTruth)$estimate,
                     MethylMaster1mb = cor.test(GIndex$MethylMaster1mb, GIndex$BaseTruth)$estimate)
 
-
+# Genome Modified
+GenomeModified <- function(dfCH3){
+  df <- dfCH3 %>% dplyr::filter(type != "SNP", CNVStatus != "Normal") %>%
+    dplyr::mutate(width = loc.end - loc.start) 
+  modifiedWidth <- sum(df$width)
+  hg19_info <- getChromInfoFromUCSC("hg19") %>% dplyr::filter(assembled == "TRUE")
+  hg19_info <- hg19_info[1:22,]
+  hg19_total <- sum(hg19_info$size)
+  
+  return((modifiedWidth/hg19_total) * 100)
+  
+}

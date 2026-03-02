@@ -332,8 +332,9 @@ GenomicIndex <- function(dfCH3, sw){
   if(sw == F){
     dfSNP <- dfCH3 %>% dplyr::filter(type == "SNP") %>%
       dplyr::filter(CNVStatus != "Normal")
+    modChrom <- length(unique(dfSNP$chrom))
     CNVCount <- nrow(dfSNP)
-    ret <- (CNVCount^2)/22
+    ret <- (CNVCount^2)/modChrom
     return(ret)
   } else {
   
@@ -342,10 +343,11 @@ GenomicIndex <- function(dfCH3, sw){
     dplyr::filter(CNVStatus != "Normal")
   # Count
   CNVCount <- nrow(dfCH3f)
+  modChrom <- length(unique(dfCH3f$chrom))
   
   
   # Return value
-  ret <- (CNVCount^2)/22
+  ret <- (CNVCount^2)/modChrom
   return(ret) 
   }
 }

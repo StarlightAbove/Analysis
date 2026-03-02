@@ -1,5 +1,78 @@
 library(GenomicRanges)
 library(dplyr)
+
+# Best labeller for LMS data
+labLMSProc <- function(STTq, Technology, binSize){
+  
+  
+  # Correlate by STT information between methylation Sentrix and SNP data.
+  correlationSheet <- read.csv("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/correlative.csv") %>% filter(STT == STTq)
+  
+  cnvMatch <- read_delim(paste0("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LMS_Probe_and_segment_level_data_01Feb2026/STT", 
+                                STTq, "_Recentered_Segment_level_data_01Feb2026.segment.txt"))
+  
+  # methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", 
+  #paste0(correlationSheet$Sentrix_ID[1],"_", 
+  #     correlationSheet$Sentrix_Position[1], "/"), 
+  # "autocorrected_regions.csv"))
+  
+  conumeeMatch <- read.csv(paste0("~/Work/Analysis/Outputs/Conumee/LabLMS/", binSize,"/", paste0(correlationSheet$Sentrix_ID[1],"_", 
+                                                                                                 correlationSheet$Sentrix_Position[1],".csv")))
+  
+  sesameMatch <- read.csv(paste0("~/Work/Analysis/Outputs/SeSAMe/LabLMS/", binSize,"/", paste0("segments_",correlationSheet$Sentrix_ID[1],"_", 
+                                                                                               correlationSheet$Sentrix_Position[1],".csv")))
+  
+  methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", binSize,"/", 
+                                 correlationSheet$Sentrix_ID[1],"_", correlationSheet$Sentrix_Position[1],"/autocorrected_regions.csv"))
+  
+  cnvMatch <- cnvMatch %>% dplyr::filter(!(Type == "LOH")) %>% dplyr::filter(Chromosome != 24 & Chromosome != 25) %>% dplyr::select("Chromosome", "StartPosition", "StopPosition", "Median Log2 Ratio") %>% 
+    dplyr::rename(chrom = "Chromosome", loc.start = "StartPosition", loc.end = "StopPosition", seg.mean = "Median Log2 Ratio") %>%
+    dplyr::mutate(seg.mean = as.numeric(seg.mean)) %>%
+    dplyr::mutate(CNVStatus = case_when(
+      seg.mean <= -0.2 ~ "Deletion", 
+      seg.mean >= 0.2 ~ "Amplification", 
+      TRUE ~ "Normal"
+    ), type = "SNP")
+  
+  print(cnvMatch)
+  if(Technology == "MethylMaster") {
+    methylMatch <- methylMatch %>% dplyr::rename(
+      seg.mean = "Mean", loc.start = "bp.Start", 
+      loc.end = "bp.End") %>% dplyr::select(
+        seg.mean, loc.start, loc.end, Chromosome) %>% mutate(
+          type = "MethylMaster") %>% dplyr::rename(chrom = "Chromosome") %>% 
+      dplyr::mutate(chrom = as.numeric(gsub("chr", "", chrom))) %>% filter(!is.na(chrom)) %>%
+      dplyr::mutate(loc.start = as.numeric(loc.start), loc.end = as.numeric(loc.end), seg.mean = as.numeric(seg.mean)) %>% mutate(CNVStatus = case_when(
+        seg.mean <= -0.2 ~ "Deletion", 
+        seg.mean >= 0.2 ~ "Amplification", 
+        TRUE ~ "Normal"
+      ))
+    combinedSet <- rbind(methylMatch, cnvMatch) %>% mutate(Gene = as.character(0)) %>% arrange(chrom)
+  }
+  
+  if(Technology == "Conumee"){
+    conumeeMatch <- conumeeMatch %>% dplyr::select(chrom, loc.start, loc.end, seg.mean) %>% mutate(CNVStatus = case_when(
+      seg.mean <= -0.2 ~ "Deletion", 
+      seg.mean >= 0.2 ~ "Amplification", 
+      TRUE ~ "Normal"
+    )) %>% mutate(chrom = as.numeric(gsub("chr", "", chrom))) %>% mutate(type = "Conumee")
+    combinedSet <- rbind(conumeeMatch, cnvMatch) %>% mutate(Gene = as.character(0)) %>% arrange(chrom)
+  }
+  
+  if(Technology == "Sesame"){
+    sesameMatch <- sesameMatch %>% dplyr::select(c("chrom", "loc.start", 
+                                                   "loc.end", "seg.mean")) %>% dplyr::mutate(
+                                                     chrom = str_remove_all(chrom, "chr")) %>% filter(
+                                                       !(chrom == "X") & !(chrom == "Y")) %>% mutate(
+                                                         chrom = as.numeric(chrom)) %>% arrange(chrom) %>% mutate(
+                                                           CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
+                                                                                 seg.mean < -0.3 ~ "Deletion",
+                                                                                 TRUE ~ "Normal"), type = "SeSAMe") 
+    combinedSet <- rbind(sesameMatch, cnvMatch) %>% mutate(Gene = as.character(0), seg.mean = as.numeric(seg.mean)) %>% arrange(chrom)
+  }
+  combinedSet
+}
+
 accuracyModel <- function(t1){
   pred_df <- t1 %>% filter(!(type == "SNP"))
   truth_df <- t1 %>% filter(type == "SNP")
@@ -52,6 +125,7 @@ accuracyModel <- function(t1){
 fpCheck <- function(df) {
   library(GenomicRanges)
   library(dplyr)
+  df <- df %>% select(-c("Gene"))
   
   pred_df <- df %>% filter(!(type == "SNP"))
   pred_df$chrom <- as.character(pred_df$chrom)
@@ -88,27 +162,30 @@ fpCheck <- function(df) {
     pred_cnv = pred_cnv,
     truth_cnv = truth_cnv
   ) 
-  print(tp_df)
   tp_df <- tp_df %>%
     filter(pred_cnv == truth_cnv) %>%
     group_by(Chromosome) %>%
     summarise(TP_bp = sum(width), .groups = "drop")
-  print(tp_df)
   
   # ---- Step 4: False Positives ----
-  non_overlapping_pred <- pred_gr[-queryHits(hits)]
-  fp_df <- as.data.frame(non_overlapping_pred) %>%
-    filter(CNV != "Normal") %>%
-    group_by(seqnames) %>%
-    summarise(FP_bp = sum(width), .groups = "drop") %>% dplyr::rename(Chromosome = "seqnames")
-  print(fp_df)
+  fp_df <- data.frame(
+    Chromosome = as.character(seqnames(overlap_ranges)),
+    width = width(overlap_ranges),
+    pred_cnv = pred_cnv,
+    truth_cnv = truth_cnv
+  ) %>% filter(pred_cnv != truth_cnv, truth_cnv == "Normal") %>%
+    group_by(Chromosome) %>%
+    summarise(FP_bp = sum(width), .groups = "drop")
   
   # ---- Step 5: False Negatives ----
-  non_overlapping_truth <- truth_gr[-subjectHits(hits)]
-  fn_df <- as.data.frame(non_overlapping_truth) %>%
-    filter(CNV != "Normal") %>%
-    group_by(seqnames) %>%
-    summarise(FN_bp = sum(width), .groups = "drop") %>% dplyr::rename(Chromosome = "seqnames")
+  fn_df <- data.frame(
+    Chromosome = as.character(seqnames(overlap_ranges)),
+    width = width(overlap_ranges),
+    pred_cnv = pred_cnv,
+    truth_cnv = truth_cnv
+  ) %>% filter(pred_cnv != truth_cnv, pred_cnv == "Normal") %>%
+    group_by(Chromosome) %>%
+    summarise(FN_bp = sum(width), .groups = "drop")
   print(fn_df)
   # ---- Step 6: Merge and compute accuracy ----
   final_eval <- hg19_chr_sizes %>%
@@ -395,7 +472,56 @@ sts <- df %>% dplyr::filter(type != "SNP")  %>% group_by(bin, type) %>%
   )
 
 # Reanalyze accuracy of all cases
+# LMS Accuracies
+stts <- c(9202, 9203, 9327, 9328, 9337, 9338, 9350, 9353, 9354, 9355, 9356, 9357, 9358)
+bins <- c(10000, 50000, 1e+05, 1e+06)
+tech <- c("MethylMaster", "Conumee", "Sesame")
+labels <- c("Conumee – default bin size",
+            "Conumee – 10kb",
+            "Conumee – 100kb",
+            "Conumee – 1Mb",            
+            "Sesame – default bin size",
+            "Sesame – 10kb",
+            "Sesame – 100kb",
+            "Sesame – 1Mb",
+            "MethylMasteR – default bin size",
+            "MethylMasteR – 10kb",
+            "MethylMasteR – 100kb",
+            "MethylMasteR – 1Mb"
+            )
+ConumeeDef <- c()
+Conumee10kb <- c()
+Conumee100kb <- c()
+Conumee1Mb <- c()
+SesameDef <- c()
+Sesame10kb <- c()
+Sesame100kb <- c()
+Sesame1Mb <- c()
+MethylMasterDef <- c()
+MethylMaster10kb <- c()
+MethylMaster100kb <- c()
+MethylMaster1Mb <- c()
+for(stt in stts){
+  ConumeeDef <- c(ConumeeDef, fpCheck(labLMSProc(stt, "Conumee", 50000)))
+  Conumee10kb <- c(Conumee10kb, fpCheck(labLMSProc(stt, "Conumee", 10000)))
+  Conumee100kb <- c(Conumee100kb, fpCheck(labLMSProc(stt, "Conumee", 1e+05)))
+  Conumee1Mb <- c(Conumee1Mb, fpCheck(labLMSProc(stt, "Conumee", 1e+06)))
+  SesameDef <- c(SesameDef, fpCheck(labLMSProc(stt, "Sesame", 50000)))
+  Sesame10kb <- c(Sesame10kb, fpCheck(labLMSProc(stt, "Sesame", 10000)))
+  Sesame100kb <- c(Sesame100kb, fpCheck(labLMSProc(stt, "Sesame", 1e+05)))
+  Sesame1Mb <- c(Sesame1Mb, fpCheck(labLMSProc(stt, "Sesame", 1e+06)))
+  MethylMasterDef <- c(MethylMasterDef, fpCheck(labLMSProc(stt, "MethylMaster", 50000)))
+  MethylMaster10kb <- c(MethylMaster10kb, fpCheck(labLMSProc(stt, "MethylMaster", 10000)))
+  MethylMaster100kb <- c(MethylMaster100kb, fpCheck(labLMSProc(stt, "MethylMaster", 1e+05)))
+  MethylMaster1Mb <- c(MethylMaster1Mb, fpCheck(labLMSProc(stt, "MethylMaster", 1e+06)))
+}
 
+
+
+# LM Accuracies
+stts <- read.csv("~/Work/Analysis/LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv")$STT
+bins <- c(10000, 50000, 1e+05, 1e+06)
+tech <- c("MethylMaster", "Conumee", "Sesame")
 
 
 

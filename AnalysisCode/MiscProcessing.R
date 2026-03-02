@@ -160,7 +160,7 @@ labLMSProc <- function(STTq, Technology, binSize){
   # Correlate by STT information between methylation Sentrix and SNP data.
   correlationSheet <- read.csv(paste0(basePath,"/LabData/LMS_SNP_EPIC_array_data/correlative.csv")) %>% filter(STT == STTq)
   
-  cnvMatch <- read.csv(paste0(basePath,"/LabData/LMS_SNP_EPIC_array_data/SNP_array_data_LMS/CNV_calls/CNVCallsCSV/", 
+  cnvMatch <- read.csv(paste0(basePath,"~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LMS_Probe_and_segment_level_data_01Feb2026", 
                               correlationSheet$CNV_Label[1], "_events.csv"))
   
   methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/",binSize,"/", 

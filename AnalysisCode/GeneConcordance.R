@@ -73,7 +73,7 @@ NoGraphGeneGen <- function(Gene, db = NULL, case){
     coords_final
   }
 }
-NoGraphGeneGen <- function(Gene, db = NULL, case){
+NoGraphGeneGen <- function(Gene, db = NULL, case){ # Updated function.
   entrez_idsDB <- mapIds(org.Hs.eg.db, 
                          keys=Gene, 
                          column="ENTREZID", 
@@ -113,14 +113,6 @@ NoGraphGeneGen <- function(Gene, db = NULL, case){
                                      start.field = "loc.start",
                                      end.field = "loc.end",
                                      keep.extra.columns = TRUE)
-    
-    print("grDt chrom 19 MethylMasteR rows:")
-    print(as.data.frame(grDt) %>% dplyr::filter(seqnames == 19, type == "MethylMaster"))
-    
-    overlaps <- findOverlaps(grDt, grC)
-    
-    print("Overlap hits for MethylMasteR chrom 19:")
-    print(as.data.frame(grDt[queryHits(overlaps)]) %>% dplyr::filter(seqnames == 19, type == "MethylMaster"))
     
     
     # Extract intersection and bind gene annotation immediately before any row changes
@@ -189,11 +181,6 @@ NoGraphGeneGen <- function(Gene, db = NULL, case){
                                    dplyr::bind_rows(missing_rows))
     }
     
-    print("intersection_df chrom 19 MethylMasteR rows:")
-    print(intersection_df %>% dplyr::filter(chrom == 19, type == "MethylMaster"))
-    
-    print("overlapping_regions before unique, chrom 19 MethylMasteR:")
-    print(overlapping_regions %>% dplyr::filter(chrom == 19, type == "MethylMaster"))
     
     print(overlapping_regions %>% dplyr::filter(Gene == "RB1"))
     overlapping_regions <- unique(overlapping_regions[c(6, 1, 2, 3, 4, 5, 7)])
@@ -241,7 +228,6 @@ for(stt in stts){
                                                    labLMSProc(stt, "Sesame", 1e+06)), 
                            case = stt))
 }
-ap10000 %>% filter(Gene == "RB1", case == 9356)
 techs <- c("Gene_MMasteR", "Gene_SNP", "Gene_Conumee", "Gene_SeSAMe")
 
 ap10000 <- ap10000 %>% dplyr::rename(log2ratio = seg.mean)

@@ -1,9 +1,55 @@
 ---
-title: "Benchmarking detection of DNA copy number variation using high-density methylation microarrays"
-output: html_document
+title: "Benchmarking detection of DNA copy number variation using high-density methylation
+  microarrays"
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
+  chunk_output_type: console
 ---
 
 # Code Paper for Benchmarking Project
+
+```{r setup, include=FALSE}
+# Bioconductor first
+library(GenomeInfoDb)
+library(AnnotationDbi)
+library(AnnotationHub)
+library(org.Hs.eg.db)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(rentrez)
+library(GenomicRanges)
+library(GenomicFeatures)
+library(pheatmap)
+
+# Then tidyverse and dplyr last so they win all masking conflicts
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(ggrepel)
+library(patchwork)
+library(cowplot)
+library(gridGraphics)
+library(gridExtra)
+library(ggplotify)
+library(readxl)
+library(RColorBrewer)
+library(reshape2)
+
+conflictRules("dplyr", mask.ok = c("filter", "select", "summarize", 
+                                    "summarise", "mutate", "arrange",
+                                    "rename", "count", "group_by"))
+
+filter    <- dplyr::filter
+select    <- dplyr::select
+summarize <- dplyr::summarize
+mutate    <- dplyr::mutate
+arrange   <- dplyr::arrange
+rename    <- dplyr::rename
+
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+```
 
 Hi! This is a very informally written document just to give the beats of what is happening in the code, and the analysis I am doing. It needs to be MUCH more formalized before being shown publicly, but it is useful for understanding!
 
@@ -62,7 +108,7 @@ labLMSProc <- function(STTq, Technology, binSize){
       TRUE ~ "Normal"
     ), type = "SNP")
   
-  print(cnvMatch)
+
   if(Technology == "MethylMaster") {
     methylMatch <- methylMatch %>% dplyr::rename(
       seg.mean = "Mean", loc.start = "bp.Start", 
@@ -241,6 +287,8 @@ This entire evaluation is contained in a function, which asks for a set of IDs (
 
 ```{r}
   
+ caseCorr <- function(IDs, bin){
+  
   Methyl <- c()
   Ses <- c()
   Con <- c()
@@ -258,20 +306,20 @@ This entire evaluation is contained in a function, which asks for a set of IDs (
     Con <- c(Con,Conumee)
     
   }
-
-```
-
-It then takes the median log2 ratio of each sample for each software and bin, and returns it as a list, given by the initialized Methyl (MethylMasteR), Ses (SeSAMe) and Con (Conumee) values.
-
-```{r}
-acc <- data.frame(Conumee_Median = median(Con), 
+  
+  acc <- data.frame(Conumee_Median = median(Con), 
                     Conumee_SD = sd(Con), 
                     Sesame_Median = median(Ses), 
                     Sesame_SD = sd(Ses), 
                     Methyl_Median = median(Methyl), 
                     Methyl_SD = sd(Methyl))
   acc
+  
+}
+
 ```
+
+It then takes the median log2 ratio of each sample for each software and bin, and returns it as a list, given by the initialized Methyl (MethylMasteR), Ses (SeSAMe) and Con (Conumee) values.
 
 It then returns a data frame for easy post-processing.
 
@@ -292,14 +340,12 @@ GenomicIndex <- function(dfCH3, sw){
   # Filter out for clinically significant segments %>% filter(CNVStatus != Normal)
   dfCH3f <- dfCH3 %>% dplyr::filter(type == "Conumee" | type == "MethylMaster" | type == "SeSAMe") %>%
     dplyr::filter(CNVStatus != "Normal")
-  print(nrow(dfCH3))
   # Count
   CNVCount <- nrow(dfCH3f)
   
   
   # Return value
   ret <- (CNVCount^2)/22
-  print(CNVCount)
   return(ret) 
   }
 }
@@ -343,7 +389,7 @@ Then, it prints out by taking a Pearson's correlation on the different arrays, a
 stts <- c(9202, 9203, 9327, 9328, 9337, 9338, 9350, 9353, 9354, 9355, 9356, 9357, 9358)
 bins <- c(10000, 50000, 1e+05, 1e+06)
 tech <- c("MethylMaster", "Conumee", "Sesame")
-genomeCalc <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
+genomeCalc <- read_excel("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
   dplyr::select("STT", "% Genome Changed") %>% dplyr::rename(gc = "% Genome Changed")
 bin10kb <- genomeCalc
 binDef <- genomeCalc
@@ -401,7 +447,7 @@ for(bin in bins){
 fpCheck <- function(df) {
   library(GenomicRanges)
   library(dplyr)
-  df <- df %>% select(-c("Gene")) # Removes genes, it's unnecessary for this purpose
+  df <- df %>% dplyr::select(-c("Gene")) # Removes genes, it's unnecessary for this purpose
   
   pred_df <- df %>% filter(!(type == "SNP")) # The methylation dataset
   pred_df$chrom <- as.character(pred_df$chrom)
@@ -521,7 +567,8 @@ NoGraphGeneGen <- function(Gene, db = NULL, case){ # Updated function.
                                          columns = c("CHR", "CHRLOC", "CHRLOCEND"),
                                          keytype = "ENTREZID")
   txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
-  target_genes_ranges <- gene_ranges[gene_ranges$gene_id %in% entrez_ids]
+  gene_ranges <- genes(txdb)
+  target_genes_ranges <- gene_ranges[gene_ranges$gene_id %in% entrez_idsDB]
   coords_df <- as.data.frame(target_genes_ranges)
   coords_df$entrez_id <- target_genes_ranges$gene_id
   coords_final <- coords_df[, c("entrez_id", "seqnames", "start", "end", 
@@ -546,7 +593,7 @@ NoGraphGeneGen <- function(Gene, db = NULL, case){ # Updated function.
       dplyr::mutate(seg.mean = 0, CNVStatus = "Normal", type = "Gene") %>%
       dplyr::mutate(Gene = Gene) %>% 
       dplyr::select(-c("strand", "width", "entrez_id", "start", "end"))
-    print(gcoords)
+
     grC <- makeGRangesFromDataFrame(gcoords, 
                                     start.field = "loc.start",
                                     end.field = "loc.end",
@@ -556,6 +603,7 @@ NoGraphGeneGen <- function(Gene, db = NULL, case){ # Updated function.
                                      end.field = "loc.end",
                                      keep.extra.columns = TRUE)
     
+    overlaps <- findOverlaps(grDt, grC)
     
     # Extract intersection and bind gene annotation immediately before any row changes
     intersection_df <- as.data.frame(pintersect(
@@ -644,6 +692,12 @@ NoGraphGeneGen <- function(Gene, db = NULL, case){ # Updated function.
 We then now have to deal with visualizations.
 
 ```{r}
+ap10000 <- NULL
+ap50000 <- NULL
+ap1e05 <- NULL
+ap1e06 <- NULL
+Gene <- c("MYC","MYOCD","CCNE1","CDKN2A","PTEN","RB1","TP53")
+
 for(stt in stts){
   ap10000 <- rbind(ap10000, NoGraphGeneGen(Gene = Gene, db = rbind(labLMSProc(stt, "MethylMaster", 10000), 
                                                     labLMSProc(stt, "Conumee", 10000), 
@@ -709,14 +763,6 @@ states <- c("Conumee – default bin size",
             "MethylMasteR – 1Mb"
 )
 
-Methyl <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_MMasteR")
-Ses <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SeSAMe")
-Con <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_Conumee")
-Snp <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SNP")
-Snp <- Snp %>% group_by(case) %>%
-  summarize(
-    log2ratio = mean(log2ratio)
-  )
 
 CCNE1 <- c(1:length(states))
 CDKN2A <- c(1:length(states))
@@ -733,21 +779,23 @@ output.df <- data.frame(states, CCNE1,
                         PTEN ,
                         RB1 ,
                         TP53)
+i <- 0
+j <- 0
 for(i in seq_along(ap)){
   for(j in bins){
-    print(genes[i])
-    print(j)
-    Methyl <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_MMasteR")
-    Ses <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SeSAMe")
-    Con <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_Conumee")
-    Snp <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SNP")
+    Methyl <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_MMasteR") %>% dplyr::mutate(seg.mean = as.numeric(seg.mean))
+    Ses <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SeSAMe") %>% dplyr::mutate(seg.mean = as.numeric(seg.mean))
+    Con <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_Conumee") %>% dplyr::mutate(seg.mean = as.numeric(seg.mean))
+    Snp <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SNP") %>% dplyr::mutate(seg.mean = as.numeric(seg.mean))
     Snp <- Snp %>% group_by(case) %>%
       summarize(
-        log2ratio = mean(log2ratio)
+        log2ratio = mean(seg.mean)
       )
-    mCorr <- cor(Methyl$log2ratio, Snp$log2ratio)
-    sCorr <- cor(Ses$log2ratio, Snp$log2ratio)
-    cCorr <- cor(Con$log2ratio, Snp$log2ratio)
+
+    mCorr <- cor(Methyl$seg.mean,Snp$log2ratio)
+    sCorr <- cor(Ses$seg.mean, Snp$log2ratio)
+    cCorr <- cor(Con$seg.mean, Snp$log2ratio)
+
     print(paste0(mCorr, " ", sCorr, " ", cCorr))
     tag <- 0
     if(j == "50000"){
@@ -772,7 +820,7 @@ for(i in seq_along(ap)){
 df_long <- melt(output.df, id.vars = "states", variable.name = "gene", value.name = "correlation")
 
 # Keep row order
-df_long$state <- factor(df_long$state, levels = rev(data$state))
+df_long$states <- factor(df_long$states, levels = rev(output.df$states))
 
 # Plot
 p <- ggplot(df_long, aes(x = gene, y = states, fill = correlation)) +
@@ -899,14 +947,15 @@ geneGen <- function(Gene, db = NULL){
                                          columns = c("CHR", "CHRLOC", "CHRLOCEND"),
                                          keytype = "ENTREZID")
   txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
-  target_genes_ranges <- gene_ranges[gene_ranges$gene_id %in% entrez_ids]
+  gene_ranges <- genes(txdb)
+  target_genes_ranges <- gene_ranges[gene_ranges$gene_id %in% entrez_idsDB]
   coords_df <- as.data.frame(target_genes_ranges)
   coords_df$entrez_id <- target_genes_ranges$gene_id
   coords_final <- coords_df[, c("entrez_id", "seqnames", "start", "end", 
                                 "strand", "width")] %>% 
     dplyr::mutate(chrom=seqnames) %>% 
     dplyr::mutate(chrom = as.numeric(gsub("chr","",chrom)), 
-                  Gene = rownames(coords_final)) %>% 
+                  Gene = rownames(.)) %>% 
     dplyr::select(-c(seqnames))
   rownames(coords_final) <- Gene
   if(!is.null(db)){
@@ -1001,3 +1050,156 @@ This combines the two, the gene heatmap and the Manhattan plot, into one singula
 ## A Run-through
 
 Talking about code feels very abstract, so below is a little runthrough of ALL the code, taking through how a typical set of samples would be analyzed. Some of the driver code is dropped because it muddles understanding, but can be explained if needed.
+
+Let's take the code to be analysing case STT 9202, an LMS case, at 10000 basepair bins.
+
+```{r}
+df <- rbind(labLMSProc(9202, "MethylMaster", 10000), labLMSProc(9202, "Sesame", 10000), labLMSProc(9202, "Conumee", 10000)) # This creates the full database of data for that case at that basepair bin.
+print(df)
+
+```
+
+A reasonable contest would be that this data has a lot of duplications. Further processing actually eliminates this in the analytical functions, as they all contain unique filter functions to ENSURE this doesn't happen.
+
+```{r}
+GenomeModified(df) # We calculate how much of the genome is modified.
+```
+
+```{r}
+GenomicIndex(df, T) # Calculates the GI for the selected dataframe
+```
+
+```{r}
+# An inherent limitation of this function is that it does one case at a time, else the # statistics break
+
+suppressWarnings({
+
+  print("MethylMasteR")
+  print(fpCheck(labLMSProc(9202, "MethylMaster", 10000)))
+  print("SeSAMe")
+  print(fpCheck(labLMSProc(9202, "Sesame", 10000)))
+  print("Conumee")
+  print(fpCheck(labLMSProc(9202, "Conumee", 10000)))
+  
+})
+
+```
+
+I am not running the full processing again as it is clearly visible how large the system is. Also, it works more like a black-box, so the graph kinda pops out of the code.
+
+```{r}
+# Looking for concordance
+genes <- names(ap)
+bins <- c("50000", "10000", "1e+05", "1e+06")
+states <- c("Conumee – default bin size",
+            "Conumee – 10kb",
+            "Conumee – 100kb",
+            "Conumee – 1Mb",            
+            "Sesame – default bin size",
+            "Sesame – 10kb",
+            "Sesame – 100kb",
+            "Sesame – 1Mb",
+            "MethylMasteR – default bin size",
+            "MethylMasteR – 10kb",
+            "MethylMasteR – 100kb",
+            "MethylMasteR – 1Mb"
+)
+
+CCNE1 <- c(1:length(states))
+CDKN2A <- c(1:length(states))
+MYC <- c(1:length(states))
+MYOCD <- c(1:length(states))
+PTEN <- c(1:length(states))
+RB1 <- c(1:length(states))
+TP53 <- c(1:length(states))
+
+output.df <- data.frame(states, CCNE1,
+                        CDKN2A,
+                        MYC,
+                        MYOCD, 
+                        PTEN ,
+                        RB1 ,
+                        TP53)
+for(i in seq_along(ap)){
+  for(j in bins){
+    print(genes[i])
+    print(j)
+    Methyl <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_MMasteR") %>% dplyr::mutate(seg.mean = as.numeric(seg.mean))
+    Ses <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SeSAMe") %>% dplyr::mutate(seg.mean = as.numeric(seg.mean))
+    Con <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_Conumee") %>% dplyr::mutate(seg.mean = as.numeric(seg.mean))
+    Snp <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SNP") %>% dplyr::mutate(seg.mean = as.numeric(seg.mean))
+    Snp <- Snp %>% group_by(case) %>%
+      summarize(
+        log2ratio = mean(seg.mean)
+      )
+    mCorr <- cor(Methyl$seg.mean, Snp$log2ratio)
+    sCorr <- cor(Ses$seg.mean, Snp$log2ratio)
+    cCorr <- cor(Con$seg.mean, Snp$log2ratio)
+    print(paste0(mCorr, " ", sCorr, " ", cCorr))
+    tag <- 0
+    if(j == "50000"){
+      tag <- 1
+    }
+    if(j == "10000"){
+      tag <- 2
+    }
+    if(j == "1e+05"){
+      tag <- 3
+    }
+    if(j == "1e+06"){
+      tag <- 4
+    }
+
+    output.df[tag, i + 1] <- mCorr
+    output.df[tag + 4, i + 1] <- sCorr 
+    output.df[tag + 8, i + 1] <- cCorr 
+  }
+}
+# Melt to long format
+df_long <- melt(output.df, id.vars = "states", variable.name = "gene", value.name = "correlation")
+
+# Keep row order
+df_long$states <- factor(df_long$states, levels = rev(output.df$states))
+
+# Plot
+p <- ggplot(df_long, aes(x = gene, y = states, fill = correlation)) +
+  geom_tile(color = "black", linewidth = 0.5) +
+  geom_text(aes(label = sprintf("%.2f", correlation)), size = 3, color = "black") +
+  scale_fill_gradient2(
+    low = "#2166ac", mid = "#f7f7f7", high = "#50C878",
+    midpoint = 0.5,
+    limits = c(min(df_long$correlation), 1),
+    name = "Correlation"
+  ) +
+  labs(
+    title = "CNV Method Comparison by Gene",
+    x = "Gene",
+    y = "Method & Bin Size"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    axis.text.x = element_text(angle = 30, hjust = 1, face = "bold"),
+    axis.text.y = element_text(size = 9),
+    panel.grid = element_blank(),
+    legend.position = "right"
+  )
+p
+```
+
+I just ran the visualizer, as that is the meat of the code.
+
+Finally, we need to plot the final dataset for the case.
+
+```{r}
+Gene <- c("MYC","MYOCD","CCNE1","CDKN2A","PTEN","RB1","TP53")
+geneAnno(Gene = Gene, db = df)
+```
+
+It looks terribly compressed, but this is honestly just due to the limits of this RMD file. Saving it with the proper parameters make it look more like this:
+
+![A lot more elegant!](images/clipboard-3927775445.png)
+
+## Conclusion
+
+That's about it! This whole pipeline gives an elegant flow, from preprocessing the data into a common readable format, to the different forms of analysis, all the way down to the visualizations, step by step.

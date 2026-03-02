@@ -346,9 +346,10 @@ for(i in seq_along(ap)){
     Ses <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SeSAMe")
     Con <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_Conumee")
     Snp <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SNP")
+    print(Snp)
     Snp <- Snp %>% group_by(case) %>%
       summarize(
-        log2ratio = mean(log2ratio)
+        log2ratio = mean(seg.mean)
       )
     mCorr <- cor(Methyl$log2ratio, Snp$log2ratio)
     sCorr <- cor(Ses$log2ratio, Snp$log2ratio)

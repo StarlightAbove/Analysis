@@ -222,11 +222,14 @@ caseCorr <- function(IDs, bin){
   Con <- c()
   
   for(ID in IDs){
-    MethylMaster <- read.csv(paste0("~/Outputs/MethylMaster/Normals/",bin,"/",ID,"/autocorrected_regions.csv"))
+    MethylMaster <- read.csv(paste0(getwd(),"/Outputs/MethylMaster/Normals/",
+                                    bin,"/",ID,"/autocorrected_regions.csv"))
     MethylMaster <- median(MethylMaster$Mean)
-    Sesame <- read.csv(paste0("~/Outputs/SeSAMe/Normals/",bin,"/segments_",ID,".csv"))
+    Sesame <- read.csv(paste0(getwd(),"/Outputs/SeSAMe/Normals/",
+                              bin,"/segments_",ID,".csv"))
     Sesame <- median(Sesame$seg.mean)
-    Conumee <- read.csv(paste0("~/Outputs/Conumee/LabNormals/",bin,"/",ID,".csv"))
+    Conumee <- read.csv(paste0(getwd(),"/Outputs/Conumee/LabNormals/",
+                               bin,"/",ID,".csv"))
     Conumee <- median(Conumee$seg.mean)
     
     Methyl <- c(Methyl, MethylMaster)
@@ -282,7 +285,7 @@ GenomeModified <- function(dfCH3){
 fpCheck <- function(df) {
   library(GenomicRanges)
   library(dplyr)
-  df <- df %>% dplyr::select(-c("Gene")) # Removes genes, it's unnecessary for this purpose
+  # Removes genes, it's unnecessary for this purpose
   
   pred_df <- df %>% filter(!(type == "SNP")) # The methylation dataset
   pred_df$chrom <- as.character(pred_df$chrom)
@@ -362,7 +365,7 @@ fpCheck <- function(df) {
     ) %>%
     arrange(as.numeric(Chromosome)) # Joins all the analysis together, so it can be seen at once, and then calculates the accuracy across each case
   
-  accuracy <- sum(final_eval$Accuracy) / 22
+  accuracy <- median(final_eval$Accuracy)
   
   return(list(final_eval, accuracy))
 }
@@ -677,3 +680,427 @@ geneAnno <- function(Gene, db = NULL){
   img2 <- plot_cnv_segments(db)
   return(list((img2 + pheatmap_ggplot + plot_layout(widths = unit(c(20,8), c("null","null")))), db))
 }
+
+
+# Getting the list of cases
+LMS_cases <- read_csv(paste0(getwd(), "/LabData/LMS_SNP_EPIC_array_data/correlative.csv"))
+LMS_cases <- LMS_cases$STT
+
+LM_cases <- read_csv(paste0(getwd(),"/LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv"))
+LM_cases <- LM_cases$STT
+
+Normals <- read_csv("LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv")
+Normals <- Normals$Basename
+
+# Okay, now for each of the functions, essentially a runthrough of the full analysis.
+# Let's verify that the Normals are actually normal.
+normalsFrame10kb <- caseCorr(IDs = Normals, bin = 10000) %>% dplyr::mutate(bin = 10000)
+normalsFrame100kb <- caseCorr(IDs = Normals, bin = 1e+05) %>% dplyr::mutate(bin = 1e+05)
+normalsFrameDef <- caseCorr(IDs = Normals, bin = 50000) %>% dplyr::mutate(bin = 50000)
+normalsFrame1Mb <- caseCorr(IDs = Normals, bin = 1e+06) %>% dplyr::mutate(bin = 1e+06)
+
+# We calculate for each bin and package and save it into one df.
+NormalsFrame <- rbind(normalsFrame10kb, normalsFrame100kb, normalsFrameDef, 
+                      normalsFrame1Mb) %>% arrange(bin) 
+write.csv(NormalsFrame, file = paste0(getwd(), "/FinalSet/normals.csv")) # Lets save this data
+
+# Let's move onto computing the genomic index
+# we have three axis of computation: software, cases, and bins
+# let's use the software as an extra row
+# cases as rows, and bins as columns
+
+genomicIndexDf <- NULL
+
+
+# columns in the dataframe: case, binDefault, bin10kb, bin100kb, bin1Mb.
+for(i in LMS_cases){
+  gen <- data.frame(case = i,
+                    tech = "MethylMaster",
+                    Default = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 50000), sw = T),
+                    "10kb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 10000), sw = T),
+                    "100kb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 1e+05), sw = T),
+                    "1Mb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 1e+06), sw = T)
+                    )
+  genS <- data.frame(case = i,
+                    tech = "Sesame",
+                    Default = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 50000), sw = T),
+                    "10kb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 10000), sw = T),
+                    "100kb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 1e+05), sw = T),
+                    "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 1e+06), sw = T)
+  )
+  genC <- data.frame(case = i,
+                     tech = "Conumee",
+                     Default = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 50000), sw = T),
+                     "10kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 10000), sw = T),
+                     "100kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+05), sw = T),
+                     "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+06), sw = T)
+  )
+  genSNP <- data.frame(case = i,
+                       tech = "SNP",
+                       Default = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 50000), sw = F),
+                       "10kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 10000), sw = F),
+                       "100kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+05), sw = F),
+                       "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+06), sw = F)
+  )
+  genomicIndexDf <- rbind(genomicIndexDf, gen, genS, genC, genSNP)
+}
+genomicIndexDf <- unique(genomicIndexDf)
+write.csv(genomicIndexDf, file = paste0(getwd(), "/FinalSet/GenomicIndex/GenomicIndex.csv")) # Lets save this data
+# Just looking at numbers is difficult, let's run a PCC, and draw a plot to understand this better
+# We have 12 categories for correlation.
+pccCorrelation <- NULL
+techs <- c("MethylMaster", "Sesame", "Conumee")
+binCols <- colnames(genomicIndexDf)[3:6]
+for(t in techs){
+  dfs <- genomicIndexDf %>% dplyr::filter(tech == t)
+  bstruth <- genomicIndexDf %>% dplyr::filter(tech == "SNP")
+  MetDef <- data.frame(category = paste0(t, " - Default"), pcc = cor(bstruth$Default, dfs$Default))
+  Met10kb <- data.frame(category = paste0(t, " - 10kb"), pcc = cor(bstruth$X10kb, dfs$X10kb) )
+  Met100kb <- data.frame(category = paste0(t, " - 100kb"), pcc = cor(bstruth$X100kb, dfs$X100kb) )
+  Met1Mb <- data.frame(category = paste0(t, " - 1Mb"), pcc = cor(bstruth$X1Mb, dfs$X1Mb) )
+  pccCorrelation <- rbind(pccCorrelation, MetDef, Met10kb, Met100kb, Met1Mb)
+}
+plotDf <- genomicIndexDf %>% pivot_longer(
+  cols = binCols, # Selects columns that start with "Year"
+  names_to = "bins",         # The new column for the former column names
+  values_to = "pcc"        # The new column for the values
+)
+# Plot of how it would look in terms of pure numbers.
+ggplot(data = plotDf, aes(x = factor(case), y = pcc, color = tech)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_log10() +
+  labs(title = "Genomic Index vs. Bin across cases") +
+  facet_wrap(~ bins) +
+  theme_gray()
+
+# Now, let's calculate genome modified.
+techs <- c("MethylMaster", "Sesame", "Conumee")
+bins <- c(50000, 10000, 1e+05, 1e+06)
+geneMod <- NULL
+for(tech in techs){
+  for(bin in bins){
+    for(cases in LMS_cases){
+      result <- data.frame(
+        category = paste0(cases, "-", bin, "-", tech),
+        val = GenomeModified(labLMSProc(STTq = cases, Technology = tech, binSize = bin))
+      )
+      geneMod <- rbind(geneMod, result)
+    }
+  }
+}
+geneMod <- geneMod %>%
+  separate(
+    col = category,
+    into = c("Case", "Bin", "Tech"),
+    sep = "-"
+  )
+
+SNP10kb <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
+  dplyr::select(c("STT", "% Genome Changed")) %>% 
+  dplyr::mutate(Tech = "SNP", Bin = 10000) %>% 
+  dplyr::rename(val = `% Genome Changed`, Case = STT)
+SNPDef <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
+  dplyr::select(c("STT", "% Genome Changed")) %>% 
+  dplyr::mutate(Tech = "SNP", Bin = 50000) %>% 
+  dplyr::rename(val = `% Genome Changed`, Case = STT)
+SNP100kb <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
+  dplyr::select(c("STT", "% Genome Changed")) %>% 
+  dplyr::mutate(Tech = "SNP", Bin = 1e+05) %>% 
+  dplyr::rename(val = `% Genome Changed`, Case = STT)
+SNP1Mb <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
+  dplyr::select(c("STT", "% Genome Changed")) %>% 
+  dplyr::mutate(Tech = "SNP", Bin = 1e+06) %>% 
+  dplyr::rename(val = `% Genome Changed`, Case = STT)
+
+geneMod <- rbind(geneMod, SNP10kb, SNPDef, SNP100kb, SNP1Mb)
+ggplot(data = geneMod, aes(x = factor(Case), y = val, color = Tech)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_log10() +
+  labs(title = "Genomic Index vs. Bin across cases") +
+  facet_wrap(~ Bin) +
+  theme_gray()
+write.csv(geneMod, file = paste0(getwd(), "/FinalSet/GenomeChanged/genomeChanged.csv"))
+
+# Let's go after accuracies using the accuracy algorithm now.
+techs <- c("MethylMaster", "Sesame", "Conumee")
+bins <- c(50000, 10000, 1e+05, 1e+06)
+CaseAccuracies <- NULL
+for(tech in techs){
+  for(bin in bins){
+    for(cases in LMS_cases){
+      result <- data.frame(
+        category = paste0(cases, "-", bin, "-", tech),
+        Accuracy = fpCheck(labLMSProc(STTq = cases, Technology = tech, binSize = bin))[[2]]
+      )
+      CaseAccuracies <- rbind(CaseAccuracies, result)
+    }
+  }
+}
+CaseAccuracies <- CaseAccuracies %>%
+  separate(
+    col = category,
+    into = c("Case", "Bin", "Tech"),
+    sep = "-"
+  )
+ggplot(data = CaseAccuracies, aes(x = factor(Case), y = Accuracy, color = Tech)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  labs(title = "Accuracy vs. Bin across cases") +
+  facet_wrap(~ Bin) +
+  theme_gray()
+write.csv(CaseAccuracies, file = paste0(getwd(), "/FinalSet/Accuracies/accuraciesLMSMedian.csv"))
+
+CaseAccuracies <- NULL
+for(tech in techs){
+  for(bin in bins){
+    for(cases in LM_cases){
+      result <- data.frame(
+        category = paste0(cases, "-", bin, "-", tech),
+        Accuracy = fpCheck(LMStt(STT = cases, bin = bin, tech = tech))[[2]]
+      )
+      CaseAccuracies <- rbind(CaseAccuracies, result)
+    }
+  }
+}
+CaseAccuracies <- CaseAccuracies %>%
+  separate(
+    col = category,
+    into = c("Case", "Bin", "Tech"),
+    sep = "-"
+  )
+ggplot(data = CaseAccuracies, aes(x = factor(Case), y = Accuracy, color = Tech)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  labs(title = "Accuracy vs. Bin across cases") +
+  facet_wrap(~ Bin) +
+  theme_gray()
+write.csv(CaseAccuracies, file = paste0(getwd(), "/FinalSet/Accuracies/accuraciesMedianLM.csv"))
+
+# Can we make a categorical recommendation? Done by taking the median and mean of both LM and LMS accuracies
+# across the nine categories
+LMSMedian <- read_csv(paste0(getwd(),"/FinalSet/Accuracies/accuraciesLMSMedian.csv")) %>%
+  dplyr::rename(LMSMedian = Accuracy)
+LMMedian <- read_csv(paste0(getwd(),"/FinalSet/Accuracies/accuraciesMedianLM.csv"))%>%
+  dplyr::rename(LMMedian = Accuracy)
+LMSMean <- read_csv(paste0(getwd(),"/FinalSet/Accuracies/accuraciesLMS.csv"))%>%
+  dplyr::rename(LMSMean = Accuracy)
+LMMean <- read_csv(paste0(getwd(),"/FinalSet/Accuracies/accuraciesLM.csv"))%>%
+  dplyr::rename(LMMean = Accuracy)
+
+CategoricalLMS <- cbind(LMSMean, LMSMedian) %>% 
+  dplyr::select(c("Case", "Bin", "Tech", "LMSMean", "LMSMedian")) %>% 
+  dplyr::mutate(LMSMean = as.numeric(LMSMean), LMSMedian = as.numeric(LMSMedian)) 
+
+CategoricalLM <- cbind(LMMean, LMMedian) %>% 
+  dplyr::select(c("Case", "Bin", "Tech", "LMMean", "LMMedian")) %>%
+  dplyr::mutate(LMMean = as.numeric(LMMean), LMMedian = as.numeric(LMMedian)) 
+
+rm(LMSMean, LMMean, LMMedian, LMSMedian)
+
+CategoricalLMS <- CategoricalLMS %>% 
+  group_by(Bin, Tech) %>%
+  summarize(LMSMean = mean(LMSMean), LMSMedian = median(LMSMedian), .groups = "drop")
+
+CategoricalLM <- CategoricalLM %>% 
+  group_by(Bin, Tech) %>%
+  summarize(LMMean = mean(LMMean), LMMedian = median(LMMedian), .groups = "drop")
+
+Categorical <- cbind(CategoricalLMS, CategoricalLM)
+
+# Let's calculate concordance by gene
+ap10000 <- NULL
+ap50000 <- NULL
+ap1e05 <- NULL
+ap1e06 <- NULL
+
+Gene <- c("MYC", "MYOCD", "CCNE1", "CDKN2A", "PTEN", "RB1", "TP53") 
+stts <- c(9202, 9203, 9327, 9328, 9337, 9338, 9350, 9353, 9354, 9355, 9356, 9357, 9358)
+bins <- c(10000, 50000, 1e+05, 1e+06)
+
+
+for(stt in stts){
+  ap10000 <- rbind(ap10000, NoGraphGeneGen(Gene = Gene, db = rbind(labLMSProc(stt, "MethylMaster", 10000), 
+                                                                   labLMSProc(stt, "Conumee", 10000), 
+                                                                   labLMSProc(stt, "Sesame", 10000)), 
+                                           case = stt))
+  ap50000 <- rbind(ap50000, NoGraphGeneGen(Gene = Gene, db = rbind(labLMSProc(stt, "MethylMaster", 50000), 
+                                                                   labLMSProc(stt, "Conumee", 50000), 
+                                                                   labLMSProc(stt, "Sesame", 50000)), 
+                                           case = stt))
+  ap1e05 <- rbind(ap1e05, NoGraphGeneGen(Gene = Gene, db = rbind(labLMSProc(stt, "MethylMaster", 1e+05), 
+                                                                 labLMSProc(stt, "Conumee", 1e+05), 
+                                                                 labLMSProc(stt, "Sesame", 1e+05)), 
+                                         case = stt))
+  ap1e06 <- rbind(ap1e06, NoGraphGeneGen(Gene = Gene, db = rbind(labLMSProc(stt, "MethylMaster", 1e+06), 
+                                                                 labLMSProc(stt, "Conumee", 1e+06), 
+                                                                 labLMSProc(stt, "Sesame", 1e+06)), 
+                                         case = stt))
+}
+techs <- c("Gene_MMasteR", "Gene_SNP", "Gene_Conumee", "Gene_SeSAMe")
+
+ap10000 <- ap10000 %>% dplyr::rename(log2ratio = seg.mean)
+ap50000 <- ap50000 %>% dplyr::rename(log2ratio = seg.mean)
+ap1e05 <- ap1e05 %>% dplyr::rename(log2ratio = seg.mean)
+ap1e06 <- ap1e06 %>% dplyr::rename(log2ratio = seg.mean)
+
+ggplot(ap10000, aes(as.factor(case), Gene, fill=log2ratio)) +
+  facet_wrap(~type) +
+  xlab("Case") +
+  ylab("Oncogene") +
+  labs(title = "Relationship between log-2 ratio, technology & gene",
+       subtitle = "Bin Size: 10000") +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  theme_minimal()
+
+ggplot(ap50000, aes(as.factor(case), Gene, fill=log2ratio)) +
+  facet_wrap(~type) +
+  xlab("Case") +
+  ylab("Oncogene") +
+  labs(title = "Relationship between log-2 ratio, technology & gene",
+       subtitle = "Bin Size: 50000") +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  theme_minimal()
+
+ggplot(ap1e05, aes(as.factor(case), Gene, fill=log2ratio)) +
+  facet_wrap(~type) +
+  xlab("Case") +
+  ylab("Oncogene") +
+  labs(title = "Relationship between log-2 ratio, technology & gene",
+       subtitle = "Bin Size: 1e+05") +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  theme_minimal()
+
+ggplot(ap1e06, aes(as.factor(case), Gene, fill=log2ratio)) +
+  facet_wrap(~type) +
+  xlab("Case") +
+  ylab("Oncogene") +
+  labs(title = "Relationship between log-2 ratio, technology & gene",
+       subtitle = "Bin Size: 1e+06") +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  theme_minimal()
+
+
+# Saving raw data
+ap10000 <- ap10000 %>% dplyr::mutate(bin = 10000)
+ap50000 <- ap50000 %>% dplyr::mutate(bin = 50000)
+ap1e05 <- ap1e05 %>% dplyr::mutate(bin = 1e+05)
+ap1e06 <- ap1e06 %>% dplyr::mutate(bin = 1e+06)
+ap <- rbind(ap10000, ap50000, ap1e05, ap1e06) %>% dplyr::select(-c("chrom")) %>%
+  dplyr::mutate(width = loc.end - loc.start)
+ap <- split(ap, ap$Gene)
+
+for (i in seq_along(ap)) {
+  file_name <- paste0(names(ap)[i], ".csv")
+  write.csv(ap[[i]], file = paste0("~/Work/Analysis/FinalSet/GeneConcordance/", file_name), row.names = FALSE)
+}
+ap[[Gene[1]]] <- split(ap[[Gene[1]]], ap[[Gene[1]]]$bin)
+ap[[Gene[2]]] <- split(ap[[Gene[2]]], ap[[Gene[2]]]$bin)
+ap[[Gene[3]]] <- split(ap[[Gene[3]]], ap[[Gene[3]]]$bin)
+ap[[Gene[4]]] <- split(ap[[Gene[4]]], ap[[Gene[4]]]$bin)
+ap[[Gene[5]]] <- split(ap[[Gene[5]]], ap[[Gene[5]]]$bin)
+ap[[Gene[6]]] <- split(ap[[Gene[6]]], ap[[Gene[6]]]$bin)
+ap[[Gene[7]]] <- split(ap[[Gene[7]]], ap[[Gene[7]]]$bin)
+
+# Looking for concordance
+genes <- names(ap)
+bins <- c("50000", "10000", "1e+05", "1e+06")
+states <- c("Conumee – default bin size",
+            "Conumee – 10kb",
+            "Conumee – 100kb",
+            "Conumee – 1Mb",            
+            "Sesame – default bin size",
+            "Sesame – 10kb",
+            "Sesame – 100kb",
+            "Sesame – 1Mb",
+            "MethylMasteR – default bin size",
+            "MethylMasteR – 10kb",
+            "MethylMasteR – 100kb",
+            "MethylMasteR – 1Mb"
+)
+
+
+CCNE1 <- c(1:length(states))
+CDKN2A <- c(1:length(states))
+MYC <- c(1:length(states))
+MYOCD <- c(1:length(states))
+PTEN <- c(1:length(states))
+RB1 <- c(1:length(states))
+TP53 <- c(1:length(states))
+
+output.df <- data.frame(states, CCNE1,
+                        CDKN2A,
+                        MYC,
+                        MYOCD, 
+                        PTEN ,
+                        RB1 ,
+                        TP53)
+for(i in seq_along(ap)){
+  for(j in bins){
+    print(genes[i])
+    print(j)
+    Methyl <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_MMasteR")
+    Ses <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SeSAMe")
+    Con <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_Conumee")
+    Snp <- ap[[i]][[j]] %>% dplyr::filter(type == "Gene_SNP")
+    print(Snp)
+    Snp <- Snp %>% group_by(case) %>%
+      summarize(
+        log2ratio = mean(log2ratio)
+      )
+    mCorr <- cor(Methyl$log2ratio, Snp$log2ratio)
+    sCorr <- cor(Ses$log2ratio, Snp$log2ratio)
+    cCorr <- cor(Con$log2ratio, Snp$log2ratio)
+    print(paste0(mCorr, " ", sCorr, " ", cCorr))
+    tag <- 0
+    if(j == "50000"){
+      tag <- 1
+    }
+    if(j == "10000"){
+      tag <- 2
+    }
+    if(j == "1e+05"){
+      tag <- 3
+    }
+    if(j == "1e+06"){
+      tag <- 4
+    }
+    
+    output.df[tag, i + 1] <- mCorr
+    output.df[tag + 4, i + 1] <- sCorr 
+    output.df[tag + 8, i + 1] <- cCorr 
+  }
+}
+# Melt to long format
+df_long <- melt(output.df, id.vars = "states", variable.name = "gene", value.name = "correlation")
+
+# Keep row order
+df_long$state <- factor(df_long$state, levels = rev(data$state))
+
+# Plot
+p <- ggplot(df_long, aes(x = gene, y = states, fill = correlation)) +
+  geom_tile(color = "black", linewidth = 0.5) +
+  geom_text(aes(label = sprintf("%.2f", correlation)), size = 3, color = "black") +
+  scale_fill_gradient2(
+    low = "#2166ac", mid = "#f7f7f7", high = "#50C878",
+    midpoint = 0.5,
+    limits = c(min(df_long$correlation), 1),
+    name = "Correlation"
+  ) +
+  labs(
+    title = "CNV Method Comparison by Gene",
+    x = "Gene",
+    y = "Method & Bin Size"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    axis.text.x = element_text(angle = 30, hjust = 1, face = "bold"),
+    axis.text.y = element_text(size = 9),
+    panel.grid = element_blank(),
+    legend.position = "right"
+  )
+
+
+# Now going through all of the graph generators for individual cases

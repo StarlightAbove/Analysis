@@ -903,7 +903,52 @@ CategoricalLM <- CategoricalLM %>%
   group_by(Bin, Tech) %>%
   summarize(LMMean = mean(LMMean), LMMedian = median(LMMedian), .groups = "drop")
 
-Categorical <- cbind(CategoricalLMS, CategoricalLM)
+Categorical <- cbind(CategoricalLMS, CategoricalLM) %>% distinct() %>%
+  dplyr::select(c(Bin, Tech, LMSMean, LMSMedian, LMMean, LMMedian)) %>% 
+  arrange(LMSMean,LMSMedian,LMMean,LMMedian)
+
+df <- Categorical %>%
+  mutate(Row = paste(Tech, Bin, sep = " | ")) %>%
+  arrange(Tech, Bin)
+
+mat <- df %>%
+  select(Row, LMSMean, LMSMedian, LMMean, LMMedian) %>%
+  column_to_rownames("Row") %>%
+  as.matrix()
+
+# Annotation for Tech groups
+annotation_row <- df %>%
+  select(Row, Tech) %>%
+  column_to_rownames("Row")
+
+tech_colors <- c(Conumee = "#4E79A7", MethylMaster = "#F28E2B", Sesame = "#59A14F")
+annotation_colors <- list(Tech = tech_colors)
+
+# Use two-slope color palette to highlight the LMS (~0.5) vs LM (~0.9-1.0) split
+breaks <- c(seq(0.40, 0.60, length.out = 51), seq(0.61, 1.00, length.out = 50))
+colors <- c(
+  colorRampPalette(c("#2166AC", "#F7F7F7"))(51),
+  colorRampPalette(c("#F7F7F7", "#B2182B"))(50)
+)
+
+pheatmap(
+  mat,
+  cluster_rows    = FALSE,
+  cluster_cols    = FALSE,
+  annotation_row  = annotation_row,
+  annotation_colors = annotation_colors,
+  color           = colors,
+  breaks          = breaks,
+  display_numbers = TRUE,
+  number_format   = "%.3f",
+  number_color    = "black",
+  fontsize_number = 8,
+  border_color    = "white",
+  main            = "LMS and LM Metrics by Tech and Bin",
+  angle_col       = 45,
+  fontsize_row    = 9,
+  fontsize_col    = 10
+)
 
 # Let's calculate concordance by gene
 ap10000 <- NULL

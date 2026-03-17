@@ -51,8 +51,10 @@ This is given by the formula: $$
 GI = CNV^2/Cr
 $$ Where Cr is the number of chromosomes that the CNVs are observed on.
 This is computed only for LMS, with the GIBarChartLMS.png plotting the
-Genomic index across each technology, bin and case. This will be
-recomputed, as some indexes seem to be too large.
+Genomic index across each technology, bin and case. The recomputed graph
+has been added. The high GI actually seems to be a feature of some of
+the cases. The new graph can be seen at GIndeCorrected.png, and the .csv
+has been changed to the improved method.
 
 ### Individual Case Graphs
 

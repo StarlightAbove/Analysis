@@ -247,10 +247,11 @@ caseCorr <- function(IDs, bin){
   acc
   
 }
-GenomicIndex <- function(dfCH3, stt = 0, sw){
+GenomicIndex <- function(dfCH3, stt = 0, bin, sw, LMSorLM = "LMS"){
   if(sw == F && stt != 0){
-    dfSNP <- read_delim(paste0("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LMS_CNV_calls_01Feb2026/Recentered_", stt,".RC.OSCHP")) %>%
-      dplyr::filter(Chromosome != "X")
+    dfSNP <- read_delim(paste0("~/Work/Analysis/LabData/",LMSorLM,"_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_",LMSorLM,"_CNV_calls_01Feb2026/Recentered_STT", stt,".RC.OSCHP.segments.txt")) %>%
+      dplyr::filter(Chromosome != "X", `Size (kbp)` >= bin/1000)
+    print(dfSNP)
     modChrom <- length(unique(dfSNP$Chromosome))
     CNVCount <- nrow(dfSNP)
     ret <- (CNVCount^2)/modChrom
@@ -716,31 +717,31 @@ genomicIndexDf <- NULL
 for(i in LMS_cases){
   gen <- data.frame(case = i,
                     tech = "MethylMaster",
-                    Default = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 50000), sw = T),
-                    "10kb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 10000), sw = T),
-                    "100kb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 1e+05), sw = T),
-                    "1Mb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 1e+06), sw = T)
+                    Default = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 50000),stt = i,bin = 50000, sw = T),
+                    "10kb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 10000),stt = i,bin = 10000, sw = T),
+                    "100kb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 1e+05),stt = i,bin = 1e+05, sw = T),
+                    "1Mb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 1e+06),stt = i,bin = 1e+06, sw = T)
                     )
   genS <- data.frame(case = i,
                     tech = "Sesame",
-                    Default = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 50000), sw = T),
-                    "10kb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 10000), sw = T),
-                    "100kb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 1e+05), sw = T),
-                    "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 1e+06), sw = T)
+                    Default = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 50000),stt = i,bin = 50000, sw = T),
+                    "10kb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 10000),stt = i,bin = 10000, sw = T),
+                    "100kb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 1e+05),stt = i,bin = 1e+05, sw = T),
+                    "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 1e+06),stt = i,bin = 1e+06, sw = T)
   )
   genC <- data.frame(case = i,
                      tech = "Conumee",
-                     Default = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 50000), sw = T),
-                     "10kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 10000), sw = T),
-                     "100kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+05), sw = T),
-                     "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+06), sw = T)
+                     Default = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 50000),stt = i,bin = 50000, sw = T),
+                     "10kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 10000),stt = i,bin = 10000, sw = T),
+                     "100kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+05),stt = i,bin = 1e+05, sw = T),
+                     "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+06),stt = i,bin = 1e+06, sw = T)
   )
   genSNP <- data.frame(case = i,
                        tech = "SNP",
-                       Default = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 50000), stt =i, sw = F),
-                       "10kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 10000), sw = F),
-                       "100kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+05), sw = F),
-                       "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+06), sw = F)
+                       Default = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 50000), stt = i, bin = 50000, sw = F),
+                       "10kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 10000), stt = i,bin = 10000, sw = F),
+                       "100kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+05),stt = i,bin = 1e+05,  sw = F),
+                       "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+06), stt = i,bin = 1e+06, sw = F)
   )
   genomicIndexDf <- rbind(genomicIndexDf, gen, genS, genC, genSNP)
 }

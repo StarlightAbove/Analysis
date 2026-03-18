@@ -50,11 +50,14 @@ corresponding .csv file.
 This is given by the formula: $$
 GI = CNV^2/Cr
 $$ Where Cr is the number of chromosomes that the CNVs are observed on.
-This is computed only for LMS, with the GIBarChartLMS.png plotting the
+This is computed only for LMS, with the CorrectedLMSPlot.png plotting the
 Genomic index across each technology, bin and case. The recomputed graph
 has been added. The high GI actually seems to be a feature of some of
-the cases. The new graph can be seen at GIndeCorrected.png, and the .csv
-has been changed to the improved method.
+the cases. 
+In the case of LM, sometimes the filter seems to be catching that there are just 
+no CNVs larger than a certain size, which is expected in a more focal CNV
+environment. The associated files are LMGenomicIndex.csv, and the plot is
+LMGenomicIndexPlot.png.
 
 ### Individual Case Graphs
 

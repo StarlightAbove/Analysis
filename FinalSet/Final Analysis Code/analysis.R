@@ -95,12 +95,12 @@ labLMSProc <- function(STTq, Technology, binSize){
 }
 LMStt <- function(STT, bin, tech){
   
-  corrSheet <- read.csv("~/Work/Analysis/LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv") %>%
+  corrSheet <- read.csv(paste0(getwd(), "/LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv")) %>%
     dplyr::filter(STT == STT)
   sentrixID <- corrSheet$Sentrix_ID[1]
   sentrixPos <- corrSheet$Sentrix_Position[1]
   
-  SNP <- read_delim(paste0("~/Work/Analysis/LabData/LM_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LM_Probe_and_segment_level_data_01Feb2026/STT",
+  SNP <- read_delim(paste0(getwd(), "/LabData/LM_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LM_Probe_and_segment_level_data_01Feb2026/STT",
                            STT,"_Segment_level_data_01Feb2026.segment.txt"))
   SNP <- SNP %>% dplyr::filter(!(Type == "LOH")) %>% dplyr::filter(Chromosome != 24 & Chromosome != 25) %>% dplyr::select("Chromosome", "StartPosition", "StopPosition", "Median Log2 Ratio") %>% 
     dplyr::rename(chrom = "Chromosome", loc.start = "StartPosition", loc.end = "StopPosition", seg.mean = "Median Log2 Ratio") %>%
@@ -115,7 +115,7 @@ LMStt <- function(STT, bin, tech){
   # MethylMasteR
   cnvMethyl <- NULL;
   if(tech == "MethylMaster"){
-    outputDirMethyl <- paste0("~/Work/Analysis/Outputs/MethylMaster/LM/",bin,"/",sentrixID,"_",sentrixPos,"/autocorrected_regions.csv")
+    outputDirMethyl <- paste0(getwd(), "/Outputs/MethylMaster/LM/",bin,"/",sentrixID,"_",sentrixPos,"/autocorrected_regions.csv")
     cnvMethyl <- read.csv(outputDirMethyl) %>%
       dplyr::select(c("Chromosome", "bp.Start", "bp.End", "Mean")) %>% dplyr::rename(
         chrom = "Chromosome",
@@ -135,7 +135,7 @@ LMStt <- function(STT, bin, tech){
   # SeSAMe
   sesameOutput <- NULL
   if(tech == "Sesame"){
-    outputDirSesame <- paste0("~/Work/Analysis/Outputs/SeSAMe/LM/bins/",bin,"/","segments_",sentrixID, "_", sentrixPos, ".csv")
+    outputDirSesame <- paste0(getwd(),"/Outputs/SeSAMe/LM/bins/",bin,"/","segments_",sentrixID, "_", sentrixPos, ".csv")
     sesameOutput <- read.csv(outputDirSesame) %>% dplyr::select(c("chrom", "loc.start", 
                                                                   "loc.end", "seg.mean")) %>% dplyr::mutate(
                                                                     chrom = str_remove_all(chrom, "chr")) %>% filter(
@@ -150,7 +150,7 @@ LMStt <- function(STT, bin, tech){
   # Conumee
   case <- NULL
   if(tech == "Conumee"){
-    outputDirConumee <- paste0("~/Work/Analysis/Outputs/Conumee/LMData/bins/",bin,"/",sentrixID,"_",sentrixPos,".csv")
+    outputDirConumee <- paste0(getwd(), "/Outputs/Conumee/LMData/bins/",bin,"/",sentrixID,"_",sentrixPos,".csv")
     case <- read.csv(outputDirConumee)
     case <- case %>% dplyr::select(-c("ID", "bstat")) %>% 
       mutate(CNVStatus = case_when(case$seg.mean > 0.2 ~ "Amplification",
@@ -248,8 +248,17 @@ caseCorr <- function(IDs, bin){
   
 }
 GenomicIndex <- function(dfCH3, stt = 0, bin, sw, LMSorLM = "LMS"){
+  recentered <- NULL
+  rc <- NULL
+  if(LMSorLM == "LM"){
+    recentered <- ""
+    rc <- ""
+  } else { 
+    recentered <- "Recentered_"
+    rc <- ".RC"
+    }
   if(sw == F && stt != 0){
-    dfSNP <- read_delim(paste0("~/Work/Analysis/LabData/",LMSorLM,"_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_",LMSorLM,"_CNV_calls_01Feb2026/Recentered_STT", stt,".RC.OSCHP.segments.txt")) %>%
+    dfSNP <- read_delim(paste0(getwd(), "/LabData/",LMSorLM,"_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_",LMSorLM,"_CNV_calls_01Feb2026/",recentered,"STT", stt, rc,".OSCHP.segments.txt")) %>%
       dplyr::filter(Chromosome != "X", `Size (kbp)` >= bin/1000)
     print(dfSNP)
     modChrom <- length(unique(dfSNP$Chromosome))
@@ -260,7 +269,7 @@ GenomicIndex <- function(dfCH3, stt = 0, bin, sw, LMSorLM = "LMS"){
     
     # Filter out for clinically significant segments %>% filter(CNVStatus != Normal)
     dfCH3f <- dfCH3 %>% dplyr::filter(type == "Conumee" | type == "MethylMaster" | type == "SeSAMe") %>%
-      dplyr::filter(CNVStatus != "Normal")
+      dplyr::filter(CNVStatus != "Normal", chrom != "X")
     # Count
     CNVCount <- nrow(dfCH3f)
     modChrom <- length(unique(dfCH3f$chrom))
@@ -714,6 +723,7 @@ genomicIndexDf <- NULL
 
 
 # columns in the dataframe: case, binDefault, bin10kb, bin100kb, bin1Mb.
+# columns in the dataframe: case, binDefault, bin10kb, bin100kb, bin1Mb.
 for(i in LMS_cases){
   gen <- data.frame(case = i,
                     tech = "MethylMaster",
@@ -721,13 +731,13 @@ for(i in LMS_cases){
                     "10kb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 10000),stt = i,bin = 10000, sw = T),
                     "100kb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 1e+05),stt = i,bin = 1e+05, sw = T),
                     "1Mb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 1e+06),stt = i,bin = 1e+06, sw = T)
-                    )
+  )
   genS <- data.frame(case = i,
-                    tech = "Sesame",
-                    Default = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 50000),stt = i,bin = 50000, sw = T),
-                    "10kb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 10000),stt = i,bin = 10000, sw = T),
-                    "100kb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 1e+05),stt = i,bin = 1e+05, sw = T),
-                    "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 1e+06),stt = i,bin = 1e+06, sw = T)
+                     tech = "Sesame",
+                     Default = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 50000),stt = i,bin = 50000, sw = T),
+                     "10kb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 10000),stt = i,bin = 10000, sw = T),
+                     "100kb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 1e+05),stt = i,bin = 1e+05, sw = T),
+                     "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 1e+06),stt = i,bin = 1e+06, sw = T)
   )
   genC <- data.frame(case = i,
                      tech = "Conumee",
@@ -747,6 +757,68 @@ for(i in LMS_cases){
 }
 genomicIndexDf <- unique(genomicIndexDf)
 write.csv(genomicIndexDf, file = paste0(getwd(), "/FinalSet/GenomicIndex/GenomicIndex.csv")) # Lets save this data
+# Just looking at numbers is difficult, let's run a PCC, and draw a plot to understand this better
+# We have 12 categories for correlation.
+pccCorrelation <- NULL
+techs <- c("MethylMaster", "Sesame", "Conumee")
+binCols <- colnames(genomicIndexDf)[3:6]
+for(t in techs){
+  dfs <- genomicIndexDf %>% dplyr::filter(tech == t)
+  bstruth <- genomicIndexDf %>% dplyr::filter(tech == "SNP")
+  MetDef <- data.frame(category = paste0(t, " - Default"), pcc = cor(bstruth$Default, dfs$Default))
+  Met10kb <- data.frame(category = paste0(t, " - 10kb"), pcc = cor(bstruth$X10kb, dfs$X10kb) )
+  Met100kb <- data.frame(category = paste0(t, " - 100kb"), pcc = cor(bstruth$X100kb, dfs$X100kb) )
+  Met1Mb <- data.frame(category = paste0(t, " - 1Mb"), pcc = cor(bstruth$X1Mb, dfs$X1Mb) )
+  pccCorrelation <- rbind(pccCorrelation, MetDef, Met10kb, Met100kb, Met1Mb)
+}
+plotDf <- genomicIndexDf %>% pivot_longer(
+  cols = binCols, # Selects columns that start with "Year"
+  names_to = "bins",         # The new column for the former column names
+  values_to = "pcc"        # The new column for the values
+)
+# Plot of how it would look in terms of pure numbers.
+ggplot(data = plotDf, aes(x = factor(case), y = pcc, color = tech)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_log10() +
+  labs(title = "Genomic Index vs. Bin across cases") +
+  facet_wrap(~ bins) +
+  theme_gray()
+
+# LM Genomic Index
+genomicIndexDf <- NULL
+for(i in LM_cases){
+  gen <- data.frame(case = i,
+                    tech = "MethylMaster",
+                    Default = GenomicIndex(LMStt(STT = i, bin = 50000, tech = "MethylMaster"),stt = i,bin = 50000, sw = T, LMSorLM = "LM"),
+                    "10kb" = GenomicIndex(LMStt(STT = i, bin = 10000, tech = "MethylMaster"),stt = i,bin = 10000, sw = T, LMSorLM = "LM"),
+                    "100kb" = GenomicIndex(LMStt(STT = i, bin = 1e+05, tech = "MethylMaster"),stt = i,bin = 1e+05, sw = T, LMSorLM = "LM"),
+                    "1Mb" = GenomicIndex(LMStt(STT = i, bin = 1e+06, tech = "MethylMaster"),stt = i,bin = 1e+06, sw = T, LMSorLM = "LM")
+  )
+  genS <- data.frame(case = i,
+                     tech = "Sesame",
+                     Default = GenomicIndex(LMStt(STT = i, bin = 50000, tech = "Sesame"),stt = i,bin = 50000, sw = T, LMSorLM = "LM"),
+                     "10kb" = GenomicIndex(LMStt(STT = i, bin = 10000, tech = "Sesame"),stt = i,bin = 10000, sw = T, LMSorLM = "LM"),
+                     "100kb" = GenomicIndex(LMStt(STT = i, bin = 1e+05, tech = "Sesame"),stt = i,bin = 1e+05, sw = T, LMSorLM = "LM"),
+                     "1Mb" = GenomicIndex(LMStt(STT = i, bin = 1e+06, tech = "Sesame"),stt = i,bin = 1e+06, sw = T, LMSorLM = "LM")
+  )
+  genC <- data.frame(case = i,
+                     tech = "Conumee",
+                     Default = GenomicIndex(LMStt(STT = i, bin = 50000, tech = "Conumee"),stt = i,bin = 50000, sw = T, LMSorLM = "LM"),
+                     "10kb" = GenomicIndex(LMStt(STT = i, bin = 10000, tech = "Conumee"),stt = i,bin = 10000, sw = T, LMSorLM = "LM"),
+                     "100kb" = GenomicIndex(LMStt(STT = i, bin = 1e+05, tech = "Conumee"),stt = i,bin = 1e+05, sw = T, LMSorLM = "LM"),
+                     "1Mb" = GenomicIndex(LMStt(STT = i, bin = 1e+06, tech = "Conumee"),stt = i,bin = 1e+06, sw = T, LMSorLM = "LM")
+  )
+  genSNP <- data.frame(case = i,
+                       tech = "SNP",
+                       Default = GenomicIndex(LMStt(STT = i, bin = 50000, tech = "Conumee"), stt = i, bin = 50000, sw = F, LMSorLM = "LM"),
+                       "10kb" = GenomicIndex(LMStt(STT = i, bin = 10000, tech = "Conumee"), stt = i,bin = 10000, sw = F, LMSorLM = "LM"),
+                       "100kb" = GenomicIndex(LMStt(STT = i, bin = 1e+05, tech = "Conumee"),stt = i,bin = 1e+05,  sw = F, LMSorLM = "LM"),
+                       "1Mb" = GenomicIndex(LMStt(STT = i, bin = 1e+06, tech = "Conumee"), stt = i,bin = 1e+06, sw = F, LMSorLM = "LM")
+  )
+  genomicIndexDf <- rbind(genomicIndexDf, gen, genS, genC, genSNP) 
+}
+genomicIndexDf <- unique(genomicIndexDf)
+write.csv(genomicIndexDf, file = paste0(getwd(), "/FinalSet/GenomicIndex/LMGenomicIndex.csv")) # Lets save this data
 # Just looking at numbers is difficult, let's run a PCC, and draw a plot to understand this better
 # We have 12 categories for correlation.
 pccCorrelation <- NULL

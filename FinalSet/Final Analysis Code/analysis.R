@@ -22,6 +22,8 @@ library(ggplotify)
 library(readxl)
 library(RColorBrewer)
 library(reshape2)
+library(purrr)
+
 
 labLMSProc <- function(STTq, Technology, binSize){
   
@@ -756,7 +758,7 @@ for(i in LMS_cases){
   genomicIndexDf <- rbind(genomicIndexDf, gen, genS, genC, genSNP)
 }
 genomicIndexDf <- unique(genomicIndexDf)
-write.csv(genomicIndexDf, file = paste0(getwd(), "/FinalSet/GenomicIndex/GenomicIndex.csv")) # Lets save this data
+write.csv(genomicIndexDf, file = paste0(getwd(), "/FinalSet/GenomicIndex/GenomicIndexLMS.csv")) # Lets save this data
 # Just looking at numbers is difficult, let's run a PCC, and draw a plot to understand this better
 # We have 12 categories for correlation.
 pccCorrelation <- NULL
@@ -1004,6 +1006,7 @@ colors <- c(
   colorRampPalette(c("#F7F7F7", "#B2182B"))(50)
 )
 
+# Accuracies by tech and bin
 pheatmap(
   mat,
   cluster_rows    = FALSE,
@@ -1219,6 +1222,106 @@ p <- ggplot(df_long, aes(x = gene, y = states, fill = correlation)) +
     panel.grid = element_blank(),
     legend.position = "right"
   )
+
+# What if genomic index and accuracies are correlated?
+LMSGI <- read.csv("~/Work/Analysis/FinalSet/GenomicIndex/GenomicIndexLMS.csv")
+LMGI <- read.csv("~/Work/Analysis/FinalSet/GenomicIndex/LMGenomicIndex.csv")
+LMSAccMean <- read.csv("~/Work/Analysis/FinalSet/Accuracies/accuraciesLMS.csv")
+LMAccMean <- read.csv("~/Work/Analysis/FinalSet/Accuracies/accuraciesLM.csv")
+LMSAccMedian <- read.csv("~/Work/Analysis/FinalSet/Accuracies/accuraciesLMSMedian.csv")
+LMAccMedian <- read.csv("~/Work/Analysis/FinalSet/Accuracies/accuraciesMedianLM.csv")
+
+# 1. Pivot LMSGI to long format
+LMSGI_long <- LMSGI %>%
+  rename(Case = case, Tech = tech) %>%
+  pivot_longer(
+    cols = c(Default, X10kb, X100kb, X1Mb),
+    names_to = "Bin",
+    values_to = "GI"
+  ) %>%
+  mutate(Bin = recode(Bin,
+                      "Default" = 5e+04,
+                      "X10kb"   = 1e+04,
+                      "X100kb"  = 1e+05,
+                      "X1Mb"    = 1e+06
+  ))
+
+LMGI_long <- LMGI %>%
+  rename(Case = case, Tech = tech) %>%
+  pivot_longer(
+    cols = c(Default, X10kb, X100kb, X1Mb),
+    names_to = "Bin",
+    values_to = "GI"
+  ) %>%
+  mutate(Bin = recode(Bin,
+                      "Default" = 5e+04,
+                      "X10kb"   = 1e+04,
+                      "X100kb"  = 1e+05,
+                      "X1Mb"    = 1e+06
+  ))
+
+# 2. Rename Accuracy column in each before joining so they don't clash
+LMSAccMedian_renamed <- LMSAccMedian %>%
+  mutate(Bin = as.numeric(as.character(Bin))) %>%
+  rename(Accuracy_Median = Accuracy)
+
+LMSAccMean_renamed <- LMSAccMean %>%
+  mutate(Bin = as.numeric(as.character(Bin))) %>%
+  rename(Accuracy_Mean = Accuracy)
+
+LMAccMedian_renamed <- LMAccMedian %>%
+  mutate(Bin = as.numeric(as.character(Bin))) %>%
+  rename(Accuracy_Median = Accuracy)
+
+LMAccMean_renamed <- LMAccMean %>%
+  mutate(Bin = as.numeric(as.character(Bin))) %>%
+  rename(Accuracy_Mean = Accuracy)
+
+merged_dfLMS <- LMSGI_long %>%
+  inner_join(LMSAccMedian_renamed, by = c("Case", "Bin", "Tech")) %>%
+  inner_join(LMSAccMean_renamed,   by = c("Case", "Bin", "Tech")) %>%
+  dplyr::select(-c(X.x, X.y, X))
+merged_dfLM <- LMGI_long %>%
+  inner_join(LMAccMedian_renamed, by = c("Case", "Bin", "Tech")) %>%
+  inner_join(LMAccMean_renamed,   by = c("Case", "Bin", "Tech")) %>%
+  dplyr::select(-c(X.x, X.y, X))
+ 
+# Group by technology & bin - LMS
+resultsLMS <- merged_dfLMS %>%
+  group_by(Tech, Bin) %>%
+  summarise(
+    # Median accuracy vs GI
+    cor_median = list(cor.test(GI, Accuracy_Median, method = "pearson")),
+    # Mean accuracy vs GI
+    cor_mean   = list(cor.test(GI, Accuracy_Mean, method = "pearson")),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    p_value_median  = sapply(cor_median, `[[`, "p.value"),
+    p_value_mean    = sapply(cor_mean,   `[[`, "p.value")
+  ) %>%
+  select(-cor_median, -cor_mean) # Fails to reject null hypothesis
+
+# Group by technology & bin - LM - This doesn't have enough data
+# Normality test to test whether to use Pearson or Spearman values
+# Basic Shapiro-Wilk test
+shapiro.test(data$variable)
+
+resultsLM <- merged_dfLM %>%
+  filter(Tech != "SNP") %>%
+  group_by(Tech, Bin) %>%
+  summarise(
+    # Median accuracy vs GI
+    cor_median = list(cor.test(GI, Accuracy_Median, method = "spearman")),
+    # Mean accuracy vs GI
+    cor_mean   = list(cor.test(GI, Accuracy_Mean, method = "spearman")),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    p_value_median  = sapply(cor_median, `[[`, "p.value"),
+    p_value_mean    = sapply(cor_mean,   `[[`, "p.value")
+  ) %>%
+  select(-cor_median, -cor_mean)
 
 
 # Now going through all of the graph generators for individual cases

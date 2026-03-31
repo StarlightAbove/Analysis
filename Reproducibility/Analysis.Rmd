@@ -65,12 +65,14 @@ is necessary to separate these to ensure proper reproducibility and no
 accidental interaction between the three, as many of them rely on
 similar (but not exactly the same) dependencies.
 
-For ease of install, these are built on the Github Container Registry.
+For ease of install, these are built on Docker Hub, which is the
+standard point of storage for these packages.
 
 **First Step:** [Download and Set Up
 Docker.](https://docs.docker.com/desktop/)
 
-**Second Step:** Install the Docker images to start analysis.
+**Second Step:** Install the Docker images to start analysis. There are
+three Docker images you require.
 
 ## Reading data
 

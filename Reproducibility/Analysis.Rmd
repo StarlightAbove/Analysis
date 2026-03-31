@@ -12,6 +12,8 @@ This is a document meant to walk through the analysis of this project,
 step-by-step. It is written to ensure comprehension of methods,
 reproducibility of results, and the conclusions drawn from the analysis.
 
+***Hold off till agreeing what goes in the paper.***
+
 ## Pre-requisites
 
 The R version required is 4.5 for the analysis parts or newer. Some

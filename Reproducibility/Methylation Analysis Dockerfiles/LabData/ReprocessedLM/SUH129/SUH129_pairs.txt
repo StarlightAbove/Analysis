@@ -1,0 +1,2 @@
+ATChannelCel	GCChannelCel
+/Users/elizakishan/Documents/Analysis/LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CEL_files/CEL/a521191-00-993493-033119-4338683-57263.CEL	/Users/elizakishan/Documents/Analysis/LabData/LM_SNP_EPIC_array_data/SNP_array_data_LM/CEL_files/CEL/a521191-00-990264-033119-4338683-59403.CEL

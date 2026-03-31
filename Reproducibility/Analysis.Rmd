@@ -1,0 +1,80 @@
+---
+title: "Analysis"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Benchmarking detection of DNA copy number variation using high-density methylation microarrays
+
+This is a document meant to walk through the analysis of this project,
+step-by-step. It is written to ensure comprehension of methods,
+reproducibility of results, and the conclusions drawn from the analysis.
+
+## Pre-requisites
+
+The R version required is 4.5 for the analysis parts or newer. Some
+analysis will have to be run outside of this environment due to the
+simple reason that it is difficult to modify some of these packages to
+fit a uniform versioning, therefore, some of it is run within a Docker,
+and then processed here for analysis.
+
+```{r}
+# Checks if these packages are installed, and if not, installs the necessary
+# packages for analysis.
+
+# Bioconductor first
+library(GenomeInfoDb)
+library(AnnotationDbi)
+library(AnnotationHub)
+library(org.Hs.eg.db)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+library(rentrez)
+library(GenomicRanges)
+library(GenomicFeatures)
+library(pheatmap)
+
+# Then tidyverse and dplyr last so they win all masking conflicts
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(ggrepel)
+library(patchwork)
+library(cowplot)
+library(gridGraphics)
+library(gridExtra)
+library(ggplotify)
+library(readxl)
+library(RColorBrewer)
+library(reshape2)
+```
+
+## Generating initial results for analysis
+
+This project focuses on three R packages: Conumee, MethylMasteR, and
+SeSAMe. Each of these projects require slightly different methods of
+processing, and therefore, require some technical expertise with Docker
+to ensure standardization of results.
+
+### Running Containers
+
+Go into the "Methylation Analysis Dockerfiles", and you will notice 3
+different dockerfiles, with which package that environment is set to. It
+is necessary to separate these to ensure proper reproducibility and no
+accidental interaction between the three, as many of them rely on
+similar (but not exactly the same) dependencies.
+
+For ease of install, these are built on the Github Container Registry.
+
+**First Step:** [Download and Set Up
+Docker.](https://docs.docker.com/desktop/)
+
+**Second Step:** Install the Docker images to start analysis.
+
+## Reading data
+
+Multiple functions are involved in the reading of data, but their
+purpose is similar. Associate the relevant path with the correct
+dataset, read the data, and return it in a standard manner for
+downstream analysis.

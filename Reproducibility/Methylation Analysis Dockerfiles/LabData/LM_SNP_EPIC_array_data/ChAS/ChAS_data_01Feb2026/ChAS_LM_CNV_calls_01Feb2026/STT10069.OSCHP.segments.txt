@@ -1,0 +1,3 @@
+﻿Use In Export	File	CN State	Type	Chromosome	Cytoband Start	Cytoband End	Median BAF	Median Log2Ratio	Size (kbp)	Marker Count	Gene Count	Genes	OMIM ® Genes Count	OMIM ® Genes	DB Count Both	CytoRegions	Call	Segment Interpretation	Microarray Nomenclature	Curation By	Materially Modified Segment
+true	STT10069.OSCHP	3.0	Gain	14	q12	q12		0.2885625958442688	154.02	20	1	AKAP6	1	AKAP6 (604691)		CytoRegions Not Set			arr[GRCh37] 14q12(32,700,259_32,854,278)x3		false
+true	STT10069.OSCHP	3.0	Gain	22	q13.1	q13.1		0.28132331371307373	112.137	20	5	POLR2F, PICK1, SLC16A8, BAIAP2L2, PLA2G6	5	POLR2F (604414), PICK1 (605926), SLC16A8 (610409), BAIAP2L2 (617536), PLA2G6 (603604)		CytoRegions Not Set			arr[GRCh37] 22q13.1(38,415,542_38,527,678)x3		false

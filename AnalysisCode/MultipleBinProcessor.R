@@ -22,13 +22,6 @@ for(bin in binLength){
        OutputFolder = "LabNormals")
 } # LabNormals.
 for(bin in binLength){
-  con2(locationOfTest = "./cases/SingleFileCase", 
-       locationOfControl = "./Controls/EPICControls/", 
-       arrayType = "450k",
-       binSize = bin,
-       OutputFolder = "LMS")
-} # LMS- TCGA.
-for(bin in binLength){
   con2(locationOfTest = "./LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files", 
        locationOfControl = "./Controls/EPICControls/", 
        arrayType = "EPIC",
@@ -72,24 +65,6 @@ for(bin in binLength){
     i <- i + 1
   }
 } # Lab Normals.
-rm(bins, sdf, segmentalSignals, segments, bin, segs)
-
-sdfs <- openSesame("./cases/SingleFileCase", func = NULL)
-for(bin in binLength){
-  i <- 1
-  for(sdf in sdfs){
-    segments <- cnSegmentation(sdf, tilewidth = bin, sdfs.normal = "~/Work/Analysis/Controls/HM450Controls/ControlFile")
-    segmentalSignals <- segments[["seg.signals"]]
-    bins <- segments[["bin.signals"]]
-    bins <- reshape2::melt(bins)
-    write.csv(bins, paste0("./Outputs/SeSAMe/LMS/bins/",bin,"/bins_",
-                           names(sdfs[i]),".csv"), row.names = TRUE)
-    write.csv(segmentalSignals, paste0("./Outputs/SeSAMe/Normals/",bin,"/segments_", 
-                                       names(sdfs[i]), ".csv"), row.names = FALSE)
-    print(i)
-    i <- i + 1
-  }
-} # LMS.
 rm(bins, sdf, segmentalSignals, segments, bin, segs)
 
 sdfs <- openSesame("./LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files", func = NULL)

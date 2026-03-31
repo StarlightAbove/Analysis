@@ -1,0 +1,115 @@
+library(dplyr)
+library(MethylMasteR)
+library(sesame)
+input.dir <- "~/LabData/Normal_smooth_muscle_EPIC_data/idat_files"
+
+routine.run <- "custom"
+sample.sheet.path <- "~/LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv"
+samples <- read.csv(sample.sheet.path)$Sample_Name
+bins <- c(10000, 50000, 1e+05, 1e+06)
+
+for(bin in bins){
+  output.dir <- paste0("~/Outputs/MethylMaster/Normals/",bin)
+  methyl_master(
+    routine                   = routine.run, #The routine to run
+    input.dir                 = input.dir, #The input (idat.files) directory
+    output.dir                = output.dir, #The output directory
+    sample.sheet.path         = sample.sheet.path, #The path to the MethylMasteR sample sheet
+    r.lib.path                = .libPaths()[1], #The path to the R Library path
+    file.sep                  = "/", #For windows or "/" for Linux
+    create.dir                = TRUE, #Whether to cretae directory if does not 
+    #exist?
+    save.seg                  = FALSE, #Whether to save segmentation results
+    n.cores                   = 1, #Multicore does not work for all routines 
+    #on all operating systems
+    os.type                   = "linux", #Or "linux"
+    proj                      = "TCGA-KIRC", #"TCGA-BLCA" etc.
+    visualize                 = TRUE, #Whether to output plots,
+    visualize.individual      = FALSE, #Whether to output indvidual sample plots,
+    #only works for routine sesame
+    reference                 = "internal", #"comparison" or 'internal"
+    reference.name            = NA, #For Epicopy use NA for median, 
+    #"all" is not currently supported 
+    #by Epicopy
+    comparison                = c("tumor"), #Always required treatment 
+    #first then contro can also be more specific when 
+    #designing sample sheet and use values like
+    # c("tumor_male","cord_male etc") etc.
+    #Note: in routines where internal reference is 
+    #used, second argument is ignored
+    form.thresholds           = c(-0.2, 0.2), #Used to calculate final CNV state. 
+    #If NULL, equation is is used;
+    #otherwise, specify threshold vector 
+    #of lower and upper beta values such
+    #as c(-0.3,0.3), we used c(-0.2,0.2) 
+    #in the paper
+    overlap.density           = 0.1, #For combining final CNV calls for confidence
+    sesame.data.cache         = "EPIC", #The default sesame reference platform
+    sesame.data.normal        = 'EPIC.5.normal', #The default sesame and hm450 
+    #internal reference samples
+    genome.version            = "hg19", #Or can set to "hg38"
+    hm450.workflow            = "B", #The HM450 subworkflow to use - only B 
+    #is running currently.
+    #"A" no correction,
+    #"B" median correction (default),
+    #"C" run Conumee
+    champ.padj                = 0.05, #padj to filter champ results
+    champ.control             = FALSE, #run champ.control etc.
+    champ.run.combat          = FALSE, #run champ.run.combat etc.
+    champ.run.dmp             = FALSE, #If only one pheno var must = FALSE
+    champ.run.dmr             = FALSE, #If only one pheno var must = FALSE
+    champ.run.block           = FALSE, #If only one pheno var must = FALSE
+    champ.run.gsea            = FALSE, #Requires dmp and dmr results
+    champ.run.epimod          = FALSE, #If only one pheno var must = FALSE
+    epi.run.gistic            = TRUE, #Whether to Run GISTIC in Epicopy workflow
+    olaps.split.field         = "Sample_ID", #Split field to ise during overlaps
+    #Don't change unless you know what 
+    #you are doing
+    estimate.recurrence       = TRUE, #Estimate recursion to produce p values when 
+    #finding overlaps with population_ranges 
+    #functions
+    ov.pvalue                 = 0.05, #pvalue threshold for overlaps identified
+    ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding 
+    #overlaps
+    simplify.reduce           = weightedmean, #Equation to use during reduction
+    custom.binsize            = bin
+  )
+}
+
+
+caseCorr <- function(IDs, bin){
+  
+  Methyl <- c()
+  Ses <- c()
+  Con <- c()
+  
+  for(ID in IDs){
+    MethylMaster <- read.csv(paste0("~/Outputs/MethylMaster/Normals/",bin,"/",ID,"/autocorrected_regions.csv"))
+    MethylMaster <- median(MethylMaster$Mean)
+    Sesame <- read.csv(paste0("~/Outputs/SeSAMe/Normals/",bin,"/segments_",ID,".csv"))
+    Sesame <- median(Sesame$seg.mean)
+    Conumee <- read.csv(paste0("~/Outputs/Conumee/LabNormals/",bin,"/",ID,".csv"))
+    Conumee <- median(Conumee$seg.mean)
+    
+    Methyl <- c(Methyl, MethylMaster)
+    Ses <- c(Ses, Sesame)
+    Con <- c(Con,Conumee)
+    
+  }
+  
+  acc <- data.frame(Conumee_Median = median(Con), 
+                    Conumee_SD = sd(Con), 
+                    Sesame_Median = median(Ses), 
+                    Sesame_SD = sd(Ses), 
+                    Methyl_Median = median(Methyl), 
+                    Methyl_SD = sd(Methyl))
+  acc
+  
+}
+caseCorr(samples, 10000)
+caseCorr(samples, 50000)
+caseCorr(samples, 1e+05)
+caseCorr(samples, 1e+06)
+
+
+

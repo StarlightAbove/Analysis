@@ -1,0 +1,18 @@
+# Base image
+FROM mmariani123/methylmaster:latest
+ 
+# Install patched sesame FIRST (exposes parameters under study),
+# then reinstall MethylMasteR so it links against the patched version
+RUN Rscript -e " \
+    remotes::install_github('StarlightAbove/sesame@patch-2', \
+        force = TRUE, upgrade = 'never'); \
+    remotes::install_github('StarlightAbove/MethylMasteR', \
+        force = TRUE, upgrade = 'never') \
+"
+ 
+# Copy analysis script and data into the container,
+# preserving the same directory structure
+COPY Scripts/methylmaster.R /Analysis/Scripts/methylmaster.R
+COPY LabData/               /Analysis/LabData/
+ 
+WORKDIR /Analysis

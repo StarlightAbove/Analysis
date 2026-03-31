@@ -1,0 +1,22 @@
+# Base image
+FROM rocker/tidyverse:4.5
+
+# Bootstrap package installers
+RUN Rscript -e " \
+    install.packages(c('remotes', 'devtools')); \
+    if (!require('BiocManager', quietly = TRUE)) \
+        install.packages('BiocManager') \
+"
+
+# Install conumee2 from GitHub
+RUN Rscript -e " \
+    devtools::install_github('hovestadtlab/conumee2', \
+        subdir = 'conumee2', upgrade = 'never') \
+"
+
+# Copy analysis script and data into the container,
+# preserving the same directory structure
+COPY Scripts/methylmaster.R /Analysis/Scripts/conumee.R
+COPY LabData/               /Analysis/LabData/
+
+WORKDIR /analysis

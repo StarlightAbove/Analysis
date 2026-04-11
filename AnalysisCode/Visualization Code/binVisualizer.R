@@ -99,6 +99,8 @@ labNmrlProc <- function(Sentrix, Technology, binSize){
   conumeeMatch <- read.csv(paste0("~/Work/Analysis/Outputs/Conumee/LabNormals/", binSize,"/", paste0(Sentrix,".csv")))
   
   sesameMatch <- read.csv(paste0("~/Work/Analysis/Outputs/SeSAMe/Normals/", binSize,"/", paste0("segments_",Sentrix,".csv")))
+
+  methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/Normals/", binSize, "/", Sentrix, "/autocorrected_regions.csv"))
   
   # cnvMatch <- tidyr::separate_wider_delim(tidyr::separate_wider_delim(cnvMatch, `Chromosome.Region`, names = c("chrom", "loc"), delim = ":"), `loc`,
   #                                        names = c("loc.start", "loc.end"), delim = "-") %>% mutate(type = "SNP") %>% dplyr::rename(CNVStatus = "Event") %>%
@@ -375,36 +377,21 @@ plot_cnvns <- function(df){
 }
 for(nmls in LabNmrlsCodes){
   plt <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","10000"), 
-                   labNmrlProc(nmls,"Conumee","10000")))
-  plt2 <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","25000"), 
-                          labNmrlProc(nmls,"Conumee","25000")))
+                   labNmrlProc(nmls,"Conumee","10000"), labNmrlProc(nmls,"MethylMaster","10000")))
   plt3 <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","50000"), 
-                          labNmrlProc(nmls,"Conumee","50000")))
-  plt4 <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","75000"), 
-                          labNmrlProc(nmls,"Conumee","75000")))
+                          labNmrlProc(nmls,"Conumee","50000"), labNmrlProc(nmls,"MethylMaster","50000")))
   plt5 <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","1e+05"), 
-                          labNmrlProc(nmls,"Conumee","1e+05")))
-  plt6 <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","5e+05"), 
-                          labNmrlProc(nmls,"Conumee","5e+05")))
+                          labNmrlProc(nmls,"Conumee","1e+05"), labNmrlProc(nmls,"MethylMaster","1e+05")))
   plt7 <- plot_cnvns(rbind(labNmrlProc(nmls,"Sesame","1e+06"), 
-                          labNmrlProc(nmls,"Conumee","1e+06")))
+                          labNmrlProc(nmls,"Conumee","1e+06"), labNmrlProc(nmls,"MethylMaster","1e+06")))
   ggsave(plot = plt, filename = paste0(toString(nmls), ".png"), 
          path = "~/Work/Analysis/Statistics/Normals/byBin/10000",
-         width = 1920, height = 1080, units = "px")
-  ggsave(plot = plt2, filename = paste0(toString(nmls), ".png"), 
-         path = "~/Work/Analysis/Statistics/Normals/byBin/25000",
          width = 1920, height = 1080, units = "px")
   ggsave(plot = plt3, filename = paste0(toString(nmls), ".png"), 
          path = "~/Work/Analysis/Statistics/Normals/byBin/50000",
          width = 1920, height = 1080, units = "px")
-  ggsave(plot = plt4, filename = paste0(toString(nmls), ".png"), 
-         path = "~/Work/Analysis/Statistics/Normals/byBin/75000",
-         width = 1920, height = 1080, units = "px")
   ggsave(plot = plt5, filename = paste0(toString(nmls), ".png"), 
          path = "~/Work/Analysis/Statistics/Normals/byBin/100000",
-         width = 1920, height = 1080, units = "px")
-  ggsave(plot = plt6, filename = paste0(toString(nmls), ".png"), 
-         path = "~/Work/Analysis/Statistics/Normals/byBin/5e+05",
          width = 1920, height = 1080, units = "px")
   ggsave(plot = plt7, filename = paste0(toString(nmls), ".png"), 
          path = "~/Work/Analysis/Statistics/Normals/byBin/1e+06",

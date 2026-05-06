@@ -261,17 +261,17 @@ GenomicIndex <- function(dfCH3, stt = 0, bin, sw, LMSorLM = "LMS"){
     }
   if(sw == F && stt != 0){
     dfSNP <- read_delim(paste0(getwd(), "/LabData/",LMSorLM,"_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_",LMSorLM,"_CNV_calls_01Feb2026/",recentered,"STT", stt, rc,".OSCHP.segments.txt")) %>%
-      dplyr::filter(Chromosome != "X", `Size (kbp)` >= bin/1000)
+      dplyr::filter(Chromosome != "X", `Size (kbp)` >= bin/1000) %>%
+      dplyr::filter(`Median Log2Ratio` > 0.2 | `Median Log2Ratio` < -0.2)
     print(dfSNP)
     modChrom <- length(unique(dfSNP$Chromosome))
     CNVCount <- nrow(dfSNP)
     ret <- (CNVCount^2)/modChrom
     return(ret)
   } else {
-    
     # Filter out for clinically significant segments %>% filter(CNVStatus != Normal)
-    dfCH3f <- dfCH3 %>% dplyr::filter(type == "Conumee" | type == "MethylMaster" | type == "SeSAMe") %>%
-      dplyr::filter(CNVStatus != "Normal", chrom != "X")
+    dfCH3f <- dfCH3 %>% dplyr::mutate(width = loc.end - loc.start) %>%
+      dplyr::filter(CNVStatus != "Normal", chrom != "X", type != "SNP", width <= bin)
     # Count
     CNVCount <- nrow(dfCH3f)
     modChrom <- length(unique(dfCH3f$chrom))
@@ -819,6 +819,8 @@ for(i in LM_cases){
   )
   genomicIndexDf <- rbind(genomicIndexDf, gen, genS, genC, genSNP) 
 }
+
+
 genomicIndexDf <- unique(genomicIndexDf)
 write.csv(genomicIndexDf, file = paste0(getwd(), "/FinalSet/GenomicIndex/LMGenomicIndex.csv")) # Lets save this data
 # Just looking at numbers is difficult, let's run a PCC, and draw a plot to understand this better

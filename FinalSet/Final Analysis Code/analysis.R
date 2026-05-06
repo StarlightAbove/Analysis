@@ -98,7 +98,7 @@ labLMSProc <- function(STTq, Technology, binSize){
 LMStt <- function(STT, bin, tech){
   
   corrSheet <- read.csv(paste0(getwd(), "/LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv")) %>%
-    dplyr::filter(STT == STT)
+    dplyr::filter(STT == !!STT)
   sentrixID <- corrSheet$Sentrix_ID[1]
   sentrixPos <- corrSheet$Sentrix_Position[1]
   
@@ -857,9 +857,70 @@ for(tech in techs){
     for(cases in LMS_cases){
       result <- data.frame(
         category = paste0(cases, "-", bin, "-", tech),
-        val = GenomeModified(labLMSProc(STTq = cases, Technology = tech, binSize = bin))
+        val = GenomeModified(labLMSProc(STTq = cases, Technology = tech, binSize = bin) )
       )
       geneMod <- rbind(geneMod, result)
+    }
+  }
+}
+geneMod <- geneMod %>%
+  separate(
+    col = category,
+    into = c("Case", "Bin", "Tech"),
+    sep = "-"
+  )
+
+# need to fix this SNP Genome Changed %
+SNP10kb <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
+  dplyr::select(c("STT", "% Genome Changed")) %>% 
+  dplyr::mutate(Tech = "SNP", Bin = 10000) %>% 
+  dplyr::rename(val = `% Genome Changed`, Case = STT)
+SNPDef <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
+  dplyr::select(c("STT", "% Genome Changed")) %>% 
+  dplyr::mutate(Tech = "SNP", Bin = 50000) %>% 
+  dplyr::rename(val = `% Genome Changed`, Case = STT)
+SNP100kb <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
+  dplyr::select(c("STT", "% Genome Changed")) %>% 
+  dplyr::mutate(Tech = "SNP", Bin = 1e+05) %>% 
+  dplyr::rename(val = `% Genome Changed`, Case = STT)
+SNP1Mb <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
+  dplyr::select(c("STT", "% Genome Changed")) %>% 
+  dplyr::mutate(Tech = "SNP", Bin = 1e+06) %>% 
+  dplyr::rename(val = `% Genome Changed`, Case = STT)
+
+geneMod <- rbind(geneMod, SNP10kb, SNPDef, SNP100kb, SNP1Mb)
+ggplot(data = geneMod, aes(x = factor(Case), y = val, color = Tech)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_log10() +
+  labs(title = "Genomic Index vs. Bin across cases") +
+  facet_wrap(~ Bin) +
+  theme_gray()
+write.csv(geneMod, file = paste0(getwd(), "/FinalSet/GenomeChanged/genomeChangedLMS.csv"))
+
+GenomeModifiedLM <- function(df){
+  dfs <- df %>% dplyr::filter(CNVStatus != "Normal", type != "SNP")  %>%
+    dplyr::mutate(width = loc.end - loc.start) 
+  width <- sum(dfs$width)
+  hg19_info <- getChromInfoFromUCSC("hg19") %>% dplyr::filter(assembled == "TRUE")
+  hg19_info <- hg19_info[1:22,]
+  hg19_total <- sum(hg19_info$size)
+  
+  return((width/hg19_total) * 100)
+}
+
+techs <- c("MethylMaster", "Sesame", "Conumee")
+bins <- c(50000, 10000, 1e+05, 1e+06)
+geneMod <- NULL
+result <- NULL
+for(techn in techs){
+  for(binn in bins){
+    for(cases in LM_cases){
+      result <- data.frame(
+        category = paste0(cases, "-", binn, "-", techn),
+        val = GenomeModifiedLM(LMStt(STT = cases, bin = binn, tech = techn))
+      )
+      geneMod <- rbind(geneMod, result)
+      print(result)
     }
   }
 }
@@ -888,13 +949,19 @@ SNP1Mb <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/d
   dplyr::rename(val = `% Genome Changed`, Case = STT)
 
 geneMod <- rbind(geneMod, SNP10kb, SNPDef, SNP100kb, SNP1Mb)
-ggplot(data = geneMod, aes(x = factor(Case), y = val, color = Tech)) +
+ggplot(data = geneMod, aes(x = factor(Case), y = val, fill = Tech)) +
   geom_bar(position = "dodge", stat = "identity") +
-  scale_y_log10() +
-  labs(title = "Genomic Index vs. Bin across cases") +
+  scale_fill_manual(values = c("Conumee" = "#E07B54", "MethylMaster" = "#6BAF92", "Sesame" = "#7B8FD4")) +
+  labs(
+    title = "Genome Changed (%)",
+    x = "Case",
+    y = "Genome Changed (%)"
+  ) +
   facet_wrap(~ Bin) +
-  theme_gray()
+  theme_gray() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 write.csv(geneMod, file = paste0(getwd(), "/FinalSet/GenomeChanged/genomeChanged.csv"))
+
 
 # Let's go after accuracies using the accuracy algorithm now.
 techs <- c("MethylMaster", "Sesame", "Conumee")

@@ -251,7 +251,7 @@ Future improvement efforts should target different aspects of each tool's pipeli
 | ---------------------------------------------- | ---------------------------------------------- | ------------------------------------- |
 | Per-case segment plots comparing tools and SNP | `GenomicIndexLMS.csv`                          | compression of amplitude by all tools |
 | Side-by-side: LMS vs LM mean accuracy by tool  | `accuraciesLMS.csv` + `accuraciesLM.csv`       |                                       |
-| Genome Changed Bar Graph                       | `genomeChangedLMS.csv` + `genomeChangedLM.csv` | Null result — flat trajectories       |
+| Genome Changed Bar Graph                       | `genomeChangedLMS.csv` + `genomeChangedLM.csv` | Null result, flat trajectories       |
 
 ### Potential figures to create and add
 
@@ -259,7 +259,7 @@ Future improvement efforts should target different aspects of each tool's pipeli
 | ------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------- |
 | Scatter: SNP GI vs mean accuracy (LMS cases, annotated) | `GenomicIndexLMS.csv` + `accuraciesLMS.csv`    | r = −0.659; annotate 9337, 9202/9203, 9338/9328/9350 |
 | Genome-changed violin: LMS vs LM per tool               | `genomeChangedLMS.csv` + `genomeChangedLM.csv` | MethylMaster 96% territory vs Sesame 49%             |
-| Accuracy line chart: bins 10 kb→1 Mb per tool (LMS)     | `accuraciesLMS.csv`                            | Null result — flat trajectories                      |
+| Accuracy line chart: bins 10 kb→1 Mb per tool (LMS)     | `accuraciesLMS.csv`                            | Null result, flat trajectories                      |
 
 ---
 

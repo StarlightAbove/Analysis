@@ -840,43 +840,6 @@ for(j in bins){
   out9327 <- unique(rbind(out9327, mm, cn, ss))
 }
 
-
-
-
-
-for(i in LMS_cases){
-  gen <- data.frame(case = i,
-                    tech = "MethylMaster",
-                    Default = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 50000),stt = i,bin = 50000, sw = T),
-                    "10kb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 10000),stt = i,bin = 10000, sw = T),
-                    "100kb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 1e+05),stt = i,bin = 1e+05, sw = T),
-                    "1Mb" = GenomicIndex(labLMSProc(STTq = i, "MethylMaster", binSize = 1e+06),stt = i,bin = 1e+06, sw = T)
-  )
-  genS <- data.frame(case = i,
-                     tech = "Sesame",
-                     Default = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 50000),stt = i,bin = 50000, sw = T),
-                     "10kb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 10000),stt = i,bin = 10000, sw = T),
-                     "100kb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 1e+05),stt = i,bin = 1e+05, sw = T),
-                     "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Sesame", binSize = 1e+06),stt = i,bin = 1e+06, sw = T)
-  )
-  genC <- data.frame(case = i,
-                     tech = "Conumee",
-                     Default = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 50000),stt = i,bin = 50000, sw = T),
-                     "10kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 10000),stt = i,bin = 10000, sw = T),
-                     "100kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+05),stt = i,bin = 1e+05, sw = T),
-                     "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+06),stt = i,bin = 1e+06, sw = T)
-  )
-  genSNP <- data.frame(case = i,
-                       tech = "SNP",
-                       Default = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 50000), stt = i, bin = 50000, sw = F),
-                       "10kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 10000), stt = i,bin = 10000, sw = F),
-                       "100kb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+05),stt = i,bin = 1e+05,  sw = F),
-                       "1Mb" = GenomicIndex(labLMSProc(STTq = i, "Conumee", binSize = 1e+06), stt = i,bin = 1e+06, sw = F)
-  )
-  genomicIndexDf <- rbind(genomicIndexDf, gen, genS, genC, genSNP)
-}
-genomicIndexDf <- unique(genomicIndexDf)
-write.csv(genomicIndexDf, file = paste0(getwd(), "/FinalSet/GenomicIndex/GenomicIndexLMS.csv")) # Lets save this data
 # Just looking at numbers is difficult, let's run a PCC, and draw a plot to understand this better
 # We have 12 categories for correlation.
 pccCorrelation <- NULL

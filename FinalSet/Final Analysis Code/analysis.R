@@ -123,8 +123,8 @@ labLMSProc <- function(STTq, Technology, binSize){
                                                      chrom = str_remove_all(chrom, "chr")) %>% filter(
                                                        !(chrom == "X") & !(chrom == "Y")) %>% mutate(
                                                          chrom = as.numeric(chrom)) %>% arrange(chrom) %>% mutate(
-                                                           CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
-                                                                                 seg.mean < -0.3 ~ "Deletion",
+                                                           CNVStatus = case_when(seg.mean > 0.2 ~ "Amplification",
+                                                                                 seg.mean < -0.2 ~ "Deletion",
                                                                                  TRUE ~ "Normal"), type = "SeSAMe") 
     combinedSet <- rbind(sesameMatch, cnvMatch) %>% mutate(Gene = as.character(0), seg.mean = as.numeric(seg.mean)) %>% arrange(chrom)
   }
@@ -316,6 +316,33 @@ GenomicIndex <- function(dfCH3, stt = 0, bin, sw, LMSorLM = "LMS"){
     return(ret) 
   }
 }
+
+GenomicIndexIntermediateMatrix <- function(dfCH3, stt = 0, bin, LMSorLM = "LMS", tech){
+  print(stt)
+  recentered <- NULL
+  rc <- NULL
+  if(LMSorLM == "LM"){
+    recentered <- ""
+    rc <- ""
+  } else { 
+    recentered <- "Recentered_"
+    rc <- ".RC"
+  }
+  dfSNP <- read_delim(paste0(getwd(), "/LabData/",LMSorLM,"_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_",LMSorLM,"_CNV_calls_01Feb2026/",recentered,"STT", stt, rc,".OSCHP.segments.txt")) %>%
+    dplyr::filter(Chromosome != "X", `Size (kbp)` >= bin/1000) %>%
+    dplyr::select(c("Median Log2Ratio", "Cytoband Start", "Cytoband End", 
+                    "Chromosome", "Type")) %>%
+    dplyr::rename(seg.mean = "Median Log2Ratio", loc.start = "Cytoband Start",
+                  loc.end = "Cytoband End", chrom = Chromosome, CNVStatus = Type) %>%
+    dplyr::mutate(type = "SNP", Gene = 0) %>%
+    dplyr::filter(seg.mean > 0.2 | seg.mean < -0.2)
+    
+  dfCH3f <- dfCH3 %>% 
+    dplyr::filter(CNVStatus != "Normal", chrom != "X", type != "SNP")
+  output <- rbind(dfCH3f, dfSNP) %>% dplyr::mutate(Case = stt, Bin = bin)
+  output
+}
+
 GenomeModified <- function(dfCH3){
   df <- dfCH3 %>% dplyr::filter(type != "SNP", CNVStatus != "Normal") %>%
     dplyr::mutate(width = loc.end - loc.start) 
@@ -757,6 +784,66 @@ write.csv(NormalsFrame, file = paste0(getwd(), "/FinalSet/normals.csv")) # Lets 
 
 genomicIndexDf <- NULL
 # columns in the dataframe: case, binDefault, bin10kb, bin100kb, bin1Mb.
+bins <- c(10000, 50000, 1e+05, 1e+06)
+cs <- c(9202, 9203, 9328, 9337, 9338, 9350, 
+        9353, 9354, 9355, 9356, 9357, 9358)
+outputDf <- NULL
+for(i in cs){
+  for(j in bins){
+    mm <- GenomicIndexIntermediateMatrix(labLMSProc(i, 
+                                                    Technology = "MethylMaster", 
+                                                    binSize = j), 
+                                         stt = i, bin = j, LMSorLM = "LMS", 
+                                         tech = "MethylMaster")
+    cn <- GenomicIndexIntermediateMatrix(labLMSProc(i, 
+                                                    Technology = "Sesame", 
+                                                    binSize = j), 
+                                         stt = i, bin = j, LMSorLM = "LMS", 
+                                         tech = "Sesame")
+    ss <- GenomicIndexIntermediateMatrix(labLMSProc(i, 
+                                                    Technology = "Conumee", 
+                                                    binSize = j), 
+                                         stt = i, bin = j, LMSorLM = "LMS", 
+                                         tech = "Conumee")
+    outputDf <- unique(rbind(outputDf, mm, cn, ss))
+  }
+  
+}
+
+summ <- outputDf %>% group_by(Case, Bin, type) %>% summarize(
+  count = n(),
+  c_sq = (n())^2,
+  chr_count = n_distinct(chrom)
+) %>% dplyr::mutate(gi = c_sq/chr_count)
+
+write.csv(outputDf, file = "~/Work/Analysis/FinalSet/GenomicIndex/Intermediate Documents/intermediate.csv")
+write.csv(summ, file = "~/Work/Analysis/FinalSet/GenomicIndex/Intermediate Documents/step_calcuation.csv")
+
+
+out9327 <- NULL # Missing log2ratio for STT9327
+for(j in bins){
+  mm <- GenomicIndexIntermediateMatrix(labLMSProc(9327, 
+                                                  Technology = "MethylMaster", 
+                                                  binSize = j), 
+                                       stt = 9327, bin = j, LMSorLM = "LMS", 
+                                       tech = "MethylMaster")
+  cn <- GenomicIndexIntermediateMatrix(labLMSProc(9327, 
+                                                  Technology = "Sesame", 
+                                                  binSize = j), 
+                                       stt = 9327, bin = j, LMSorLM = "LMS", 
+                                       tech = "Sesame")
+  ss <- GenomicIndexIntermediateMatrix(labLMSProc(9327, 
+                                                  Technology = "Conumee", 
+                                                  binSize = j), 
+                                       stt = 9327, bin = j, LMSorLM = "LMS", 
+                                       tech = "Conumee")
+  out9327 <- unique(rbind(out9327, mm, cn, ss))
+}
+
+
+
+
+
 for(i in LMS_cases){
   gen <- data.frame(case = i,
                     tech = "MethylMaster",

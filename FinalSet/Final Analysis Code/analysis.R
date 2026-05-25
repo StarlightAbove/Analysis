@@ -1,3 +1,38 @@
+devtools::install_github("hovestadtlab/conumee2", subdir = "conumee2")
+# Install BiocManager first to handle Bioconductor packages
+install.packages("BiocManager")
+
+# Install Bioconductor packages
+BiocManager::install(c(
+  "GenomeInfoDb",
+  "AnnotationDbi",
+  "AnnotationHub",
+  "org.Hs.eg.db",
+  "TxDb.Hsapiens.UCSC.hg19.knownGene",
+  "rentrez",
+  "GenomicRanges",
+  "GenomicFeatures",
+  "pheatmap",
+  "sesame"
+))
+
+# Install CRAN packages
+install.packages(c(
+  "tidyverse",
+  "dplyr",
+  "ggplot2",
+  "patchwork",
+  "cowplot",
+  "gridGraphics",
+  "gridExtra",
+  "ggplotify",
+  "readxl",
+  "RColorBrewer",
+  "reshape2",
+  "purrr",
+  "devtools"
+))
+
 # Bioconductor first
 library(GenomeInfoDb)
 library(AnnotationDbi)
@@ -13,7 +48,7 @@ library(pheatmap)
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
-library(ggrepel)
+# library(ggrepel)
 library(patchwork)
 library(cowplot)
 library(gridGraphics)
@@ -262,7 +297,6 @@ GenomicIndex <- function(dfCH3, stt = 0, bin, sw, LMSorLM = "LMS"){
   if(sw == F && stt != 0){
     dfSNP <- read_delim(paste0(getwd(), "/LabData/",LMSorLM,"_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_",LMSorLM,"_CNV_calls_01Feb2026/",recentered,"STT", stt, rc,".OSCHP.segments.txt")) %>%
       dplyr::filter(Chromosome != "X", `Size (kbp)` >= bin/1000) 
-    
     print(dfSNP)
     modChrom <- length(unique(dfSNP$Chromosome))
     CNVCount <- nrow(dfSNP)
@@ -999,27 +1033,50 @@ geneMod <- geneMod %>%
     sep = "-"
   )
 
-SNP10kb <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
-  dplyr::select(c("STT", "% Genome Changed")) %>% 
-  dplyr::mutate(Tech = "SNP", Bin = 10000) %>% 
-  dplyr::rename(val = `% Genome Changed`, Case = STT)
-SNPDef <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
-  dplyr::select(c("STT", "% Genome Changed")) %>% 
-  dplyr::mutate(Tech = "SNP", Bin = 50000) %>% 
-  dplyr::rename(val = `% Genome Changed`, Case = STT)
-SNP100kb <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
-  dplyr::select(c("STT", "% Genome Changed")) %>% 
-  dplyr::mutate(Tech = "SNP", Bin = 1e+05) %>% 
-  dplyr::rename(val = `% Genome Changed`, Case = STT)
-SNP1Mb <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
-  dplyr::select(c("STT", "% Genome Changed")) %>% 
-  dplyr::mutate(Tech = "SNP", Bin = 1e+06) %>% 
-  dplyr::rename(val = `% Genome Changed`, Case = STT)
+SNP_LMFilter <- function(chasFile, binSize) {
+  fi <- read_delim(chasFile) %>% 
+    dplyr::select(c("Chromosome","StartPosition",
+                    "StopPosition", "Type"
+                    ,"Median Log2 Ratio")) %>%
+    dplyr::filter(Type == "TotalCN", 
+                  Chromosome <= 22) %>%
+    dplyr::mutate(width = StopPosition-StartPosition, 
+                  l2ratio = as.numeric(`Median Log2 Ratio`)) %>% 
+    dplyr::select(Chromosome, StartPosition, StopPosition, l2ratio, width) %>%
+    dplyr::filter(l2ratio <= -0.2 | l2ratio >= 0.2) %>%
+    dplyr::filter(width >= binSize)
+  
+  totalModified <- sum(fi$width)
+  gene_ranges <- genes(TxDb.Hsapiens.UCSC.hg19.knownGene)
+  valueOfhg19 <- sum(gene_ranges@seqinfo@seqlengths)
+  modified <- (totalModified/valueOfhg19) * 100
+  
+  return(modified)
+  
+}
+SNP <- NULL
 
-geneMod <- rbind(geneMod, SNP10kb, SNPDef, SNP100kb, SNP1Mb)
+for(bin in bins){
+  for(cases in LM_cases){
+    path <- paste0("~/Work/Analysis/LabData/LM_SNP_EPIC_array_data/ChAS/",
+                   "ChAS_data_01Feb2026/ChAS_LM_Probe_and_segment_level_data_01Feb2026/STT",
+                   cases, "_Segment_level_data_01Feb2026.segment.txt")
+    df <- data.frame(Case = cases, Bin = bin, Tech = "SNP", val = SNP_LMFilter(path, bin))
+    SNP <- rbind(SNP, df)
+  }
+}
+
+geneMod <- rbind(geneMod, SNP)
+zero_df <- geneMod %>% 
+  filter(abs(val) < 1e-10) %>% 
+  mutate(Case = factor(Case, levels = levels(factor(geneMod$Case))))
+
 ggplot(data = geneMod, aes(x = factor(Case), y = val, fill = Tech)) +
   geom_bar(position = "dodge", stat = "identity") +
-  scale_fill_manual(values = c("Conumee" = "#E07B54", "MethylMaster" = "#6BAF92", "Sesame" = "#7B8FD4")) +
+  geom_bar(data = zero_df, aes(x = Case, y = val, fill = Tech),
+           position = "dodge", stat = "identity",
+           alpha = 0.4, width = 0.9) +
+  scale_fill_manual(values = c("Conumee" = "#E07B54", "MethylMaster" = "#6BAF92", "Sesame" = "#7B8FD4", "SNP" = "#0e0e0e")) +
   labs(
     title = "Genome Changed (%)",
     x = "Case",
@@ -1027,8 +1084,23 @@ ggplot(data = geneMod, aes(x = factor(Case), y = val, fill = Tech)) +
   ) +
   facet_wrap(~ Bin) +
   theme_gray() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-write.csv(geneMod, file = paste0(getwd(), "/FinalSet/GenomeChanged/genomeChanged.csv"))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  scale_y_continuous(
+    trans   = scales::pseudo_log_trans(sigma = 0.05, base = 10),
+    breaks  = c(0, 0.05, 0.1, 0.5, 1, 2.5, 5, 10),
+    labels  = scales::label_number(drop0trailing = TRUE),
+    expand  = expansion(mult = c(0, 0.05))
+  ) +
+  geom_point(
+    data     = zero_df,
+    aes(x    = Case, fill = Tech, y = 0.02),  # y inside aes()
+    shape    = 25,
+    size     = 1.8,
+    color    = NA,
+    position = position_dodge(width = 0.9),
+    show.legend = FALSE
+  )
+write.csv(geneMod, file = paste0(getwd(), "/FinalSet/GenomeChanged/genomeChangedLM.csv"))
 
 
 # Let's go after accuracies using the accuracy algorithm now.

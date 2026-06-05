@@ -65,9 +65,9 @@ labLMSProc <- function(STTq, Technology, binSize){
   
   
   # Correlate by STT information between methylation Sentrix and SNP data.
-  correlationSheet <- read.csv("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/correlative.csv") %>% filter(STT == STTq)
+  correlationSheet <- read.csv(paste0(getwd(), "/LabData/LMS_SNP_EPIC_array_data/correlative.csv")) %>% filter(STT == STTq)
   
-  cnvMatch <- read_delim(paste0("~/Work/Analysis/LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LMS_Probe_and_segment_level_data_01Feb2026/STT", 
+  cnvMatch <- read_delim(paste0(getwd(), "/LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LMS_Probe_and_segment_level_data_01Feb2026/STT", 
                                 STTq, "_Recentered_Segment_level_data_01Feb2026.segment.txt"))
   
   # methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", 
@@ -75,13 +75,13 @@ labLMSProc <- function(STTq, Technology, binSize){
   #     correlationSheet$Sentrix_Position[1], "/"), 
   # "autocorrected_regions.csv"))
   
-  conumeeMatch <- read.csv(paste0("~/Work/Analysis/Outputs/Conumee/LabLMS/", binSize,"/", paste0(correlationSheet$Sentrix_ID[1],"_", 
+  conumeeMatch <- read.csv(paste0(getwd(), "/Outputs/Conumee/LabLMS/", binSize,"/", paste0(correlationSheet$Sentrix_ID[1],"_", 
                                                                                                  correlationSheet$Sentrix_Position[1],".csv")))
   
-  sesameMatch <- read.csv(paste0("~/Work/Analysis/Outputs/SeSAMe/LabLMS/", binSize,"/", paste0("segments_",correlationSheet$Sentrix_ID[1],"_", 
+  sesameMatch <- read.csv(paste0(getwd(), "/Outputs/SeSAMe/LabLMS/", binSize,"/", paste0("segments_",correlationSheet$Sentrix_ID[1],"_", 
                                                                                                correlationSheet$Sentrix_Position[1],".csv")))
   
-  methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/LabLMS/", binSize,"/", 
+  methylMatch <- read.csv(paste0(getwd(), "/Outputs/MethylMaster/LabLMS/", binSize,"/", 
                                  correlationSheet$Sentrix_ID[1],"_", correlationSheet$Sentrix_Position[1],"/autocorrected_regions.csv"))
   
   cnvMatch <- cnvMatch %>% dplyr::filter(!(Type == "LOH")) %>% dplyr::filter(Chromosome != 24 & Chromosome != 25) %>% dplyr::select("Chromosome", "StartPosition", "StopPosition", "Median Log2 Ratio") %>% 
@@ -206,13 +206,13 @@ LMStt <- function(STT, bin, tech){
 labNmrlProc <- function(Sentrix, Technology, binSize){
   # Correlate by STT information between methylation Sentrix and SNP data.
   correlationSheet <- read.csv(
-    "~/Work/Analysis/LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv") %>% filter(Basename == Sentrix)
+    "/LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv") %>% filter(Basename == Sentrix)
   
-  methylMatch <- read.csv(paste0("~/Work/Analysis/Outputs/MethylMaster/Normals/", binSize, "/", Sentrix, "/autocorrected_regions.csv"))
+  methylMatch <- read.csv(paste0(getwd(), "/Outputs/MethylMaster/Normals/", binSize, "/", Sentrix, "/autocorrected_regions.csv"))
   
-  conumeeMatch <- read.csv(paste0("~/Work/Analysis/Outputs/Conumee/LabNormals/", binSize,"/", paste0(Sentrix,".csv")))
+  conumeeMatch <- read.csv(paste0(getwd(),"/Outputs/Conumee/LabNormals/", binSize,"/", paste0(Sentrix,".csv")))
   
-  sesameMatch <- read.csv(paste0("~/Work/Analysis/Outputs/SeSAMe/Normals/", binSize,"/", paste0("segments_",Sentrix,".csv")))
+  sesameMatch <- read.csv(paste0(getwd(),"/Outputs/SeSAMe/Normals/", binSize,"/", paste0("segments_",Sentrix,".csv")))
   
   if(Technology == "MethylMaster") {
     methylMatch <- methylMatch %>% dplyr::rename(
@@ -919,24 +919,46 @@ df <- read.csv("~/Work/Analysis/quarterCutoff/Genomic_Index/genomicIndexLMS.csv"
 LMSPlot <- giplot(df)
 
 
-
-
-
 ### GENOME MODIFIED ----
 ## LMS ----
 techs <- c("MethylMaster", "Sesame", "Conumee")
 bins <- c(50000, 10000, 1e+05, 1e+06)
 geneMod <- NULL
-for(tech in techs){
+for(cases in LMS_cases){
   for(bin in bins){
-    for(cases in LMS_cases){
+    for(tech in techs){
       result <- data.frame(
         category = paste0(cases, "-", bin, "-", tech),
         val = GenomeModified(labLMSProc(STTq = cases, Technology = tech, binSize = bin) )
       )
+      
       geneMod <- rbind(geneMod, result)
     }
+    SNP <- (sum((read_delim(paste0(getwd(), "/LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LMS_Probe_and_segment_level_data_01Feb2026/STT",
+                                   cases,"_Recentered_Segment_level_data_01Feb2026.segment.txt")) %>%
+                   dplyr::mutate(width = StopPosition - StartPosition) %>%
+                   dplyr::filter(width >= bin) %>% 
+                   dplyr::filter(`Median Log2 Ratio` <= -0.25 | `Median Log2 Ratio` >= 0.25) %>%
+                   dplyr::filter(Type == "TotalCN") %>%
+                   dplyr::filter(Chromosome != "X"))$width)/hg19_total)*100
+    resultSNP <- data.frame(
+      category = paste0(cases, "-", bin, "-SNP"),
+      val = SNP
+    )
+    geneMod <- rbind(geneMod, resultSNP)
   }
+  SNP <- (sum((read_delim(paste0(getwd(), "/LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LMS_Probe_and_segment_level_data_01Feb2026/STT",
+                           cases,"_Recentered_Segment_level_data_01Feb2026.segment.txt")) %>%
+    dplyr::mutate(width = StopPosition - StartPosition) %>%
+    dplyr::filter(width >= 1e+07) %>% 
+    dplyr::filter(`Median Log2 Ratio` <= -0.25 | `Median Log2 Ratio` >= 0.25) %>%
+    dplyr::filter(Type == "TotalCN") %>%
+    dplyr::filter(Chromosome != "X") )$width)/hg19_total)*100
+  resultSNP10Mb <- data.frame(
+    category = paste0(cases, "-1e+07-SNP"),
+    val = SNP
+  )
+  geneMod <- rbind(geneMod, resultSNP10Mb)
 }
 
 chasFile <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
@@ -955,10 +977,10 @@ geneMod <- geneMod %>%
 geneMod <- rbind(geneMod, chasFile)
 geneMod <- geneMod %>% arrange(Case)
 write.csv(geneMod, file = paste0(getwd(), "/quarterCutoff/Genome_modified/genome_modifiedLMS.csv"))
-df <- read.csv("quarterCutoff/Genome_modified/genome_modifiedLMS.csv") %>% dplyr::select(-c("X"))
-snp_data <- df %>% filter(Tech == "SNP")
-main_data <- df %>% filter(Tech != "SNP")
-main_data$Bin <- factor(main_data$Bin, levels = c("10000", "50000", "1e+05", "1e+06"))
+df <- read.csv("quarterCutoff/Genome_modified/genome_modifiedLMS.csv") %>% dplyr::select(-c("X")) %>% dplyr::filter(Case != 9327)
+snp_data <- df %>% filter(Tech == "SNP" & Bin == "DEF")
+main_data <- df %>% filter(Bin != "DEF")
+main_data$Bin <- factor(main_data$Bin, levels = c("10000", "50000", "1e+05", "1e+06", "1e+07"))
 ggplot() +
   # SNP baseline: horizontal reference line per Case
   geom_hline(
@@ -1020,7 +1042,7 @@ for(tec in techs){
 GenomeModifiedSNP <- NULL
 for(cases in LM_cases){
   
-  SNPDf <- read_delim(paste0("~/Work/Analysis/LabData/LM_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LM_Probe_and_segment_level_data_01Feb2026/STT",
+  SNPDf <- read_delim(paste0(getwd(), "/LabData/LM_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LM_Probe_and_segment_level_data_01Feb2026/STT",
                       cases, "_Segment_level_data_01Feb2026.segment.txt")) %>% 
     dplyr::select(c("Chromosome", "StartPosition", "StopPosition" ,"Median Log2 Ratio")) %>%
     drop_na() %>%

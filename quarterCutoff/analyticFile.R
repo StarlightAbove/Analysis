@@ -791,7 +791,6 @@ geneAnno <- function(Gene, db = NULL){
 # Getting the list of cases
 LMS_cases <- read_csv(paste0(getwd(), "/LabData/LMS_SNP_EPIC_array_data/correlative.csv"))
 LMS_cases <- LMS_cases$STT
-LMS_cases <- LMS_cases[LMS_cases != 9327]
 
 LM_cases <- read_csv(paste0(getwd(),"/LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files/SampSheet.csv"))
 LM_cases <- LM_cases$STT
@@ -825,9 +824,10 @@ write.csv(NormalsFrame, file = paste0(getwd(), "/quarterCutoff/normals.csv"))
 ### GENOMIC INDEX ----
 ## LMS ----
 outputDf <- NULL
-# Have to exclude 9327 since it has no median log2 ratio
 for(i in LMS_cases){
+  print(i)
   for(j in bins){
+    print(j)
     mm <- GenomicIndexIntermediateMatrix(labLMSProc(i, 
                                                     Technology = "MethylMaster", 
                                                     binSize = j), 
@@ -853,11 +853,10 @@ summ <- outputDf %>% group_by(Case, Bin, type) %>% summarize(
   chr_count = n_distinct(chrom)
 ) %>% dplyr::mutate(gi = c_sq/chr_count) %>% filter(!(Bin != 1e+06 & type == "SNP"))
 
-write.csv(summ, paste0(getwd(), "/quarterCutoff/genomicIndexLMS.csv"))
+write.csv(summ, paste0(getwd(), "/quarterCutoff/Genomic_Index/genomicIndexLMS.csv"))
 
 ## LM ----
 outputDf <- NULL
-# Have to exclude 9327 since it has no median log2 ratio
 for(i in LM_cases){
   for(j in bins){
     mm <- GenomicIndexIntermediateMatrix(LMStt(STT = i, bin = j, tech = "MethylMaster"), 
@@ -879,7 +878,7 @@ LMGI <- outputDf %>% group_by(Case, Bin, type) %>% summarize(
   chr_count = n_distinct(chrom)
 ) %>% dplyr::mutate(gi = c_sq/chr_count)
 
-write.csv(LMGI, paste0(getwd(), "/quarterCutoff/genomicIndexLM.csv"))
+write.csv(LMGI, paste0(getwd(), "/quarterCutoff/Genomic_Index/genomicIndexLM.csv"))
 
 ## Plotting ----
 giplot <- function(df){
@@ -912,7 +911,7 @@ df <- read.csv("~/Work/Analysis/quarterCutoff/Genomic_Index/genomicIndexLM.csv")
   mutate(Bin = factor(Bin, levels = c(1e+04, 5e+04, 1e+05, 1e+06)))
 LMPlot <- giplot(df)
 
-df <- read.csv("~/Work/Analysis/quarterCutoff/Genomic_Index/genomicIndexLMS.csv") %>%
+df <- read.csv(paste0(getwd(), "/quarterCutoff/Genomic_Index/genomicIndexLMS.csv")) %>%
   select(Case, Bin, type, gi) %>%
   mutate(Case = factor(Case)) %>%
   mutate(Bin = factor(Bin, levels = c(1e+04, 5e+04, 1e+05, 1e+06)))
@@ -934,31 +933,7 @@ for(cases in LMS_cases){
       
       geneMod <- rbind(geneMod, result)
     }
-    SNP <- (sum((read_delim(paste0(getwd(), "/LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LMS_Probe_and_segment_level_data_01Feb2026/STT",
-                                   cases,"_Recentered_Segment_level_data_01Feb2026.segment.txt")) %>%
-                   dplyr::mutate(width = StopPosition - StartPosition) %>%
-                   dplyr::filter(width >= bin) %>% 
-                   dplyr::filter(`Median Log2 Ratio` <= -0.25 | `Median Log2 Ratio` >= 0.25) %>%
-                   dplyr::filter(Type == "TotalCN") %>%
-                   dplyr::filter(Chromosome != "X"))$width)/hg19_total)*100
-    resultSNP <- data.frame(
-      category = paste0(cases, "-", bin, "-SNP"),
-      val = SNP
-    )
-    geneMod <- rbind(geneMod, resultSNP)
   }
-  SNP <- (sum((read_delim(paste0(getwd(), "/LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/ChAS_LMS_Probe_and_segment_level_data_01Feb2026/STT",
-                           cases,"_Recentered_Segment_level_data_01Feb2026.segment.txt")) %>%
-    dplyr::mutate(width = StopPosition - StartPosition) %>%
-    dplyr::filter(width >= 1e+07) %>% 
-    dplyr::filter(`Median Log2 Ratio` <= -0.25 | `Median Log2 Ratio` >= 0.25) %>%
-    dplyr::filter(Type == "TotalCN") %>%
-    dplyr::filter(Chromosome != "X") )$width)/hg19_total)*100
-  resultSNP10Mb <- data.frame(
-    category = paste0(cases, "-1e+07-SNP"),
-    val = SNP
-  )
-  geneMod <- rbind(geneMod, resultSNP10Mb)
 }
 
 chasFile <- read_excel("LabData/LMS_SNP_EPIC_array_data/ChAS/ChAS_data_01Feb2026/design_13LMS_CNVs_other_info_01Feb2026.xlsx") %>%
@@ -977,11 +952,11 @@ geneMod <- geneMod %>%
 geneMod <- rbind(geneMod, chasFile)
 geneMod <- geneMod %>% arrange(Case)
 write.csv(geneMod, file = paste0(getwd(), "/quarterCutoff/Genome_modified/genome_modifiedLMS.csv"))
-df <- read.csv("quarterCutoff/Genome_modified/genome_modifiedLMS.csv") %>% dplyr::select(-c("X")) %>% dplyr::filter(Case != 9327)
+df <- read.csv("quarterCutoff/Genome_modified/genome_modifiedLMS.csv") %>% dplyr::select(-c("X"))
 snp_data <- df %>% filter(Tech == "SNP" & Bin == "DEF")
 main_data <- df %>% filter(Bin != "DEF")
 main_data$Bin <- factor(main_data$Bin, levels = c("10000", "50000", "1e+05", "1e+06", "1e+07"))
-ggplot() +
+plt <- ggplot() +
   # SNP baseline: horizontal reference line per Case
   geom_hline(
     data = snp_data,
@@ -1211,7 +1186,7 @@ aps <- split(ap, ap$Gene)
 
 for (i in seq_along(aps)) {
   file_name <- paste0(names(aps)[i], ".csv")
-  write.csv(aps[[i]], file = paste0("~/Work/Analysis/quarterCutoff/Gene_concordance/", file_name), row.names = FALSE)
+  write.csv(aps[[i]], file = paste0(getwd(),"/quarterCutoff/Gene_concordance/", file_name), row.names = FALSE)
 }
 aps[[Gene[1]]] <- split(aps[[Gene[1]]], aps[[Gene[1]]]$bin)
 aps[[Gene[2]]] <- split(aps[[Gene[2]]], aps[[Gene[2]]]$bin)
@@ -1372,9 +1347,9 @@ ggplot(result_long_alt, aes(x = Metric, y = Gene, fill = Correlation)) +
     low      = "red",
     mid      = "pink",
     high     = "green",
-    limits   = c(min(result_long$Correlation, na.rm = TRUE), 
-                 max(result_long$Correlation, na.rm = TRUE)),
-    midpoint = mean(result_long$Correlation, na.rm = TRUE),
+    limits   = c(min(result_long_alt$Correlation, na.rm = TRUE), 
+                 max(result_long_alt$Correlation, na.rm = TRUE)),
+    midpoint = mean(result_long_alt$Correlation, na.rm = TRUE),
     name     = "Correlation"
   ) +
   facet_grid(
@@ -1398,7 +1373,7 @@ ggplot(result_long_alt, aes(x = Metric, y = Gene, fill = Correlation)) +
 output.df.pearson <- output.df.pearson %>% dplyr::mutate(Metric = "Pearson")
 output.df.spearman <- output.df.spearman %>% dplyr::mutate(Metric = "Spearman")
 output.df <- rbind(output.df.pearson, output.df.spearman)
-write.csv(output.df, "~/Work/Analysis/quarterCutoff/Gene_concordance/geneConcordance.csv")
+write.csv(output.df, "quarterCutoff/Gene_concordance/geneConcordance.csv")
 
 
 ### ACCURACY ----
@@ -1454,7 +1429,7 @@ ggplot() +
     axis.text.x      = element_text(angle = 35, hjust = 1),
     panel.grid.minor = element_blank()
   )
-write.csv(df, "~/Work/Analysis/quarterCutoff/Accuracy/accuracyLMS.csv")
+write.csv(df, "quarterCutoff/Accuracy/accuracyLMS.csv")
 
 ### LM ----
 tech <- c("MethylMaster", "Sesame", "Conumee")
@@ -1522,7 +1497,7 @@ for(c in LMS_cases){
                           db = rbind(labLMSProc(c, "MethylMaster", b), 
                                      labLMSProc(c, "Sesame", b), 
                                      labLMSProc(c, "Conumee", b)))
-      ggsave(filename = paste0("~/Work/Analysis/quarterCutoff/case_graphs/", c,"-",b,".pdf"), plot = my_plot, width = 24, height = 8)
+      ggsave(filename = paste0("~/Work/Analysis/quarterCutoff/case_graphs/LMS/",c,"/", c,"-",b,".pdf"), plot = my_plot, width = 24, height = 8)
       
   }
 }

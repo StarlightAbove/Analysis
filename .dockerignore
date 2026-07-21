@@ -1,0 +1,23 @@
+# Build context for Reproducibility/docker-images. Keep bulk and irrelevant
+# paths out of the context sent to the Docker daemon. LabData/, Controls/,
+# Custom Packages/, quarterCutoff/, Reproducibility/Scripts/ and renv.lock are
+# deliberately NOT ignored — the Dockerfiles COPY from them.
+
+.git
+.Rproj.user
+.cache
+.config
+.local
+renv/
+Outputs/
+FinalSet/
+FinalSet.zip
+cases/
+BaseData/
+Explainer/
+Statistics/
+Reproducibility/Outputs/
+Reproducibility/Methylation Analysis Dockerfiles/
+**/.DS_Store
+**/.Rhistory
+**/.RData

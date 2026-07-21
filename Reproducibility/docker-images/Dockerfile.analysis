@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1
+#
+# cnv-analysis — Stage 2 of the CNV reproducibility pipeline.
+#
+# Runs the Conumee arm, the Sesame arm, then analyticFile.R. Writes
+# Outputs/{Conumee,SeSAMe}/** and the quarterCutoff/** metrics and figures.
+# Headless: no RStudio, no session.
+#
+# Base image is R 4.5; the renv lockfile pins R 4.5.2 / Bioc 3.21. For an
+# archival build pin the base by digest:
+#     FROM rocker/tidyverse@sha256:<digest>
+FROM rocker/tidyverse:4.5
+
+# --- Restore the exact package set from renv.lock ----------------------------
+# renv.lock pins every CRAN/Bioc package plus conumee2 (GitHub) and the
+# unpatched sesame (Bioc) at fixed versions — the reproducibility anchor for
+# this stage. Installed into the system library so Rscript finds them directly.
+COPY renv.lock /Analysis/renv.lock
+RUN Rscript -e "install.packages('renv', repos = 'https://cloud.r-project.org'); \
+                renv::restore(lockfile = '/Analysis/renv.lock', library = .libPaths()[1], prompt = FALSE)"
+
+# --- Analysis code + data (baked in for exact reproduction) ------------------
+WORKDIR /Analysis
+COPY ["Reproducibility/Scripts/conumee.R", "/Analysis/Scripts/conumee.R"]
+COPY ["Reproducibility/Scripts/sesame.R",  "/Analysis/Scripts/sesame.R"]
+COPY ["Reproducibility/docker-images/run_analysis.sh", "/Analysis/Scripts/run_analysis.sh"]
+COPY ["quarterCutoff/analyticFile.R", "/Analysis/quarterCutoff/analyticFile.R"]
+COPY ["LabData/", "/Analysis/LabData/"]
+COPY ["Controls/", "/Analysis/Controls/"]
+RUN chmod +x /Analysis/Scripts/run_analysis.sh
+
+# Headless batch execution: the three scripts in order, halting on any error.
+ENTRYPOINT ["/Analysis/Scripts/run_analysis.sh"]

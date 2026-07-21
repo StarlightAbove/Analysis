@@ -1,0 +1,38 @@
+# syntax=docker/dockerfile:1
+#
+# cnv-methylmaster — Stage 1 of the CNV reproducibility pipeline.
+#
+# Runs the MethylMaster CNV arm on the baked-in LabData, writes
+# Outputs/MethylMaster/**, then exits. Headless: no RStudio, no session.
+#
+# Base image ships most of the heavy Bioconductor stack (ChAMP, Epicopy,
+# minfi, ...) at R 4.1.2. For an archival build pin it by digest:
+#     FROM mmariani123/methylmaster@sha256:<digest>
+FROM mmariani123/methylmaster:latest
+
+# --- Custom / off-CRAN dependencies, installed in dependency order -----------
+
+# ignore dependencies, can just allow the image to load it.
+
+# Patched sesame FIRST (exposes the parameters under study) so that
+# MethylMasteR links against it. Pin to a commit SHA for an archival build:
+#     StarlightAbove/sesame@<sha>
+RUN Rscript -e "remotes::install_github('StarlightAbove/sesame@patch-2', force = TRUE, upgrade = 'never')"
+
+# Claude mistake (to fix), pin to github version
+COPY ["Custom Packages/MethylMasteR.tar.gz", "/tmp/MethylMasteR.tar.gz"]
+RUN R CMD INSTALL /tmp/MethylMasteR.tar.gz
+
+# Optional: pre-cache sesame reference data at build time for a fully offline,
+# deterministic runtime (large download, several GB). Otherwise methylmaster.R
+# caches it at runtime via sesameDataCacheAll().
+RUN Rscript -e "sesameData::sesameDataCacheAll()"
+
+# --- Analysis code + data (baked in for exact reproduction) ------------------
+WORKDIR /Analysis
+COPY ["Reproducibility/Scripts/methylmaster.R", "/Analysis/Scripts/methylmaster.R"]
+COPY ["LabData/", "/Analysis/LabData/"]
+
+# Headless batch execution. getwd() is /Analysis, so the script writes into
+# /Analysis/Outputs (the shared handoff volume).
+ENTRYPOINT ["Rscript", "/Analysis/Scripts/methylmaster.R"]

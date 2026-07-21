@@ -1,0 +1,33 @@
+# CNV reproducibility pipeline — two stages, run in order.
+#
+#     docker compose up --build
+#
+# Stage 1 (methylmaster) runs to completion; the completion gate then releases
+# Stage 2 (analysis). Outputs/ is a shared bind-mount handoff; quarterCutoff/
+# receives the final metrics and figures on the host.
+#
+# Paths are relative to this file (Reproducibility/docker-images/). ../../ is
+# the Analysis project root, which is also the Docker build context — so a
+# .dockerignore at the project root is strongly recommended (see README).
+
+services:
+  methylmaster:
+    image: cnv-methylmaster
+    build:
+      context: ../..
+      dockerfile: Reproducibility/docker-images/Dockerfile.methylmaster
+    volumes:
+      - ../../Outputs:/Analysis/Outputs
+
+  analysis:
+    image: cnv-analysis
+    build:
+      context: ../..
+      dockerfile: Reproducibility/docker-images/Dockerfile.analysis
+    depends_on:
+      methylmaster:
+        # Coarse but deterministic: Stage 2 starts only after Stage 1 exits 0.
+        condition: service_completed_successfully
+    volumes:
+      - ../../Outputs:/Analysis/Outputs
+      - ../../quarterCutoff:/Analysis/quarterCutoff

@@ -32,6 +32,8 @@ install.packages(c(
   "purrr",
   "devtools"
 ))
+install.packages("corrplot")
+
 
 # Bioconductor first
 library(GenomeInfoDb)
@@ -59,6 +61,8 @@ library(readxl)
 library(RColorBrewer)
 library(reshape2)
 library(purrr)
+library(corrplot)
+library(boot)
 
 ## Functions ----
 labLMSProc <- function(STTq, Technology, binSize){
@@ -1529,3 +1533,126 @@ for(c in normals){
 
 
 
+
+### Correlations ----
+# Building correlations for Accuracy to Genome Modified, Genomic Index to Accuracy, and Genomic Index to Genome Modified
+## Accuracy - Genomic Index ----
+gi <- read.csv(paste0(getwd(), "/quarterCutoff/Genomic_Index/genomicIndexLMS.csv")) %>% 
+  dplyr::select(c(Case, Bin, type, gi)) %>%
+  dplyr::filter(type != "SNP")
+acc <- read.csv(paste0(getwd(), "/quarterCutoff/Accuracy/accuracyLMS.csv")) %>% 
+  dplyr::select(c(Cases, Accuracy, Bin_Size, Technology)) %>% 
+  dplyr::rename(Case = Cases) %>%
+  dplyr::rename(Bin = Bin_Size) %>%
+  dplyr::rename(type = Technology)
+acc[acc == "Sesame"] <- "SeSAMe"
+data <- dplyr::inner_join(gi, acc, by = c("Case", "Bin", "type"))
+
+# Function that computes Spearman correlation on a resampled dataset
+spearman_boot <- function(data, indices) {
+  d <- data[indices, ]
+  cor(d$Accuracy, d$gi, method = "spearman")
+}
+
+# Wrapper to run the bootstrap for one technology/bin subset
+bootstrap_correlation <- function(df, n_boot = 2000) {
+  set.seed(42)  # for reproducibility
+  
+  boot_result <- boot(data = df, statistic = spearman_boot, R = n_boot)
+  
+  ci <- boot.ci(boot_result, type = "bca")  
+  tibble(
+    correlation = boot_result$t0,
+    ci_lower = ci$bca[4],
+    ci_upper = ci$bca[5]
+  )
+}
+
+correlations <- data %>%
+  group_by(Bin, type) %>%
+  group_modify(~ bootstrap_correlation(.x)) %>%
+  ungroup()
+mat <- matrix(NA, nrow = 4, ncol = 3)
+colnames(mat) <- unique(correlations$type)
+rownames(mat) <- unique(correlations$Bin)
+for (i in 1:nrow(correlations)) {
+  row_index <- match(correlations$Bin[i], rownames(mat))
+  col_index <- match(correlations$type[i], colnames(mat))
+  mat[row_index, col_index] <- as.numeric(correlations$correlation[i])
+}
+
+colors <- rev(brewer.pal(n = 7, name = "RdBu"))
+labels_matrix <- matrix(sprintf("%.3f", mat), 
+                        nrow = nrow(mat), 
+                        ncol = ncol(mat))
+ph <- pheatmap(
+  mat,
+  color = colors,
+  scale = "row", # Scales the values in each row/column/none to a z-score
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE, 
+  display_numbers = labels_matrix,
+  main = "Correlation Heatmap: Accuracy vs. Genomic Index"
+)
+
+# No worthy data from correlation for LMs.
+## Accuracy - Genomic Modified ----
+genome_modified <- read.csv(paste0(getwd(), "/quarterCutoff/Genome_modified/genome_modifiedLMS.csv")) %>% 
+  dplyr::select(c(Case, Bin, Tech, val)) %>%
+  dplyr::filter(Tech != "SNP") %>%
+  dplyr::mutate(Bin = as.numeric(Bin))
+acc <- read.csv(paste0(getwd(), "/quarterCutoff/Accuracy/accuracyLMS.csv")) %>% 
+  dplyr::select(c(Cases, Accuracy, Bin_Size, Technology)) %>% 
+  dplyr::rename(Case = Cases) %>%
+  dplyr::rename(Bin = Bin_Size) %>%
+  dplyr::rename(Tech = Technology)
+data <- dplyr::inner_join(genome_modified, acc, by = c("Case", "Bin", "Tech"))
+
+# Function that computes Spearman correlation on a resampled dataset
+spearman_boot <- function(data, indices) {
+  d <- data[indices, ]
+  cor(d$Accuracy, d$val, method = "spearman")
+}
+
+# Wrapper to run the bootstrap for one technology/bin subset
+bootstrap_correlation <- function(df, n_boot = 2000) {
+  set.seed(42)  # for reproducibility
+  
+  boot_result <- boot(data = df, statistic = spearman_boot, R = n_boot)
+  
+  ci <- boot.ci(boot_result, type = "bca")  
+  tibble(
+    correlation = boot_result$t0,
+    ci_lower = ci$bca[4],
+    ci_upper = ci$bca[5]
+  )
+}
+
+correlations <- data %>%
+  group_by(Bin, Tech) %>%
+  group_modify(~ bootstrap_correlation(.x)) %>%
+  ungroup()
+mat <- matrix(NA, nrow = 4, ncol = 3)
+colnames(mat) <- unique(correlations$Tech)
+rownames(mat) <- unique(correlations$Bin)
+for (i in 1:nrow(correlations)) {
+  row_index <- match(correlations$Bin[i], rownames(mat))
+  col_index <- match(correlations$Tech[i], colnames(mat))
+  mat[row_index, col_index] <- as.numeric(correlations$correlation[i])
+}
+
+colors <- rev(brewer.pal(n = 7, name = "RdBu"))
+labels_matrix <- matrix(sprintf("%.3f", mat), 
+                        nrow = nrow(mat), 
+                        ncol = ncol(mat))
+ph <- pheatmap(
+  mat,
+  color = colors,
+  scale = "row", # Scales the values in each row/column/none to a z-score
+  cluster_rows = FALSE,
+  cluster_cols = FALSE,
+  show_rownames = TRUE, 
+  display_numbers = labels_matrix,
+  main = "Correlation Heatmap: Accuracy vs. Genome Modified"
+)

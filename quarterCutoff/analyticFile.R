@@ -1542,7 +1542,59 @@ ggplot() +
     panel.grid.minor = element_blank()
   )
 
-### Case Graphs ----
+## Alternative LMS Accuracy Calculation
+# Just use CNV Accuracy
+df <- expand.grid(
+  Cases = LMS_cases,
+  Bin_Size  = bins,
+  Technology = tech,
+  stringsAsFactors = FALSE
+) %>% dplyr::mutate(Accuracy = 0)
+
+for(c in LMS_cases){
+  for(b in bins){
+    for(t in tech){
+      cs <- fpCheck(labLMSProc(c, t, b))
+      acc <- sum(cs[[1]]$CNV_Only_Accuracy)/22
+      idx <- which(df$Cases == c & 
+                     df$Bin_Size  == b  & 
+                     df$Technology == t)
+      df$CNVAccuracy[idx] <- acc
+    }
+  }
+}
+
+ggplot() +
+  # Main lines for the three tools
+  geom_line(
+    data = df,
+    aes(x = factor(Bin_Size), y = CNVAccuracy, colour = Technology, group = Technology),
+    linewidth = 0.8
+  ) +
+  geom_point(
+    data = df,
+    aes(x = factor(Bin_Size), y = CNVAccuracy, colour = Technology),
+    size = 2
+  ) +
+  # Facet by Case
+  facet_wrap(~ Cases, ncol = 4) +
+  # Scales and labels
+  scale_colour_brewer(palette = "Set1", name = "Tool") +
+  labs(
+    title = "Accuracy across genome & cases",
+    x     = "Bin size",
+    y     = "Accuracy"
+  ) +
+  theme_bw(base_size = 11) +
+  theme(
+    strip.background = element_rect(fill = "grey92"),
+    strip.text       = element_text(face = "bold"),
+    legend.position  = "bottom",
+    axis.text.x      = element_text(angle = 35, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+
+ ### Case Graphs ----
 ## LMS ----
 Genes <- c("MYC", "MYOCD", "CCNE1", "CDKN2A", "PTEN", "RB1", "TP53") 
 for(c in LMS_cases){

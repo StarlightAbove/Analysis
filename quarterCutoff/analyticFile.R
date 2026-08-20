@@ -1564,6 +1564,8 @@ for(c in LMS_cases){
   }
 }
 
+write.csv(df, "quarterCutoff/Accuracy/CNVaccuracyLMS.csv")
+
 ggplot() +
   # Main lines for the three tools
   geom_line(
@@ -1758,3 +1760,22 @@ ph <- pheatmap(
   display_numbers = labels_matrix,
   main = "Correlation Heatmap: Accuracy vs. Genome Modified"
 )
+
+## SNP GI v. Methylation GI ----
+gi <- read.csv(paste0(getwd(), "/quarterCutoff/Genomic_Index/genomicIndexLMS.csv")) %>% 
+  dplyr::select(c(Case, Bin, type, gi)) %>%
+  dplyr::filter(type != "SNP")
+giSNP <- read.csv(paste0(getwd(), "/quarterCutoff/Genomic_Index/genomicIndexLMS.csv")) %>% 
+  dplyr::select(c(Case, Bin, type, gi)) %>%
+  dplyr::filter(type == "SNP") %>%
+  dplyr::rename(giSNP = gi)
+gi_combined <- inner_join(gi, giSNP, by = c("Case", "Bin")) %>% 
+  dplyr::select(-c(type.y)) %>%
+  dplyr::rename(Technology = type.x) %>%
+  dplyr::rename(Genomic_Index = gi) %>%
+  dplyr::rename(Genomic_Index_SNP = giSNP)
+crr <- gi_combined %>% group_by(Technology) %>% 
+  summarize(corr_coeff_pearson = cor(Genomic_Index, Genomic_Index_SNP, use = "complete.obs", method = "pearson"),
+            corr_coeff_spearman = cor(Genomic_Index, Genomic_Index_SNP, use = "complete.obs", method = "spearman"),
+            corr_coeff_kendall = cor(Genomic_Index, Genomic_Index_SNP, use = "complete.obs", method = "kendall"))
+write.csv(crr, "quarterCutoff/Correlations/SNP_Methylation_GI_correlation.csv")

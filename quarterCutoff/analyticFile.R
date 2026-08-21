@@ -1779,3 +1779,26 @@ crr <- gi_combined %>% group_by(Technology) %>%
             corr_coeff_spearman = cor(Genomic_Index, Genomic_Index_SNP, use = "complete.obs", method = "spearman"),
             corr_coeff_kendall = cor(Genomic_Index, Genomic_Index_SNP, use = "complete.obs", method = "kendall"))
 write.csv(crr, "quarterCutoff/Correlations/SNP_Methylation_GI_correlation.csv")
+
+## SNP GM v. Methylation GM ----
+GenomeModifiedLMS <- read.csv(paste0(getwd(), "/quarterCutoff/Genome_modified/genome_modifiedLMS.csv")) %>%
+  dplyr::select(-c("X")) %>%
+  dplyr::filter(Tech != "SNP")
+
+GenomeModifiedLMS_SNP <- read.csv(paste0(getwd(), "/quarterCutoff/Genome_modified/genome_modifiedLMS.csv")) %>% 
+  dplyr::select(-c(X)) %>%
+  dplyr::filter(Tech == "SNP") %>%
+  dplyr::rename(valSNP = val) 
+
+GenomeModified <- inner_join(GenomeModifiedLMS, GenomeModifiedLMS_SNP, by = c("Case")) %>%
+  dplyr::select(-c(Tech.y, Bin.y)) %>%
+  dplyr::rename(Technology = Tech.x, Bin = Bin.x) %>%
+  group_by(Technology, Bin) %>%
+  summarize(corr_coeff_pearson = cor(val, valSNP, use = "complete.obs", method = "pearson"),
+            distrib_methyl = unname(shapiro.test(val)$statistic["W"]),
+            distrib_SNP = unname(shapiro.test(valSNP)$statistic["W"]),
+            p_val_SNP = unname(shapiro.test(valSNP)$p.value),
+            p_val_methyl = unname(shapiro.test(val)$p.value))
+
+write.csv(GenomeModified, paste0(getwd(), "/quarterCutoff/Correlations/SNP_Methylation_GenomeChanged_correlation.csv"))
+

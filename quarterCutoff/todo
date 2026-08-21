@@ -1,0 +1,4 @@
+- Regenerate case graphs sans Gene concordance
+- Run correlations on Genome Modified.
+- Exact CSV subsets used to calculate GI for each case 
+- Create branch to clean up old data and better organization

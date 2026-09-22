@@ -148,7 +148,6 @@ LMStt <- function(STT, bin, tech){
   }
   
   output <- rbind(SNP,case,sesameOutput,cnvMethyl) %>% dplyr::mutate(Gene = as.character(0))
-  output$chrom <- as.character(output$chrom)
   output
 }
 #### 1b. Normal-control loader ----
@@ -157,7 +156,7 @@ LMStt <- function(STT, bin, tech){
 labNmrlProc <- function(Sentrix, Technology, binSize){
   # Correlate by STT information between methylation Sentrix and SNP data.
   correlationSheet <- read.csv(
-    "/LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv") %>% filter(Basename == Sentrix)
+    paste0(getwd(), "/LabData/Normal_smooth_muscle_EPIC_data/idat_files/Sample_Sheet_Normal.csv")) %>% filter(Basename == Sentrix)
   
   methylMatch <- read.csv(paste0(getwd(), "/Outputs/MethylMaster/Normals/", binSize, "/", Sentrix, "/autocorrected_regions.csv"))
   
@@ -576,11 +575,9 @@ NoGraphGeneGen <- function(Gene, db = NULL, case){ # Updated function.
   }
 }
 
-
 # Whole-genome CNV segment plot: log2 ratio vs. cumulative genomic
-# position, one colored line per caller, chromosome boundaries marked,
-# with gene labels overlaid where the input df contains "Gene_*" rows.
-plot_cnv_segments <- function(df) {
+# position, one colored line per caller, chromosome boundaries marked.
+plot_cnv_segments <- function(df, title = "CNV Segments Across Genome") {
   
   df <- df %>%
     mutate(
@@ -616,44 +613,20 @@ plot_cnv_segments <- function(df) {
   x_labels <- c(x_labels)
   print(x_labels)
   print(df)
-  df$Gene[df$Gene == "0"] <- NA
-  gene_labels <- subset(df, type == "Gene_SNP" & !is.na(Gene) & Gene != "0") %>%
-    arrange(start_cum) %>%
-    mutate(
-      too_close = c(FALSE, diff(start_cum) < 5e7),
-      y_offset  = ifelse(too_close, -Inf, -Inf)  # both bottom
-    )
   # Plot
-  p <- ggplot(df, aes(x = start_cum, xend = end_cum, y = seg.mean, yend = seg.mean, label = Gene)) +
+  p <- ggplot(df, aes(x = start_cum, xend = end_cum, y = seg.mean, yend = seg.mean)) +
     geom_segment(aes(color = type), size = 0.7, alpha = 0.8) +
-    geom_point(data = subset(df, type == "Gene_Conumee"), aes(x = start_cum, y = seg.mean), color = "green", size = 3) + 
-    geom_point(data = subset(df, type == "Gene_SNP"), aes(x = start_cum, y = seg.mean), color = "gray40", size = 3) + 
-    geom_point(data = subset(df, type == "Gene_SeSAMe"), aes(x = start_cum, y = seg.mean), color = "red", size = 3) + 
-    geom_point(data = subset(df, type == "Gene_MMasteR"), aes(x = start_cum, y = seg.mean), color = "blue", size = 3) + 
-    geom_vline(data = gene_labels,
-               aes(xintercept = start_cum),
-               color = "orange", linetype = "solid", 
-               linewidth = 0.4, alpha = 0.6) +
-    geom_label(data = gene_labels,
-               aes(x = start_cum, y = -Inf, label = Gene),
-               vjust  = ifelse(gene_labels$too_close, 1, 0),
-               hjust = 0,
-               angle = 90,
-               size = 3,
-               fill = "white",
-               color = "orange",
-               label.size = 0.2,
-               inherit.aes = FALSE) +
     geom_vline(data = chr_boundaries, aes(xintercept = x), color = "grey70", linetype = "dashed") +
     # scale_color_manual(values = c("Amplification" = "red", "Deletion" = "blue", "Normal" = "black")) +
     scale_x_continuous(breaks = x_breaks, labels = x_labels) +
-    scale_color_manual(values = c("SeSAMe" = "red", "MethylMaster" = "blue", 
-                                  "Conumee" = "green", "SNP" = "black", "Gene" = "orange")) +
+    # Okabe-Ito colorblind-safe palette (distinguishable under all common CVD types).
+    scale_color_manual(values = c("SeSAMe" = "#D55E00", "MethylMaster" = "#0072B2",
+                                  "Conumee" = "#009E73", "SNP" = "#000000")) +
     labs(
       x = "Genomic Position (across chromosomes)",
       y = "Segment Mean (log2 ratio)",
-      title = "CNV Segments Across Genome"
-    ) + geom_hline(yintercept = -0.25, linetype = "dotted", color = "black") + 
+      title = title
+    ) + geom_hline(yintercept = -0.25, linetype = "dotted", color = "black") +
     geom_hline(yintercept = 0.25, linetype = "dotted", color = "black") + 
     scale_y_continuous(breaks = c(-0.75, -0.5, -0.25, 0, 0.25,0.5,0.75)) +
     theme_minimal() +
@@ -774,3 +747,4 @@ geneAnno <- function(Gene, db = NULL){
   plot <- plot_cnv_segments(db)
   return(plot + pheatmap_ggplot + plot_layout(widths = unit(c(20,8), c("null","null"))))
 }
+

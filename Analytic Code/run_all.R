@@ -17,5 +17,5 @@ scripts <- c(
 
 for (s in scripts) {
   message("Running ", s, " ...")
-  source(s, local = new.env())
+  source(paste0(getwd(), "/Analytic Code/", s), local = new.env())
 }

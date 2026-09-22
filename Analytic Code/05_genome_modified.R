@@ -2,15 +2,15 @@
 ### 5. GENOME MODIFIED
 ### ============================================================
 # % of genome altered per case / bin / caller for LMS and LM, vs. SNP baseline.
-# Writes: quarterCutoff/Genome_modified/genome_modifiedLMS.csv, genome_modifiedLM.csv
+# Writes: results/Genome_modified/genome_modifiedLMS.csv, genome_modifiedLM.csv
 
 # Shared setup: libraries, helper functions, case lists / bin sizes.
 # Run with the working directory set to the analysis root (the folder
-# containing LabData/, Outputs/ and quarterCutoff/), since all data paths
+# containing LabData/, Outputs/ and results/), since all data paths
 # are built from getwd().
-source("00_setup.R")
-source("01_functions.R")
-source("02_load_data.R")
+source(paste0(getwd(), "/Analytic Code/00_setup.R"))
+source(paste0(getwd(), "/Analytic Code/01_functions.R"))
+source(paste0(getwd(), "/Analytic Code/02_load_data.R"))
 
 # % of genome altered (see GenomeModified()) per case/bin/caller, plus the
 # corresponding SNP-array baseline pulled from the ChAS design spreadsheet.
@@ -47,8 +47,8 @@ geneMod <- geneMod %>%
 
 geneMod <- rbind(geneMod, chasFile)
 geneMod <- geneMod %>% arrange(Case)
-write.csv(geneMod, file = paste0(getwd(), "/quarterCutoff/Genome_modified/genome_modifiedLMS.csv"))
-df <- read.csv("quarterCutoff/Genome_modified/genome_modifiedLMS.csv") %>% dplyr::select(-c("X"))
+write.csv(geneMod, file = paste0(getwd(), "/results/Genome_modified/genome_modifiedLMS.csv"))
+df <- read.csv("results/Genome_modified/genome_modifiedLMS.csv") %>% dplyr::select(-c("X"))
 snp_data <- df %>% filter(Tech == "SNP" & Bin == "DEF")
 main_data <- df %>% filter(Bin != "DEF")
 main_data$Bin <- factor(main_data$Bin, levels = c("10000", "50000", "1e+05", "1e+06", "1e+07"))
@@ -189,4 +189,4 @@ ggplot() +
   )
 
 LMdf <- rbind(snp_data, main_data)
-write.csv(LMdf, file = paste0(getwd(), "/quarterCutoff/Genome_modified/genome_modifiedLM.csv"))
+write.csv(LMdf, file = paste0(getwd(), "/results/Genome_modified/genome_modifiedLM.csv"))

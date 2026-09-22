@@ -2,15 +2,15 @@
 ### 7. ACCURACY
 ### ============================================================
 # Accuracy of each caller vs. SNP-array ground truth, plus CNV-only accuracy.
-# Writes: quarterCutoff/Accuracy/accuracyLMS.csv, accuracyLM.csv, CNVaccuracyLMS.csv, CNVaccuracyLM.csv
+# Writes: results/Accuracy/accuracyLMS.csv, accuracyLM.csv, CNVaccuracyLMS.csv, CNVaccuracyLM.csv
 
 # Shared setup: libraries, helper functions, case lists / bin sizes.
 # Run with the working directory set to the analysis root (the folder
-# containing LabData/, Outputs/ and quarterCutoff/), since all data paths
+# containing LabData/, Outputs/ and results/), since all data paths
 # are built from getwd().
-source("00_setup.R")
-source("01_functions.R")
-source("02_load_data.R")
+source(paste0(getwd(), "/Analytic Code/00_setup.R"))
+source(paste0(getwd(), "/Analytic Code/01_functions.R"))
+source(paste0(getwd(), "/Analytic Code/02_load_data.R"))
 
 # In the original single-file script, section 6 (Gene Concordance) reassigned
 # `bins` to character values, and this section inherited that. Reproduced here
@@ -74,7 +74,7 @@ ggplot() +
     axis.text.x      = element_text(angle = 35, hjust = 1),
     panel.grid.minor = element_blank()
   )
-write.csv(df, "quarterCutoff/Accuracy/accuracyLMS.csv")
+write.csv(df, "results/Accuracy/accuracyLMS.csv")
 
 #### 7b. LM ----
 tech <- c("MethylMaster", "Sesame", "Conumee")
@@ -128,7 +128,7 @@ ggplot() +
     axis.text.x      = element_text(angle = 35, hjust = 1),
     panel.grid.minor = element_blank()
   )
-write.csv(df, "~/Work/Analysis/quarterCutoff/Accuracy/accuracyLM.csv")
+write.csv(df, paste0(getwd(), "/results/Accuracy/accuracyLM.csv"))
 
 #### 7c. Alternative LM accuracy calculation (CNV-only accuracy) ----
 df <- expand.grid(
@@ -150,7 +150,7 @@ for(c in LM_cases){
     }
   }
 }
-write.csv(df, "quarterCutoff/Accuracy/CNVaccuracyLM.csv")
+write.csv(df, "results/Accuracy/CNVaccuracyLM.csv")
 
 ggplot() +
   # Main lines for the three tools
@@ -203,7 +203,7 @@ for(c in LMS_cases){
   }
 }
 
-write.csv(df, "quarterCutoff/Accuracy/CNVaccuracyLMS.csv")
+write.csv(df, "results/Accuracy/CNVaccuracyLMS.csv")
 
 ggplot() +
   # Main lines for the three tools

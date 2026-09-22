@@ -2,15 +2,15 @@
 ### 4. GENOMIC INDEX
 ### ============================================================
 # Genomic Index per case / bin / caller for LMS and LM, plus bar plots.
-# Writes: quarterCutoff/Genomic_Index/genomicIndexLMS.csv, genomicIndexLM.csv
+# Writes: results/Genomic_Index/genomicIndexLMS.csv, genomicIndexLM.csv
 
 # Shared setup: libraries, helper functions, case lists / bin sizes.
 # Run with the working directory set to the analysis root (the folder
-# containing LabData/, Outputs/ and quarterCutoff/), since all data paths
+# containing LabData/, Outputs/ and results/), since all data paths
 # are built from getwd().
-source("00_setup.R")
-source("01_functions.R")
-source("02_load_data.R")
+source(paste0(getwd(), "/Analytic Code/00_setup.R"))
+source(paste0(getwd(), "/Analytic Code/01_functions.R"))
+source(paste0(getwd(), "/Analytic Code/02_load_data.R"))
 
 # Genomic Index (see GenomicIndexIntermediateMatrix()/GenomicIndex()) computed
 # per case, per bin size, per caller (incl. SNP truth at 1Mb), for both cohorts.
@@ -46,7 +46,7 @@ summ <- outputDf %>% group_by(Case, Bin, type) %>% summarize(
   chr_count = n_distinct(chrom)
 ) %>% dplyr::mutate(gi = c_sq/chr_count) %>% filter(!(Bin != 1e+06 & type == "SNP"))
 
-write.csv(summ, paste0(getwd(), "/quarterCutoff/Genomic_Index/genomicIndexLMS.csv"))
+write.csv(summ, paste0(getwd(), "/results/Genomic_Index/genomicIndexLMS.csv"))
 
 #### 4b. LM ----
 outputDf <- NULL
@@ -71,22 +71,24 @@ LMGI <- outputDf %>% group_by(Case, Bin, type) %>% summarize(
   chr_count = n_distinct(chrom)
 ) %>% dplyr::mutate(gi = c_sq/chr_count)
 
-write.csv(LMGI, paste0(getwd(), "/quarterCutoff/Genomic_Index/genomicIndexLM.csv"))
+write.csv(LMGI, paste0(getwd(), "/results/Genomic_Index/genomicIndexLM.csv"))
 
 #### 4c. Plotting ----
-# Bar chart of Genomic Index by case, faceted by bin size, colored by caller.
+# Bar chart of 1 Mb Genomic Index by case, colored by caller. Case/tool
+# combinations with no computed value (no row in the source CSV) are filled
+# in as gi = 0 and drawn as a flat line at zero instead of a bar, so a
+# genuine zero result is visually distinguishable from a missing one.
 giplot <- function(df){
   p <- ggplot(df, aes(x = Case, y = gi, fill = type)) +
     geom_col(position = position_dodge(width = 0.8), width = 0.7) +
-    facet_wrap(~ Bin, ncol = 2, labeller = labeller(Bin = c(
-      `5e+04` = "Default",
-      `1e+04` = "10 kb",
-      `1e+05` = "100 kb",
-      `1e+06` = "1 Mb"
-    ))) +
+    geom_errorbar(aes(ymin = 0, ymax = 0, alpha = filled, color = type),
+                  position = position_dodge(width = 0.8), width = 0.7,
+                  linewidth = 0.6, show.legend = FALSE) +
     scale_fill_brewer(palette = "Set2") +
+    scale_color_brewer(palette = "Set2") +
+    scale_alpha_manual(values = c(`TRUE` = 1, `FALSE` = 0), guide = "none") +
     labs(
-      title = "Genomic Index by Case and Tool",
+      title = "Genomic Index by Case and Tool (1 Mb bins)",
       x     = "Case",
       y     = "Genomic Index",
       fill  = "Tool"
@@ -99,14 +101,18 @@ giplot <- function(df){
     )
 }
 
-df <- read.csv("~/Work/Analysis/quarterCutoff/Genomic_Index/genomicIndexLM.csv") %>%
+df <- read.csv(paste0(getwd(), "/results/Genomic_Index/genomicIndexLM.csv")) %>%
   select(Case, Bin, type, gi) %>%
+  filter(Bin == 1e+06) %>%
   mutate(Case = factor(Case)) %>%
-  mutate(Bin = factor(Bin, levels = c(1e+04, 5e+04, 1e+05, 1e+06)))
+  tidyr::complete(Case, type, fill = list(gi = 0)) %>%
+  mutate(filled = gi == 0)
 LMPlot <- giplot(df)
 
-df <- read.csv(paste0(getwd(), "/quarterCutoff/Genomic_Index/genomicIndexLMS.csv")) %>%
+df <- read.csv(paste0(getwd(), "/results/Genomic_Index/genomicIndexLMS.csv")) %>%
   select(Case, Bin, type, gi) %>%
+  filter(Bin == 1e+06) %>%
   mutate(Case = factor(Case)) %>%
-  mutate(Bin = factor(Bin, levels = c(1e+04, 5e+04, 1e+05, 1e+06)))
+  tidyr::complete(Case, type, fill = list(gi = 0)) %>%
+  mutate(filled = gi == 0)
 LMSPlot <- giplot(df)

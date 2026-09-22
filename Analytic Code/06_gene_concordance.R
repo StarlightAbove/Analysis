@@ -2,15 +2,15 @@
 ### 6. GENE CONCORDANCE
 ### ============================================================
 # Per-oncogene log2-ratio agreement between each caller and the SNP array.
-# Writes: quarterCutoff/Gene_concordance/<GENE>.csv, geneConcordance.csv
+# Writes: results/Gene_concordance/<GENE>.csv, geneConcordance.csv
 
 # Shared setup: libraries, helper functions, case lists / bin sizes.
 # Run with the working directory set to the analysis root (the folder
-# containing LabData/, Outputs/ and quarterCutoff/), since all data paths
+# containing LabData/, Outputs/ and results/), since all data paths
 # are built from getwd().
-source("00_setup.R")
-source("01_functions.R")
-source("02_load_data.R")
+source(paste0(getwd(), "/Analytic Code/00_setup.R"))
+source(paste0(getwd(), "/Analytic Code/01_functions.R"))
+source(paste0(getwd(), "/Analytic Code/02_load_data.R"))
 
 # For a panel of oncogenes relevant to LMS/LM, compare each caller's
 # log2 ratio at the gene to the SNP-array log2 ratio at the same gene,
@@ -102,7 +102,7 @@ aps <- split(ap, ap$Gene)
 
 for (i in seq_along(aps)) {
   file_name <- paste0(names(aps)[i], ".csv")
-  write.csv(aps[[i]], file = paste0(getwd(),"/quarterCutoff/Gene_concordance/", file_name), row.names = FALSE)
+  write.csv(aps[[i]], file = paste0(getwd(),"/results/Gene_concordance/", file_name), row.names = FALSE)
 }
 aps[[Gene[1]]] <- split(aps[[Gene[1]]], aps[[Gene[1]]]$bin)
 aps[[Gene[2]]] <- split(aps[[Gene[2]]], aps[[Gene[2]]]$bin)
@@ -245,4 +245,4 @@ ggplot(result_long_alt, aes(x = Metric, y = Gene, fill = Correlation)) +
 output.df.pearson <- output.df.pearson %>% dplyr::mutate(Metric = "Pearson")
 output.df.spearman <- output.df.spearman %>% dplyr::mutate(Metric = "Spearman")
 output.df <- rbind(output.df.pearson, output.df.spearman)
-write.csv(output.df, "quarterCutoff/Gene_concordance/geneConcordance.csv")
+write.csv(output.df, "results/Gene_concordance/geneConcordance.csv")

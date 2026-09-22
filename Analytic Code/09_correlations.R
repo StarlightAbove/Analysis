@@ -5,15 +5,15 @@
 # and SNP vs. methylation agreement on both metrics.
 #
 # Requires outputs from: 04_genomic_index.R, 05_genome_modified.R, 07_accuracy.R
-# Writes: quarterCutoff/Correlations/*.csv
+# Writes: results/Correlations/*.csv
 
 # Shared setup: libraries, helper functions, case lists / bin sizes.
 # Run with the working directory set to the analysis root (the folder
-# containing LabData/, Outputs/ and quarterCutoff/), since all data paths
+# containing LabData/, Outputs/ and results/), since all data paths
 # are built from getwd().
-source("00_setup.R")
-source("01_functions.R")
-source("02_load_data.R")
+source(paste0(getwd(), "/Analytic Code/00_setup.R"))
+source(paste0(getwd(), "/Analytic Code/01_functions.R"))
+source(paste0(getwd(), "/Analytic Code/02_load_data.R"))
 
 # Bootstrap Spearman correlations between Accuracy and Genomic
 # Index / Genome Modified, plus direct SNP-vs-methylation agreement
@@ -62,10 +62,10 @@ bootstrap_correlation_gm <- function(df, n_boot = 2000) {
 }
 
 #### 9a. Accuracy vs. Genomic Index ----
-gi <- read.csv(paste0(getwd(), "/quarterCutoff/Genomic_Index/genomicIndexLMS.csv")) %>% 
+gi <- read.csv(paste0(getwd(), "/results/Genomic_Index/genomicIndexLMS.csv")) %>% 
   dplyr::select(c(Case, Bin, type, gi)) %>%
   dplyr::filter(type != "SNP")
-acc <- read.csv(paste0(getwd(), "/quarterCutoff/Accuracy/accuracyLMS.csv")) %>% 
+acc <- read.csv(paste0(getwd(), "/results/Accuracy/accuracyLMS.csv")) %>% 
   dplyr::select(c(Cases, Accuracy, Bin_Size, Technology)) %>% 
   dplyr::rename(Case = Cases) %>%
   dplyr::rename(Bin = Bin_Size) %>%
@@ -103,11 +103,11 @@ ph <- pheatmap(
 
 # No worthy data from correlation for LMs.
 #### 9b. Accuracy vs. Genome Modified ----
-genome_modified <- read.csv(paste0(getwd(), "/quarterCutoff/Genome_modified/genome_modifiedLMS.csv")) %>% 
+genome_modified <- read.csv(paste0(getwd(), "/results/Genome_modified/genome_modifiedLMS.csv")) %>% 
   dplyr::select(c(Case, Bin, Tech, val)) %>%
   dplyr::filter(Tech != "SNP") %>%
   dplyr::mutate(Bin = as.numeric(Bin))
-acc <- read.csv(paste0(getwd(), "/quarterCutoff/Accuracy/accuracyLMS.csv")) %>% 
+acc <- read.csv(paste0(getwd(), "/results/Accuracy/accuracyLMS.csv")) %>% 
   dplyr::select(c(Cases, Accuracy, Bin_Size, Technology)) %>% 
   dplyr::rename(Case = Cases) %>%
   dplyr::rename(Bin = Bin_Size) %>%
@@ -143,10 +143,10 @@ ph <- pheatmap(
 )
 
 #### 9c. SNP GI v. Methylation GI ----
-gi <- read.csv(paste0(getwd(), "/quarterCutoff/Genomic_Index/genomicIndexLMS.csv")) %>% 
+gi <- read.csv(paste0(getwd(), "/results/Genomic_Index/genomicIndexLMS.csv")) %>% 
   dplyr::select(c(Case, Bin, type, gi)) %>%
   dplyr::filter(type != "SNP")
-giSNP <- read.csv(paste0(getwd(), "/quarterCutoff/Genomic_Index/genomicIndexLMS.csv")) %>% 
+giSNP <- read.csv(paste0(getwd(), "/results/Genomic_Index/genomicIndexLMS.csv")) %>% 
   dplyr::select(c(Case, Bin, type, gi)) %>%
   dplyr::filter(type == "SNP") %>%
   dplyr::rename(giSNP = gi)
@@ -159,14 +159,14 @@ crr <- gi_combined %>% group_by(Technology) %>%
   summarize(corr_coeff_pearson = cor(Genomic_Index, Genomic_Index_SNP, use = "complete.obs", method = "pearson"),
             corr_coeff_spearman = cor(Genomic_Index, Genomic_Index_SNP, use = "complete.obs", method = "spearman"),
             corr_coeff_kendall = cor(Genomic_Index, Genomic_Index_SNP, use = "complete.obs", method = "kendall"))
-write.csv(crr, "quarterCutoff/Correlations/SNP_Methylation_GI_correlation.csv")
+write.csv(crr, "results/Correlations/SNP_Methylation_GI_correlation.csv")
 
 #### 9d. SNP GM v. Methylation GM ----
-GenomeModifiedLMS <- read.csv(paste0(getwd(), "/quarterCutoff/Genome_modified/genome_modifiedLMS.csv")) %>%
+GenomeModifiedLMS <- read.csv(paste0(getwd(), "/results/Genome_modified/genome_modifiedLMS.csv")) %>%
   dplyr::select(-c("X")) %>%
   dplyr::filter(Tech != "SNP")
 
-GenomeModifiedLMS_SNP <- read.csv(paste0(getwd(), "/quarterCutoff/Genome_modified/genome_modifiedLMS.csv")) %>% 
+GenomeModifiedLMS_SNP <- read.csv(paste0(getwd(), "/results/Genome_modified/genome_modifiedLMS.csv")) %>% 
   dplyr::select(-c(X)) %>%
   dplyr::filter(Tech == "SNP") %>%
   dplyr::rename(valSNP = val) 
@@ -181,4 +181,36 @@ GenomeModified <- inner_join(GenomeModifiedLMS, GenomeModifiedLMS_SNP, by = c("C
             p_val_SNP = unname(shapiro.test(valSNP)$p.value),
             p_val_methyl = unname(shapiro.test(val)$p.value))
 
-write.csv(GenomeModified, paste0(getwd(), "/quarterCutoff/Correlations/SNP_Methylation_GenomeChanged_correlation.csv"))
+write.csv(GenomeModified, paste0(getwd(), "/results/Correlations/SNP_Methylation_GenomeChanged_correlation.csv"))
+
+#### 9e. Genomic Index correlation matrix (all callers incl. SNP) ----
+# Pairwise Pearson r between each caller's 1 Mb Genomic Index and the
+# SNP-array Genomic Index (ground truth), so it's visible at a glance
+# which callers track SNP closely and which don't. LM is skipped here
+# (see 9a's note) since most cases are missing a Genomic Index value
+# for at least one caller, leaving too few complete pairs to correlate.
+gi_wide <- read.csv(paste0(getwd(), "/results/Genomic_Index/genomicIndexLMS.csv")) %>%
+  dplyr::select(Case, Bin, type, gi) %>%
+  dplyr::filter(Bin == 1e+06) %>%
+  tidyr::pivot_wider(id_cols = Case, names_from = type, values_from = gi)
+
+gi_cor <- cor(dplyr::select(gi_wide, -Case), method = "pearson", use = "pairwise.complete.obs")
+
+write.csv(gi_cor, paste0(getwd(), "/results/Correlations/GenomicIndex_correlation_matrix.csv"))
+
+pdf(paste0(getwd(), "/results/Correlations/GenomicIndex_correlation_matrix.pdf"), width = 7, height = 7)
+corrplot(
+  gi_cor,
+  method = "color",
+  type = "upper",
+  order = "original",
+  addCoef.col = "black",
+  number.digits = 3,
+  tl.col = "black",
+  tl.srt = 45,
+  col = rev(brewer.pal(n = 7, name = "RdBu")),
+  col.lim = c(-1, 1),
+  title = "Genomic Index Correlation Matrix (1 Mb, Pearson r)",
+  mar = c(0, 0, 2, 0)
+)
+dev.off()

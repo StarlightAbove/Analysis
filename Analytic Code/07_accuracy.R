@@ -45,7 +45,7 @@ for(c in LMS_cases){
   }
 }
 
-ggplot() +
+pltAccLMS <- ggplot() +
   # Main lines for the three tools
   geom_line(
     data = df,
@@ -75,6 +75,7 @@ ggplot() +
     panel.grid.minor = element_blank()
   )
 write.csv(df, "results/Accuracy/accuracyLMS.csv")
+ggsave(paste0(getwd(), "/results/Accuracy/accuracyLMS_plot.pdf"), pltAccLMS, width = 14, height = 10)
 
 #### 7b. LM ----
 tech <- c("MethylMaster", "Sesame", "Conumee")
@@ -99,7 +100,7 @@ for(c in LM_cases){
   }
 }
 
-ggplot() +
+pltAccLM <- ggplot() +
   # Main lines for the three tools
   geom_line(
     data = df,
@@ -129,6 +130,7 @@ ggplot() +
     panel.grid.minor = element_blank()
   )
 write.csv(df, paste0(getwd(), "/results/Accuracy/accuracyLM.csv"))
+ggsave(paste0(getwd(), "/results/Accuracy/accuracyLM_plot.pdf"), pltAccLM, width = 14, height = 8)
 
 #### 7c. Alternative LM accuracy calculation (CNV-only accuracy) ----
 df <- expand.grid(
@@ -152,7 +154,7 @@ for(c in LM_cases){
 }
 write.csv(df, "results/Accuracy/CNVaccuracyLM.csv")
 
-ggplot() +
+pltCNVAccLM <- ggplot() +
   # Main lines for the three tools
   geom_line(
     data = df,
@@ -181,6 +183,7 @@ ggplot() +
     axis.text.x      = element_text(angle = 35, hjust = 1),
     panel.grid.minor = element_blank()
   )
+ggsave(paste0(getwd(), "/results/Accuracy/CNVaccuracyLM_plot.pdf"), pltCNVAccLM, width = 14, height = 8)
 
 #### 7d. Alternative LMS accuracy calculation (CNV-only accuracy) ----
 df <- expand.grid(
@@ -205,7 +208,7 @@ for(c in LMS_cases){
 
 write.csv(df, "results/Accuracy/CNVaccuracyLMS.csv")
 
-ggplot() +
+pltCNVAccLMS <- ggplot() +
   # Main lines for the three tools
   geom_line(
     data = df,
@@ -234,3 +237,4 @@ ggplot() +
     axis.text.x      = element_text(angle = 35, hjust = 1),
     panel.grid.minor = element_blank()
   )
+ggsave(paste0(getwd(), "/results/Accuracy/CNVaccuracyLMS_plot.pdf"), pltCNVAccLMS, width = 14, height = 10)

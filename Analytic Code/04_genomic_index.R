@@ -108,6 +108,7 @@ df <- read.csv(paste0(getwd(), "/results/Genomic_Index/genomicIndexLM.csv")) %>%
   tidyr::complete(Case, type, fill = list(gi = 0)) %>%
   mutate(filled = gi == 0)
 LMPlot <- giplot(df)
+ggsave(paste0(getwd(), "/results/Genomic_Index/genomicIndexLM_plot.pdf"), LMPlot, width = 10, height = 6)
 
 df <- read.csv(paste0(getwd(), "/results/Genomic_Index/genomicIndexLMS.csv")) %>%
   select(Case, Bin, type, gi) %>%
@@ -116,3 +117,4 @@ df <- read.csv(paste0(getwd(), "/results/Genomic_Index/genomicIndexLMS.csv")) %>
   tidyr::complete(Case, type, fill = list(gi = 0)) %>%
   mutate(filled = gi == 0)
 LMSPlot <- giplot(df)
+ggsave(paste0(getwd(), "/results/Genomic_Index/genomicIndexLMS_plot.pdf"), LMSPlot, width = 10, height = 6)

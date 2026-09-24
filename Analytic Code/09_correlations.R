@@ -96,9 +96,12 @@ ph <- pheatmap(
   scale = "row", # Scales the values in each row/column/none to a z-score
   cluster_rows = FALSE,
   cluster_cols = FALSE,
-  show_rownames = TRUE, 
+  show_rownames = TRUE,
   display_numbers = labels_matrix,
-  main = "Correlation Heatmap: Accuracy vs. Genomic Index"
+  main = "Correlation Heatmap: Accuracy vs. Genomic Index",
+  filename = paste0(getwd(), "/results/Correlations/Accuracy_vs_GenomicIndex_correlation.pdf"),
+  width = 7,
+  height = 5
 )
 
 # No worthy data from correlation for LMs.
@@ -137,9 +140,12 @@ ph <- pheatmap(
   scale = "row", # Scales the values in each row/column/none to a z-score
   cluster_rows = FALSE,
   cluster_cols = FALSE,
-  show_rownames = TRUE, 
+  show_rownames = TRUE,
   display_numbers = labels_matrix,
-  main = "Correlation Heatmap: Accuracy vs. Genome Modified"
+  main = "Correlation Heatmap: Accuracy vs. Genome Modified",
+  filename = paste0(getwd(), "/results/Correlations/Accuracy_vs_GenomeModified_correlation.pdf"),
+  width = 7,
+  height = 5
 )
 
 #### 9c. SNP GI v. Methylation GI ----

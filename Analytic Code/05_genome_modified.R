@@ -93,6 +93,7 @@ plt <- ggplot() +
     axis.text.x      = element_text(angle = 35, hjust = 1),
     panel.grid.minor = element_blank()
   )
+ggsave(paste0(getwd(), "/results/Genome_modified/genome_modifiedLMS_plot.pdf"), plt, width = 14, height = 10)
 
 #### 5b. LM ----
 techs <- c("MethylMaster", "Sesame", "Conumee")
@@ -146,7 +147,7 @@ main_data <- geneModLM %>%
   )
 main_data$Bin <- factor(main_data$Bin, levels = c("10000", "50000", "1e+05", "1e+06"))
 
-ggplot() +
+pltLM <- ggplot() +
   # SNP baseline: horizontal reference line per Case
   geom_hline(
     data = snp_data,
@@ -190,3 +191,4 @@ ggplot() +
 
 LMdf <- rbind(snp_data, main_data)
 write.csv(LMdf, file = paste0(getwd(), "/results/Genome_modified/genome_modifiedLM.csv"))
+ggsave(paste0(getwd(), "/results/Genome_modified/genome_modifiedLM_plot.pdf"), pltLM, width = 14, height = 8)

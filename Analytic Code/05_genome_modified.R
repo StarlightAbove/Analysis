@@ -48,7 +48,8 @@ geneMod <- geneMod %>%
 geneMod <- rbind(geneMod, chasFile)
 geneMod <- geneMod %>% arrange(Case)
 write.csv(geneMod, file = paste0(getwd(), "/results/Genome_modified/genome_modifiedLMS.csv"))
-df <- read.csv("results/Genome_modified/genome_modifiedLMS.csv") %>% dplyr::select(-c("X"))
+df <- read.csv("results/Genome_modified/genome_modifiedLMS.csv") %>% dplyr::select(-c("X")) %>%
+  dplyr::mutate(Case = alias_cases(Case, LMS_tags))
 snp_data <- df %>% filter(Tech == "SNP" & Bin == "DEF")
 main_data <- df %>% filter(Bin != "DEF")
 main_data$Bin <- factor(main_data$Bin, levels = c("10000", "50000", "1e+05", "1e+06", "1e+07"))
@@ -146,23 +147,26 @@ main_data <- geneModLM %>%
     sep = "-"
   )
 main_data$Bin <- factor(main_data$Bin, levels = c("10000", "50000", "1e+05", "1e+06"))
+# Plot-only copies with STT replaced by LM tags; the CSV below keeps STT.
+snp_plot <- snp_data %>% dplyr::mutate(Case = alias_cases(Case, LM_tags))
+main_plot <- main_data %>% dplyr::mutate(Case = alias_cases(Case, LM_tags))
 
 pltLM <- ggplot() +
   # SNP baseline: horizontal reference line per Case
   geom_hline(
-    data = snp_data,
+    data = snp_plot,
     aes(yintercept = val, linetype = "SNP baseline"),
     colour = "grey40",
     linewidth = 0.7
   ) +
   # Main lines for the three tools
   geom_line(
-    data = main_data,
+    data = main_plot,
     aes(x = Bin, y = val, colour = Tech, group = Tech),
     linewidth = 0.8
   ) +
   geom_point(
-    data = main_data,
+    data = main_plot,
     aes(x = Bin, y = val, colour = Tech),
     size = 2
   ) +

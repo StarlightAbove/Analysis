@@ -50,7 +50,7 @@ ap50000 <- ap50000 %>% dplyr::rename(log2ratio = seg.mean)
 ap1e05 <- ap1e05 %>% dplyr::rename(log2ratio = seg.mean)
 ap1e06 <- ap1e06 %>% dplyr::rename(log2ratio = seg.mean)
 
-ggplot(ap10000, aes(as.factor(case), Gene, fill=log2ratio)) +
+ggplot(ap10000, aes(alias_cases(case, LMS_tags), Gene, fill=log2ratio)) +
   facet_wrap(~type) +
   xlab("Case") +
   ylab("Oncogene") +
@@ -60,7 +60,7 @@ ggplot(ap10000, aes(as.factor(case), Gene, fill=log2ratio)) +
   scale_fill_viridis_c() +
   theme_minimal()
 
-ggplot(ap50000, aes(as.factor(case), Gene, fill=log2ratio)) +
+ggplot(ap50000, aes(alias_cases(case, LMS_tags), Gene, fill=log2ratio)) +
   facet_wrap(~type) +
   xlab("Case") +
   ylab("Oncogene") +
@@ -70,7 +70,7 @@ ggplot(ap50000, aes(as.factor(case), Gene, fill=log2ratio)) +
   scale_fill_viridis_c() +
   theme_minimal()
 
-ggplot(ap1e05, aes(as.factor(case), Gene, fill=log2ratio)) +
+ggplot(ap1e05, aes(alias_cases(case, LMS_tags), Gene, fill=log2ratio)) +
   facet_wrap(~type) +
   xlab("Case") +
   ylab("Oncogene") +
@@ -80,7 +80,7 @@ ggplot(ap1e05, aes(as.factor(case), Gene, fill=log2ratio)) +
   scale_fill_viridis_c() +
   theme_minimal()
 
-ggplot(ap1e06, aes(as.factor(case), Gene, fill=log2ratio)) +
+ggplot(ap1e06, aes(alias_cases(case, LMS_tags), Gene, fill=log2ratio)) +
   facet_wrap(~type) +
   xlab("Case") +
   ylab("Oncogene") +

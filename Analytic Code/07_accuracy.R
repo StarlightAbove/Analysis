@@ -45,15 +45,16 @@ for(c in LMS_cases){
   }
 }
 
+plot_df <- df %>% dplyr::mutate(Cases = alias_cases(Cases, LMS_tags))
 pltAccLMS <- ggplot() +
   # Main lines for the three tools
   geom_line(
-    data = df,
+    data = plot_df,
     aes(x = Bin_Size, y = Accuracy, colour = Technology, group = Technology),
     linewidth = 0.8
   ) +
   geom_point(
-    data = df,
+    data = plot_df,
     aes(x = Bin_Size, y = Accuracy, colour = Technology),
     size = 2
   ) +
@@ -100,15 +101,16 @@ for(c in LM_cases){
   }
 }
 
+plot_df <- df %>% dplyr::mutate(Cases = alias_cases(Cases, LM_tags))
 pltAccLM <- ggplot() +
   # Main lines for the three tools
   geom_line(
-    data = df,
+    data = plot_df,
     aes(x = Bin_Size, y = Accuracy, colour = Technology, group = Technology),
     linewidth = 0.8
   ) +
   geom_point(
-    data = df,
+    data = plot_df,
     aes(x = Bin_Size, y = Accuracy, colour = Technology),
     size = 2
   ) +
@@ -154,15 +156,16 @@ for(c in LM_cases){
 }
 write.csv(df, "results/Accuracy/CNVaccuracyLM.csv")
 
+plot_df <- df %>% dplyr::mutate(Cases = alias_cases(Cases, LM_tags))
 pltCNVAccLM <- ggplot() +
   # Main lines for the three tools
   geom_line(
-    data = df,
+    data = plot_df,
     aes(x = factor(Bin_Size), y = CNVAccuracy, colour = Technology, group = Technology),
     linewidth = 0.8
   ) +
   geom_point(
-    data = df,
+    data = plot_df,
     aes(x = factor(Bin_Size), y = CNVAccuracy, colour = Technology),
     size = 2
   ) +
@@ -208,15 +211,16 @@ for(c in LMS_cases){
 
 write.csv(df, "results/Accuracy/CNVaccuracyLMS.csv")
 
+plot_df <- df %>% dplyr::mutate(Cases = alias_cases(Cases, LMS_tags))
 pltCNVAccLMS <- ggplot() +
   # Main lines for the three tools
   geom_line(
-    data = df,
+    data = plot_df,
     aes(x = factor(Bin_Size), y = CNVAccuracy, colour = Technology, group = Technology),
     linewidth = 0.8
   ) +
   geom_point(
-    data = df,
+    data = plot_df,
     aes(x = factor(Bin_Size), y = CNVAccuracy, colour = Technology),
     size = 2
   ) +

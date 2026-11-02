@@ -748,3 +748,10 @@ geneAnno <- function(Gene, db = NULL){
   return(plot + pheatmap_ggplot + plot_layout(widths = unit(c(20,8), c("null","null"))))
 }
 
+
+# Swap STT case IDs for their anonymized cohort tags (LMS_tags / LM_tags
+# from 02_load_data.R) for plot labels. Returns a factor whose levels follow
+# the sample-sheet tag order, so LMS2 sorts before LMS10.
+alias_cases <- function(stt, tags){
+  factor(unname(tags[as.character(stt)]), levels = unique(unname(tags)))
+}

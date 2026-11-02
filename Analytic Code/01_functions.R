@@ -340,7 +340,7 @@ GenomeModified <- function(dfCH3){
 }
 
 
-# Per-chromosome true/false positive/negative base-pair accounting for a
+# Per-chromosome true/false positive/negative/discordant-direction base-pair accounting for a
 # methylation caller against the SNP-array ground truth, plus an overall
 # per-case accuracy summary. Returns list(per_chromosome_table, median_accuracy).
 fpCheck <- function(df) {
@@ -410,19 +410,33 @@ fpCheck <- function(df) {
   ) %>% filter(pred_cnv != truth_cnv, pred_cnv == "Normal") %>%
     group_by(Chromosome) %>%
     summarise(FN_bp = sum(width), .groups = "drop") # Calculates the false negatives
-  
+
+  # ---- Step 5b: Discordant-direction calls ----
+  # Both sources call a CNV but in opposite directions (amplification vs.
+  # deletion). These are errors in their own bucket; previously they fell
+  # through every filter and were absorbed into TN.
+  dc_df <- data.frame(
+    Chromosome = as.character(seqnames(overlap_ranges)),
+    width = width(overlap_ranges),
+    pred_cnv = pred_cnv,
+    truth_cnv = truth_cnv
+  ) %>% filter(pred_cnv != truth_cnv, pred_cnv != "Normal", truth_cnv != "Normal") %>%
+    group_by(Chromosome) %>%
+    summarise(DC_bp = sum(width), .groups = "drop") # Calculates the discordant-direction calls
+
   # ---- Step 6: Merge and compute accuracy ----
   final_eval <- hg19_chr_sizes %>%
     left_join(tp_df, by = "Chromosome") %>%
     left_join(fp_df, by = "Chromosome") %>%
     left_join(fn_df, by = "Chromosome") %>%
-    mutate(across(c(TP_bp, FP_bp, FN_bp), ~replace_na(., 0))) %>%
+    left_join(dc_df, by = "Chromosome") %>%
+    mutate(across(c(TP_bp, FP_bp, FN_bp, DC_bp), ~replace_na(., 0))) %>%
     mutate(
-      CNV_bp = TP_bp + FP_bp + FN_bp,
+      CNV_bp = TP_bp + FP_bp + FN_bp + DC_bp,
       TN_bp = Genome_bp - CNV_bp,
       Accuracy = (TP_bp + TN_bp) / Genome_bp,
-      CNV_Only_Accuracy = ifelse((TP_bp + FP_bp + FN_bp) == 0, NA,
-                                 TP_bp / (TP_bp + FP_bp + FN_bp))
+      CNV_Only_Accuracy = ifelse(CNV_bp == 0, NA,
+                                 TP_bp / CNV_bp)
     ) %>%
     arrange(as.numeric(Chromosome)) # Joins all the analysis together, so it can be seen at once, and then calculates the accuracy across each case
   

@@ -5,11 +5,16 @@ sesameDataCacheAll()
 library(tidyverse)
 
 input.dir <- paste0(getwd(), "/LabData/MethylMasteRCombined")
-output.dir <- paste0(getwd(),"/Outputs/MethylMaster/LabLMS")
+output.root <- paste0(getwd(),"/Outputs/MethylMaster/LabLMS")
 routine.run <- "custom"
 sample.sheet.path <- paste0(getwd(), "/LabData/MethylMasteRCombined/Sample_Sheet_Combined.csv")
 
-mmstr <- function(input.dir, output.dir, sample.sheet.path){
+# Bin sizes (segmentation tile widths, bp) evaluated throughout the analysis.
+# Output folders are named with R's default number formatting
+# ("10000", "50000", "1e+05", "1e+06"), which is what the Analytic Code expects.
+binLength <- c(10000, 50000, 1e+05, 1e+06)
+
+mmstr <- function(input.dir, output.dir, sample.sheet.path, binSize){
   methyl_master(
     routine                   = routine.run, #The routine to run
     input.dir                 = input.dir, #The input (idat.files) directory
@@ -71,9 +76,23 @@ mmstr <- function(input.dir, output.dir, sample.sheet.path){
     ov.pvalue                 = 0.05, #pvalue threshold for overlaps identified
     ov.keep.extra.columns     = TRUE, #Keep extra metadata columns when finding 
     #overlaps
-    simplify.reduce           = weightedmean #Equation to use during reduction
+    simplify.reduce           = weightedmean, #Equation to use during reduction
+    custom.binsize            = binSize #Segmentation tile width (bp); exposed
+    #by the patched sesame/MethylMasteR builds
   )
   
 }
+
+# Run MethylMasteR once per bin size, writing each run to its own folder
+# (Outputs/MethylMaster/LabLMS/<bin>/<Sentrix>/autocorrected_regions.csv).
+for(bin in binLength){
+  output.dir <- paste0(output.root, "/", bin)
+  dir.create(output.dir, recursive = TRUE, showWarnings = FALSE)
+  message("MethylMasteR: bin size ", bin, " -> ", output.dir)
+  mmstr(input.dir = input.dir,
+        output.dir = output.dir,
+        sample.sheet.path = sample.sheet.path,
+        binSize = bin)
+} # LabLMS.
 
 

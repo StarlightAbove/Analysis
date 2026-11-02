@@ -118,3 +118,34 @@ df <- read.csv(paste0(getwd(), "/results/Genomic_Index/genomicIndexLMS.csv")) %>
   mutate(filled = gi == 0)
 LMSPlot <- giplot(df)
 ggsave(paste0(getwd(), "/results/Genomic_Index/genomicIndexLMS_plot.pdf"), LMSPlot, width = 10, height = 6)
+
+#### 4d. Genomic Index with a minimum methylation segment size ----
+# Same calculation as 4a/4b, but methylation-derived segments shorter than
+# 10 Mb are dropped, matching the 10 Mb minimum applied to the SNP-array
+# segments. SNP rows are identical to 4a/4b and kept once per case.
+minSeg <- 1e+07
+minSegDf <- NULL
+for(cohort in c("LMS", "LM")){
+  cases <- if(cohort == "LMS") LMS_cases else LM_cases
+  for(i in cases){
+    for(j in bins){
+      for(t in c("MethylMaster", "Sesame", "Conumee")){
+        dat <- if(cohort == "LMS") labLMSProc(i, Technology = t, binSize = j) else LMStt(STT = i, bin = j, tech = t)
+        minSegDf <- unique(rbind(minSegDf,
+                                 GenomicIndexIntermediateMatrix(dat, stt = i, bin = j, LMSorLM = cohort,
+                                                                tech = t, minSegSize = minSeg) %>%
+                                   dplyr::mutate(Cohort = cohort)))
+      }
+    }
+  }
+}
+
+minSegGI <- minSegDf %>% group_by(Cohort, Case, Bin, type) %>% summarize(
+  count = n(),
+  c_sq = (n())^2,
+  chr_count = n_distinct(chrom),
+  .groups = "drop"
+) %>% dplyr::mutate(gi = c_sq/chr_count, minSegSize = minSeg) %>%
+  filter(!(Bin != 1e+06 & type == "SNP"))
+
+write.csv(minSegGI, paste0(getwd(), "/results/Genomic_Index/minSegSize_GI.csv"))

@@ -120,7 +120,7 @@ for(cases in LM_cases){
     dplyr::select(c("Chromosome", "StartPosition", "StopPosition" ,"Median Log2 Ratio")) %>%
     drop_na() %>%
     dplyr::rename(seg.mean = "Median Log2 Ratio") %>%
-    dplyr::filter(seg.mean < -0.25 | seg.mean > 0.25) %>%
+    dplyr::filter(seg.mean <= -0.25 | seg.mean >= 0.25) %>%
     dplyr::mutate(width = StopPosition - StartPosition) %>%
     dplyr::filter(width > 1e+06) #1Mb cut off
   

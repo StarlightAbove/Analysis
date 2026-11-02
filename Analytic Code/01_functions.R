@@ -70,8 +70,8 @@ labLMSProc <- function(STTq, Technology, binSize){
                                                      chrom = str_remove_all(chrom, "chr")) %>% filter(
                                                        !(chrom == "X") & !(chrom == "Y")) %>% mutate(
                                                          chrom = as.numeric(chrom)) %>% arrange(chrom) %>% mutate(
-                                                           CNVStatus = case_when(seg.mean > 0.25 ~ "Amplification",
-                                                                                 seg.mean < -0.25 ~ "Deletion",
+                                                           CNVStatus = case_when(seg.mean >= 0.25 ~ "Amplification",
+                                                                                 seg.mean <= -0.25 ~ "Deletion",
                                                                                  TRUE ~ "Normal"), type = "SeSAMe") 
     combinedSet <- rbind(sesameMatch, cnvMatch) %>% mutate(Gene = as.character(0), seg.mean = as.numeric(seg.mean)) %>% arrange(chrom)
   }
@@ -109,8 +109,8 @@ LMStt <- function(STT, bin, tech){
         loc.end = "bp.End",
         seg.mean = "Mean"
       ) %>% dplyr::mutate(
-        CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
-                              seg.mean < -0.3 ~ "Deletion",
+        CNVStatus = case_when(seg.mean >= 0.25 ~ "Amplification",
+                              seg.mean <= -0.25 ~ "Deletion",
                               TRUE ~ "Normal"), type = "MethylMaster"
       )
     cnvMethyl$chrom <- as.numeric(str_remove_all(cnvMethyl$chrom, pattern = "chr"))
@@ -127,8 +127,8 @@ LMStt <- function(STT, bin, tech){
                                                                     chrom = str_remove_all(chrom, "chr")) %>% filter(
                                                                       !(chrom == "X") & !(chrom == "Y")) %>% mutate(
                                                                         chrom = as.numeric(chrom)) %>% arrange(chrom) %>% mutate(
-                                                                          CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
-                                                                                                seg.mean < -0.3 ~ "Deletion",
+                                                                          CNVStatus = case_when(seg.mean >= 0.25 ~ "Amplification",
+                                                                                                seg.mean <= -0.25 ~ "Deletion",
                                                                                                 TRUE ~ "Normal"), type = "SeSAMe") 
   }
   
@@ -139,8 +139,8 @@ LMStt <- function(STT, bin, tech){
     outputDirConumee <- paste0(getwd(), "/Outputs/Conumee/LMData/bins/",bin,"/",sentrixID,"_",sentrixPos,".csv")
     case <- read.csv(outputDirConumee)
     case <- case %>% dplyr::select(-c("ID", "bstat")) %>% 
-      mutate(CNVStatus = case_when(case$seg.mean > 0.25 ~ "Amplification",
-                                   case$seg.mean < -0.25 ~ "Deletion",
+      mutate(CNVStatus = case_when(case$seg.mean >= 0.25 ~ "Amplification",
+                                   case$seg.mean <= -0.25 ~ "Deletion",
                                    TRUE ~ "Normal"), 
              chrom = as.numeric(str_remove_all(chrom, "chr"))) %>% 
       dplyr::arrange(chrom) %>% mutate(type = "Conumee") %>%
@@ -194,8 +194,8 @@ labNmrlProc <- function(Sentrix, Technology, binSize){
                                                      chrom = str_remove_all(chrom, "chr")) %>% filter(
                                                        !(chrom == "X") & !(chrom == "Y")) %>% mutate(
                                                          chrom = as.numeric(chrom)) %>% arrange(chrom) %>% mutate(
-                                                           CNVStatus = case_when(seg.mean > 0.3 ~ "Amplification",
-                                                                                 seg.mean < -0.3 ~ "Deletion",
+                                                           CNVStatus = case_when(seg.mean >= 0.25 ~ "Amplification",
+                                                                                 seg.mean <= -0.25 ~ "Deletion",
                                                                                  TRUE ~ "Normal"), type = "SeSAMe") 
     combinedSet <- sesameMatch %>% arrange(chrom)
   }
@@ -295,7 +295,10 @@ GenomicIndex <- function(dfCH3, stt = 0, bin, sw, LMSorLM = "LMS"){
 # for one case/bin/technology, combining the caller's calls with the
 # matching SNP-array calls. Used as the input to the group_by/summarize
 # step that actually computes the Genomic Index (see section 4).
-GenomicIndexIntermediateMatrix <- function(dfCH3, stt = 0, bin, LMSorLM = "LMS", tech){
+# minSegSize (bp): optional minimum length for methylation-derived segments.
+# Default 0 keeps every altered segment; set to 1e+07 to match the 10 Mb
+# minimum already applied to the SNP-array segments below.
+GenomicIndexIntermediateMatrix <- function(dfCH3, stt = 0, bin, LMSorLM = "LMS", tech, minSegSize = 0){
   print(stt)
   recentered <- NULL
   rc <- NULL
@@ -313,11 +316,12 @@ GenomicIndexIntermediateMatrix <- function(dfCH3, stt = 0, bin, LMSorLM = "LMS",
     dplyr::rename(seg.mean = "Median Log2Ratio", loc.start = "Cytoband Start",
                   loc.end = "Cytoband End", chrom = Chromosome, CNVStatus = Type) %>%
     dplyr::mutate(type = "SNP", Gene = 0) %>%
-    dplyr::filter(seg.mean > 0.25 | seg.mean < -0.25)
+    dplyr::filter(seg.mean >= 0.25 | seg.mean <= -0.25)
 
   
   dfCH3f <- dfCH3 %>% 
-    dplyr::filter(CNVStatus != "Normal", chrom != "X", type != "SNP")
+    dplyr::filter(CNVStatus != "Normal", chrom != "X", type != "SNP") %>%
+    dplyr::filter((loc.end - loc.start) >= minSegSize)
 
   output <- rbind(dfCH3f, dfSNP) %>% dplyr::mutate(Case = stt, Bin = bin)
   

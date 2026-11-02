@@ -1,0 +1,15 @@
+
+Total time:
+
+3.86996591885885
+
+GC output: 
+
+           used  (Mb) gc trigger   (Mb)  max used   (Mb)
+Ncells 16495937 881.0   26146444 1396.4  26146444 1396.4
+Vcells 43586884 332.6  134868029 1029.0 210731295 1607.8
+
+peakRAM::peakRAM() max output (bytes): 
+
+1283.2
+Mebibytes

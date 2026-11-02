@@ -3,6 +3,9 @@ library(R.utils)
 library(conumee2)
 library(reshape2)
 
+# Bin sizes (bp) evaluated throughout the analysis.
+binLength <- c(10000, 50000, 1e+05, 1e+06)
+
 con2 <- function(locationOfTest, locationOfControl, arrayType, binSize, OutputFolder){
   RGset <- read.metharray.exp(locationOfTest, recursive = T, verbose = T)
   MSet <- preprocessIllumina(RGset)
@@ -18,7 +21,7 @@ con2 <- function(locationOfTest, locationOfControl, arrayType, binSize, OutputFo
   segments <- CNV.write(x, what = "segments")
   bins <- CNV.write(x, what = "bins")
   
-  dir.create(paste0("./Outputs/Conumee/",OutputFolder,"/",binSize))
+  dir.create(paste0("./Outputs/Conumee/",OutputFolder,"/",binSize), recursive = TRUE, showWarnings = FALSE)
   write.csv(bins, paste0("./Outputs/Conumee/",OutputFolder,"/",binSize,"/bins.csv"))
   for(segment in segments){
     write.csv(segment, paste0("./Outputs/Conumee/",OutputFolder,"/",binSize,"/",segment[["ID"]][1], ".csv"))
@@ -38,11 +41,12 @@ for(bin in binLength){
        arrayType = "EPIC",
        binSize = bin,
        OutputFolder = "LabNormals")
-} # LabNormals.
+} # LabNormals. GEO adjacent-myometrium controls (GSE192354) are used here only
+  # to quality-check the lab normals, which are the reference for both tumour cohorts.
 for(bin in binLength){
   con2(locationOfTest = "./LabData/LM_SNP_EPIC_array_data/EPIC_array_data_LM/idat_files", 
-       locationOfControl = "./Controls/EPICControls/", 
+       locationOfControl = "./LabData/Normal_smooth_muscle_EPIC_data", 
        arrayType = "EPIC",
        binSize = bin,
-       OutputFolder = "LMData")
+       OutputFolder = "LMData/bins") # path read by LMStt() in Analytic Code
 } # LM.

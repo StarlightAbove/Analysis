@@ -4673,6 +4673,12 @@
       "RemoteSubdir": "conumee2",
       "NeedsCompilation": "no"
     },
+    "corrplot": {
+      "Package": "corrplot",
+      "Version": "0.95",
+      "Source": "Repository",
+      "Repository": "CRAN"
+    },
     "cowplot": {
       "Package": "cowplot",
       "Version": "1.2.0",

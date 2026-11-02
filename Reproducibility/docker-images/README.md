@@ -6,14 +6,14 @@ Conumee, Sesame on FFPE tissue) from the baked-in `LabData/`.
 ## Why two images
 
 MethylMaster requires a **patched** sesame (`StarlightAbove/sesame@patch-2`) at
-R 4.1.2; Conumee, unpatched Sesame, and `analyticFile.R` all target
+R 4.1.2; Conumee, unpatched Sesame, and `Analytic Code/run_all.R` all target
 **R 4.5.2 / Bioc 3.21** (pinned in `renv.lock`). Patched and unpatched sesame
 cannot share one R library, so the stages are quarantined:
 
 | Image | Base | Runs | Emits |
 |---|---|---|---|
 | `cnv-methylmaster` | `mmariani123/methylmaster` (R 4.1.2) | MethylMaster arm | `Outputs/MethylMaster/**` |
-| `cnv-analysis` | `rocker/tidyverse:4.5` + `renv::restore()` | Conumee + Sesame arms, then `analyticFile.R` | `Outputs/{Conumee,SeSAMe}/**`, `quarterCutoff/**` |
+| `cnv-analysis` | `rocker/tidyverse:4.5` + `renv::restore()` | Conumee + Sesame arms, then `Analytic Code/run_all.R` | `Outputs/{Conumee,SeSAMe}/**`, `results/**` |
 
 ## Run
 
@@ -26,7 +26,7 @@ docker compose up --build
 Stage 1 runs to completion; the compose completion gate
 (`condition: service_completed_successfully`) then releases Stage 2. `Outputs/`
 is a shared bind-mount handoff; final metrics and figures land in
-`quarterCutoff/` on the host.
+`results/` on the host.
 
 ## Data flow
 
@@ -35,7 +35,7 @@ cnv-methylmaster ─▶ Outputs/MethylMaster ─┐
                                           ├─▶ [shared Outputs/] ─▶ cnv-analysis
 cnv-analysis     ─▶ Outputs/{Conumee,SeSAMe} ─┘   ├─ conumee.R
                                                   ├─ sesame.R
-                                                  └─ analyticFile.R ─▶ quarterCutoff/
+                                                  └─ run_all.R ─▶ results/
 ```
 
 ## Build context

@@ -3,7 +3,7 @@
 #     docker compose up --build
 #
 # Stage 1 (methylmaster) runs to completion; the completion gate then releases
-# Stage 2 (analysis). Outputs/ is a shared bind-mount handoff; quarterCutoff/
+# Stage 2 (analysis). Outputs/ is a shared bind-mount handoff; results/
 # receives the final metrics and figures on the host.
 #
 # Paths are relative to this file (Reproducibility/docker-images/). ../../ is
@@ -30,4 +30,4 @@ services:
         condition: service_completed_successfully
     volumes:
       - ../../Outputs:/Analysis/Outputs
-      - ../../quarterCutoff:/Analysis/quarterCutoff
+      - ../../results:/Analysis/results
